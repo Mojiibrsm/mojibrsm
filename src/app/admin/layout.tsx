@@ -67,7 +67,7 @@ export default function AdminLayout({
   }, []);
 
   useEffect(() => {
-    if (!loading) {
+    if (isClient && !loading) {
       if (!user) {
         router.push('/login');
       } else if (user.uid !== ADMIN_UID) {
@@ -75,7 +75,7 @@ export default function AdminLayout({
         router.push('/dashboard');
       }
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, isClient]);
 
   const handleLogout = async () => {
     await signOut(auth);
