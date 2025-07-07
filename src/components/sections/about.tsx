@@ -26,7 +26,7 @@ export default function About() {
   };
 
   return (
-    <section id="about" className="w-full py-16 md:py-24">
+    <section id="about" className="w-full py-16 md:py-24 bg-background">
       <motion.div
         ref={ref}
         className="container"
@@ -36,17 +36,21 @@ export default function About() {
       >
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <motion.div variants={itemVariants} className="relative group w-full max-w-md mx-auto">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-accent rounded-lg blur opacity-0 group-hover:opacity-75 transition duration-500"></div>
+             <div className="absolute -inset-1.5 bg-gradient-to-r from-primary via-accent to-secondary rounded-full blur opacity-75 animate-pulse group-hover:opacity-100 transition duration-1000"></div>
              <Image
-              src="https://storage.googleapis.com/aip-dev-img-repo/6a297298-0c64-4e42-a982-f79a9f24e4c2.png"
+              src="https://placehold.co/600x600.png"
               alt="Mojib Rsm"
               width={600}
               height={600}
               className="relative rounded-lg shadow-lg w-full"
+              data-ai-hint="man portrait"
             />
           </motion.div>
           <motion.div variants={itemVariants} className="space-y-6">
-            <h2 className="text-4xl font-bold text-foreground font-headline leading-tight">{t.about.title}</h2>
+             <div className="space-y-4">
+                <h2 className="text-4xl font-bold text-foreground font-headline leading-tight">{t.about.title}</h2>
+                <div className="h-1.5 w-24 bg-primary rounded-full"></div>
+            </div>
             <p className="text-muted-foreground">{t.about.bio}</p>
             <p className="text-muted-foreground">{t.about.mission}</p>
             <div>
