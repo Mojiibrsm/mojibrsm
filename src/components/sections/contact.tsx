@@ -5,9 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Mail, Phone, MapPin, Github, Facebook, Linkedin } from 'lucide-react';
+import { motion, useInView } from 'framer-motion';
+import { useRef } from 'react';
 
 export default function Contact() {
   const { t } = useLanguage();
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, amount: 0.1 });
 
   const socialLinks = [
     { icon: Github, href: "https://github.com/mojibrsm" },
@@ -15,15 +19,31 @@ export default function Contact() {
     { icon: Linkedin, href: "https://linkedin.com/in/mojibrsm" },
   ];
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.2, delayChildren: 0.2 } },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+  };
+
   return (
     <section id="contact" className="w-full py-16 md:py-24 bg-card">
-      <div className="container">
-        <div className="text-center mb-12">
+      <motion.div
+        ref={ref}
+        className="container"
+        variants={containerVariants}
+        initial="hidden"
+        animate={isInView ? 'visible' : 'hidden'}
+      >
+        <motion.div variants={itemVariants} className="text-center mb-12">
           <h2 className="text-4xl font-bold font-headline">{t.contact.title}</h2>
           <p className="max-w-2xl mx-auto text-muted-foreground mt-4">{t.contact.description}</p>
-        </div>
+        </motion.div>
         <div className="grid md:grid-cols-2 gap-12">
-          <div>
+          <motion.div variants={itemVariants}>
             <form className="space-y-4">
               <Input type="text" placeholder={t.contact.form.name} />
               <Input type="email" placeholder={t.contact.form.email} />
@@ -31,8 +51,8 @@ export default function Contact() {
               <Textarea placeholder={t.contact.form.message} rows={5} />
               <Button type="submit" size="lg" className="w-full">{t.contact.form.submit}</Button>
             </form>
-          </div>
-          <div className="space-y-6">
+          </motion.div>
+          <motion.div variants={itemVariants} className="space-y-6">
             <Card>
               <CardContent className="p-6 flex items-center gap-4">
                 <Mail className="w-8 h-8 text-primary" />
@@ -69,9 +89,9 @@ export default function Contact() {
                 </Button>
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }
