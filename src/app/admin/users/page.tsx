@@ -9,11 +9,9 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, ShieldCheck, UserCog, UserX } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getUsers } from '@/services/firestore';
+import { getUsers, FirestoreUser } from '@/services/firestore';
 
-// This type now matches the structure in Firestore
 type User = {
-    id: string;
     uid: string;
     name: string;
     email: string;
@@ -35,9 +33,8 @@ export default function AdminUsersPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const unsubscribe = getUsers((fetchedUsers) => {
+    const unsubscribe = getUsers((fetchedUsers: FirestoreUser[]) => {
       const formattedUsers: User[] = fetchedUsers.map(u => ({
-        id: u.id,
         uid: u.uid,
         name: u.displayName || 'No Name Provided',
         email: u.email || 'No Email Provided',
@@ -54,10 +51,10 @@ export default function AdminUsersPage() {
   const handleRoleChange = (userId: string, newRole: 'Admin' | 'Client') => {
     // In a real app, you would call a Firestore update function here.
     // For now, this is a UI-only simulation.
-    setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
+    setUsers(users.map(u => u.uid === userId ? { ...u, role: newRole } : u));
     toast({
       title: "User Role Updated (Simulation)",
-      description: `User's role has been changed to ${newRole}.`
+      description: `User's role has been changed to ${newRole}. This is a simulation and not saved to the database yet.`
     });
   };
 
@@ -67,7 +64,7 @@ export default function AdminUsersPage() {
     toast({
       variant: "destructive",
       title: "User Suspended (Simulation)",
-      description: `${userName} has been suspended.`,
+      description: `${userName} has been suspended. This is a simulation.`,
     });
   };
   
@@ -101,7 +98,7 @@ export default function AdminUsersPage() {
                 </TableRow>
               ) : (
                 users.map((user) => (
-                  <TableRow key={user.id}>
+                  <TableRow key={user.uid}>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar>
@@ -128,16 +125,16 @@ export default function AdminUsersPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Change Role</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'Admin')}>
+                          <DropdownMenuItem onClick={() => handleRoleChange(user.uid, 'Admin')}>
                             <ShieldCheck className="mr-2 h-4 w-4" />
                             Make Admin
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'Client')}>
+                          <DropdownMenuItem onClick={() => handleRoleChange(user.uid, 'Client')}>
                             <UserCog className="mr-2 h-4 w-4" />
                             Make Client
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-destructive" onClick={() => handleSuspendUser(user.id, user.name)}>
+                          <DropdownMenuItem className="text-destructive" onClick={() => handleSuspendUser(user.uid, user.name)}>
                             <UserX className="mr-2 h-4 w-4" />
                             Suspend User
                           </DropdownMenuItem>

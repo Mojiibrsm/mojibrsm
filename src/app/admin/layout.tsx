@@ -35,9 +35,9 @@ import { Button } from '@/components/ui/button';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
-// IMPORTANT: Replace this with your actual Firebase Admin User UID
-// You can find your UID in the Firebase console under Authentication > Users tab.
-const ADMIN_UID = 'YL4kT1aXv5WU8QUhfeY2FhfeJFu2';
+// IMPORTANT: The admin role is now automatically assigned to the first registered user.
+// You no longer need to manually set an ADMIN_UID.
+// To make another user an admin, you can change their role in Firestore.
 
 const Logo = () => (
     <svg width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -57,7 +57,7 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading } = useAuth();
+  const { user, firestoreUser, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [isClient, setIsClient] = useState(false);
@@ -70,12 +70,12 @@ export default function AdminLayout({
     if (isClient && !loading) {
       if (!user) {
         router.push('/login');
-      } else if (user.uid !== ADMIN_UID) {
+      } else if (firestoreUser?.role !== 'Admin') {
         // If not an admin, redirect to the user dashboard
         router.push('/dashboard');
       }
     }
-  }, [user, loading, router, isClient]);
+  }, [user, firestoreUser, loading, router, isClient]);
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -92,7 +92,7 @@ export default function AdminLayout({
     { href: '/admin/settings', label: 'Settings', icon: Settings },
   ];
 
-  if (!isClient || loading || !user || user.uid !== ADMIN_UID) {
+  if (!isClient || loading || !user || firestoreUser?.role !== 'Admin') {
     return null;
   }
 

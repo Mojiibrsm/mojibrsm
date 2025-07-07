@@ -1,44 +1,65 @@
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, updateDoc, deleteDoc, query, where, Timestamp, onSnapshot, Unsubscribe, arrayUnion } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, deleteDoc, query, where, Timestamp, onSnapshot, Unsubscribe, arrayUnion, setDoc, getDoc, getDocs } from 'firebase/firestore';
 import type { User as FirebaseAuthUser } from 'firebase/auth';
 
 // --- User Management ---
 export interface FirestoreUser {
-    id: string;
     uid: string;
-    displayName: string;
-    email: string;
-    photoURL: string;
+    displayName: string | null;
+    email: string | null;
+    photoURL: string | null;
     role: 'Admin' | 'Client';
     createdAt: Timestamp;
 }
 
 export const addUser = async (user: FirebaseAuthUser) => {
+    const userRef = doc(db, "users", user.uid);
     try {
-        // Note: We don't store this document with the user's UID as the document ID
-        // to allow for easier querying by Firestore's default IDs if needed.
-        // A 'users' collection with document IDs being the user's UID is also a common pattern.
-        await addDoc(collection(db, "users"), {
-            uid: user.uid,
-            displayName: user.displayName,
-            email: user.email,
-            photoURL: user.photoURL,
-            createdAt: Timestamp.now(),
-            role: 'Client' // Default role for new sign-ups
-        });
+        const docSnap = await getDoc(userRef);
+        if (!docSnap.exists()) {
+            const usersQuery = query(collection(db, "users"));
+            const querySnapshot = await getDocs(usersQuery);
+            const isFirstUser = querySnapshot.empty;
+
+            await setDoc(userRef, {
+                displayName: user.displayName,
+                email: user.email,
+                photoURL: user.photoURL,
+                createdAt: Timestamp.now(),
+                role: isFirstUser ? 'Admin' : 'Client',
+            });
+        }
     } catch (error) {
         console.error("Error adding user to Firestore: ", error);
     }
 };
 
-export const getUsers = (callback: (users: any[]) => void): Unsubscribe => {
+export const getUsers = (callback: (users: FirestoreUser[]) => void): Unsubscribe => {
     const q = query(collection(db, "users"));
     return onSnapshot(q, (querySnapshot) => {
-        const users = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const users = querySnapshot.docs.map(doc => ({
+            uid: doc.id,
+            ...(doc.data() as Omit<FirestoreUser, 'uid'>)
+        }));
         callback(users);
     }, (error) => {
         console.error("Error fetching users: ", error);
         callback([]);
+    });
+};
+
+export const getUserDoc = (uid: string, callback: (user: FirestoreUser | null) => void): Unsubscribe => {
+    const userRef = doc(db, "users", uid);
+    return onSnapshot(userRef, (docSnap) => {
+        if (docSnap.exists()) {
+            callback({ uid: docSnap.id, ...docSnap.data() } as FirestoreUser);
+        } else {
+            console.warn(`User document not found for UID: ${uid}`);
+            callback(null);
+        }
+    }, (error) => {
+        console.error("Error fetching user document: ", error);
+        callback(null);
     });
 };
 
