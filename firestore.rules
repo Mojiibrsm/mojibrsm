@@ -1,0 +1,56 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check if a user is an Admin by checking their role in the 'users' collection.
+    function isAdmin() {
+      // Ensure the user is authenticated before checking for role.
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Admin';
+    }
+    
+    // Helper function to check if the currently authenticated user is the owner of a document.
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Rules for the 'users' collection
+    match /users/{userId} {
+      // Any authenticated user can create their own user document upon sign-up.
+      allow create: if request.auth != null;
+      
+      // Users can only read or update their own data. Admins can read any user's data.
+      allow read, update: if isOwner(userId) || isAdmin();
+    }
+
+    // Rules for the 'projects' collection
+    match /projects/{projectId} {
+      // An authenticated user can only read a project if they are the assigned user, or if they are an admin.
+      allow read: if (request.auth != null && resource.data.userId == request.auth.uid) || isAdmin();
+      
+      // Only admins can create, update, or delete projects.
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // Rules for the 'requests' collection
+    match /requests/{requestId} {
+      // An authenticated user can create a request for themselves.
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      
+      // Users can only read their own requests. Admins can read all requests.
+      allow read: if (request.auth != null && resource.data.userId == request.auth.uid) || isAdmin();
+      
+      // Only admins can update the status of a request.
+      allow update: if isAdmin();
+    }
+
+    // Rules for the 'messageThreads' collection
+    match /messageThreads/{threadId} {
+        // An authenticated user can create a message thread for themselves.
+        allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+        
+        // The user who owns the thread and admins can read or write (add messages) to it.
+        allow read, write: if (request.auth != null && resource.data.userId == request.auth.uid) || isAdmin();
+    }
+  }
+}
