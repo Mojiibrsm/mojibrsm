@@ -1,10 +1,12 @@
-'use client';
 
+'use client';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
 const projects = [
   {
@@ -12,20 +14,25 @@ const projects = [
     name: 'E-commerce Platform Redesign',
     status: 'In Progress',
     deadline: '2025-08-30',
+    description: 'A complete overhaul of the existing e-commerce website to improve user experience and performance. This includes a new design, mobile optimization, and faster checkout process.'
   },
   {
     id: 'PROJ-002',
     name: 'Mobile App for Booking',
     status: 'Completed',
     deadline: '2025-06-15',
+    description: 'A native mobile application for both iOS and Android that allows users to book appointments and services on the go. Integrated with a custom backend and payment gateway.'
   },
   {
     id: 'PROJ-003',
     name: 'Corporate Website Development',
     status: 'Pending',
     deadline: '2025-09-10',
+    description: 'Development of a new corporate website from scratch. The project is currently in the requirement gathering and planning phase.'
   },
 ];
+
+type Project = typeof projects[0];
 
 const getStatusVariant = (status: string) => {
     switch (status) {
@@ -41,6 +48,14 @@ const getStatusVariant = (status: string) => {
 }
 
 export default function ProjectsPage() {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+
+  const handleViewProject = (project: Project) => {
+    setSelectedProject(project);
+    setIsDialogOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -59,7 +74,7 @@ export default function ProjectsPage() {
                 <TableHead>Project Name</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Deadline</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -70,8 +85,8 @@ export default function ProjectsPage() {
                     <Badge variant={getStatusVariant(project.status) as any}>{project.status}</Badge>
                   </TableCell>
                   <TableCell>{project.deadline}</TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="icon">
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="icon" onClick={() => handleViewProject(project)}>
                       <Eye className="h-4 w-4" />
                       <span className="sr-only">View Project</span>
                     </Button>
@@ -82,6 +97,23 @@ export default function ProjectsPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{selectedProject?.name}</DialogTitle>
+            <DialogDescription>
+              Status: <Badge variant={getStatusVariant(selectedProject?.status || '') as any}>{selectedProject?.status}</Badge> | Deadline: {selectedProject?.deadline}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 text-sm text-muted-foreground">
+            {selectedProject?.description}
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setIsDialogOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

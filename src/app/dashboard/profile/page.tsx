@@ -15,7 +15,7 @@ import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, Mail, Phone, Lock, Upload, Loader2 } from 'lucide-react';
 import { useRef, useState, useEffect } from 'react';
-import { updateProfile } from 'firebase/auth';
+import { updateProfile, sendPasswordResetEmail } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { auth, storage } from '@/lib/firebase';
 
@@ -31,21 +31,30 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user?.photoURL) {
-      setAvatarPreview(user.photoURL);
+    if (user) {
+      form.reset({
+        fullName: user.displayName || '',
+        email: user.email || '',
+        phoneNumber: user.phoneNumber || '',
+        bio: 'I am a passionate developer and designer.', // This could be fetched from a DB later
+      });
+      if (user.photoURL) {
+        setAvatarPreview(user.photoURL);
+      }
     }
   }, [user]);
 
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
-      fullName: user?.displayName || '',
-      email: user?.email || '',
+      fullName: '',
+      email: '',
       phoneNumber: '',
-      bio: 'I am a passionate developer and designer.',
+      bio: '',
     },
   });
 
@@ -63,11 +72,11 @@ export default function ProfilePage() {
       await updateProfile(auth.currentUser, { photoURL: downloadURL });
       
       setAvatarPreview(downloadURL);
-      await reloadUser();
+      await reloadUser(); // This will update the user object in the context
 
       toast({
-        title: 'Success',
-        description: 'Profile picture updated successfully.',
+        title: 'Success!',
+        description: 'Your profile picture has been updated.',
       });
 
     } catch (error) {
@@ -75,34 +84,59 @@ export default function ProfilePage() {
       toast({
         variant: 'destructive',
         title: 'Upload Failed',
-        description: 'There was an error updating your profile picture.',
+        description: 'There was an error updating your profile picture. Please try again.',
       });
     } finally {
       setIsUploading(false);
     }
   };
 
-  function onSubmit(data: z.infer<typeof profileFormSchema>) {
-    console.log(data);
-    if (!auth.currentUser) return;
-
-    updateProfile(auth.currentUser, {
-      displayName: data.fullName,
-    }).then(() => {
-        reloadUser();
-        toast({
-          title: 'Profile Updated',
-          description: 'Your profile information has been successfully updated.',
+  const handlePasswordChange = () => {
+    if (user?.email) {
+      sendPasswordResetEmail(auth, user.email)
+        .then(() => {
+          toast({
+            title: 'Password Reset Email Sent',
+            description: 'Please check your inbox to reset your password.',
+          });
+        })
+        .catch((error) => {
+          console.error("Error sending password reset email:", error);
+          toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not send password reset email. Please try again later.',
+          });
         });
-    }).catch((error) => {
+    }
+  };
+
+  async function onSubmit(data: z.infer<typeof profileFormSchema>) {
+    if (!auth.currentUser) return;
+    setIsSubmitting(true);
+    try {
+      await updateProfile(auth.currentUser, {
+        displayName: data.fullName,
+      });
+      // Phone number is not part of the standard Firebase User profile, would need custom handling
+      await reloadUser();
+      toast({
+        title: 'Profile Updated',
+        description: 'Your profile information has been successfully updated.',
+      });
+    } catch (error) {
         console.error("Error updating profile:", error);
         toast({
             variant: 'destructive',
             title: 'Update Failed',
             description: 'There was an error updating your profile.',
         });
-    });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
+
+  if (!user) return null;
 
   return (
     <div className="space-y-6">
@@ -114,7 +148,7 @@ export default function ProfilePage() {
         <CardHeader>
           <div className="flex items-center gap-4">
              <Avatar className="h-20 w-20">
-              <AvatarImage src={avatarPreview || ''} alt={user?.displayName || 'User'} />
+              <AvatarImage src={avatarPreview || user.photoURL || ''} alt={user?.displayName || 'User'} />
               <AvatarFallback>{user?.displayName?.charAt(0) || user?.email?.charAt(0)}</AvatarFallback>
             </Avatar>
             <div className="grid gap-1">
@@ -198,7 +232,10 @@ export default function ProfilePage() {
                   </FormItem>
                 )}
               />
-              <Button type="submit">Save Changes</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save Changes
+              </Button>
             </form>
           </Form>
 
@@ -207,9 +244,9 @@ export default function ProfilePage() {
           <div>
              <h3 className="text-lg font-medium">Change Password</h3>
              <p className="text-sm text-muted-foreground">
-                For security, you will be logged out after changing your password.
+                Click the button below to receive a password reset link in your email.
              </p>
-             <Button variant="outline" className="mt-4">
+             <Button variant="outline" className="mt-4" onClick={handlePasswordChange}>
                 <Lock className="mr-2 h-4 w-4"/>
                 Change Password
              </Button>

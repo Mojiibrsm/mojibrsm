@@ -1,6 +1,8 @@
 
 'use client';
 
+import { useState } from 'react';
+import { useAuth } from '@/contexts/auth-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -18,8 +20,37 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { useToast } from '@/hooks/use-toast';
 
 export default function SettingsPage() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [pushNotifications, setPushNotifications] = useState(false);
+
+  const handlePasswordChange = () => {
+    if (user?.email) {
+      sendPasswordResetEmail(auth, user.email)
+        .then(() => {
+          toast({
+            title: 'Password Reset Email Sent',
+            description: 'Please check your inbox to reset your password.',
+          });
+        })
+        .catch((error) => {
+          console.error("Error sending password reset email:", error);
+          toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not send password reset email. Please try again later.',
+          });
+        });
+    }
+  };
+
+
   return (
     <div className="space-y-6">
       <div>
@@ -38,14 +69,23 @@ export default function SettingsPage() {
                 <Label htmlFor="email-notifications" className="font-semibold">Email Notifications</Label>
                 <p className="text-sm text-muted-foreground">Receive emails about project updates and messages.</p>
             </div>
-            <Switch id="email-notifications" defaultChecked />
+            <Switch 
+              id="email-notifications" 
+              checked={emailNotifications}
+              onCheckedChange={setEmailNotifications}
+            />
           </div>
           <div className="flex items-center justify-between p-4 border rounded-lg">
              <div className="space-y-1">
                 <Label htmlFor="push-notifications" className="font-semibold">Push Notifications</Label>
-                <p className="text-sm text-muted-foreground">Get push notifications on your devices.</p>
+                <p className="text-sm text-muted-foreground">Get push notifications on your devices (coming soon).</p>
              </div>
-            <Switch id="push-notifications" />
+            <Switch 
+              id="push-notifications" 
+              checked={pushNotifications}
+              onCheckedChange={setPushNotifications}
+              disabled
+            />
           </div>
         </CardContent>
       </Card>
@@ -59,9 +99,9 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between p-4 border rounded-lg">
               <div>
                   <Label className="font-semibold">Change Password</Label>
-                  <p className="text-sm text-muted-foreground">For security, you will be logged out after changing your password.</p>
+                  <p className="text-sm text-muted-foreground">Click the button to receive a password reset link in your email.</p>
               </div>
-              <Button variant="outline"><Lock className="mr-2 h-4 w-4"/> Change</Button>
+              <Button variant="outline" onClick={handlePasswordChange}><Lock className="mr-2 h-4 w-4"/> Change</Button>
             </div>
             <Separator />
             <div className="flex items-center justify-between p-4 border rounded-lg border-destructive/50">

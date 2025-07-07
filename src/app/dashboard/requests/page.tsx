@@ -18,20 +18,25 @@ const requests = [
     service: 'Web Development (Basic)',
     status: 'Approved',
     date: '2025-07-20',
+    details: 'Request for a 5-page basic portfolio website. Client has provided the content and images. Needs to be responsive.'
   },
   {
     id: 'REQ-002',
     service: 'SEO & Digital Marketing',
     status: 'Pending',
     date: '2025-07-22',
+    details: 'Request for a 3-month SEO campaign for a local business website. Goal is to increase local search ranking and traffic.'
   },
   {
     id: 'REQ-003',
     service: 'Android App Development',
     status: 'Rejected',
     date: '2025-07-18',
+    details: 'Request for a complex social media application. The scope and budget were outside of current capabilities. Client has been notified.'
   },
 ];
+
+type Request = typeof requests[0];
 
 const getStatusVariant = (status: string) => {
     switch (status) {
@@ -47,7 +52,14 @@ const getStatusVariant = (status: string) => {
 }
 
 export default function RequestsPage() {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isNewRequestDialogOpen, setIsNewRequestDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
+
+  const handleViewRequest = (request: Request) => {
+    setSelectedRequest(request);
+    setIsViewDialogOpen(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -61,46 +73,10 @@ export default function RequestsPage() {
               <CardTitle>Service Requests</CardTitle>
               <CardDescription>A list of all your service requests.</CardDescription>
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                    <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        New Request
-                    </Button>
-                </DialogTrigger>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Make a New Service Request</DialogTitle>
-                        <DialogDescription>
-                          Fill out the form below and we'll get back to you as soon as possible.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="service" className="text-right">Service</Label>
-                            <Select>
-                                <SelectTrigger className="col-span-3">
-                                <SelectValue placeholder="Select a service" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="web-dev">Web Development</SelectItem>
-                                    <SelectItem value="app-dev">App Development</SelectItem>
-                                    <SelectItem value="seo">SEO & Marketing</SelectItem>
-                                    <SelectItem value="ui-ux">UI/UX Design</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="details" className="text-right">Details</Label>
-                            <Textarea id="details" placeholder="Please describe your request..." className="col-span-3" />
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button onClick={() => setIsDialogOpen(false)} variant="outline">Cancel</Button>
-                        <Button onClick={() => setIsDialogOpen(false)}>Submit Request</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <Button onClick={() => setIsNewRequestDialogOpen(true)}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                New Request
+            </Button>
         </CardHeader>
         <CardContent>
           <Table>
@@ -109,7 +85,7 @@ export default function RequestsPage() {
                 <TableHead>Service</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Date Submitted</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -120,8 +96,8 @@ export default function RequestsPage() {
                     <Badge variant={getStatusVariant(request.status) as any}>{request.status}</Badge>
                   </TableCell>
                   <TableCell>{request.date}</TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="icon">
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="icon" onClick={() => handleViewRequest(request)}>
                       <Eye className="h-4 w-4" />
                       <span className="sr-only">View Details</span>
                     </Button>
@@ -132,6 +108,62 @@ export default function RequestsPage() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* New Request Dialog */}
+      <Dialog open={isNewRequestDialogOpen} onOpenChange={setIsNewRequestDialogOpen}>
+          <DialogContent>
+              <DialogHeader>
+                  <DialogTitle>Make a New Service Request</DialogTitle>
+                  <DialogDescription>
+                    Fill out the form below and we'll get back to you as soon as possible.
+                  </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="service" className="text-right">Service</Label>
+                      <Select>
+                          <SelectTrigger className="col-span-3">
+                          <SelectValue placeholder="Select a service" />
+                          </SelectTrigger>
+                          <SelectContent>
+                              <SelectItem value="web-dev">Web Development</SelectItem>
+                              <SelectItem value="app-dev">App Development</SelectItem>
+                              <SelectItem value="seo">SEO & Marketing</SelectItem>
+                              <SelectItem value="ui-ux">UI/UX Design</SelectItem>
+                          </SelectContent>
+                      </Select>
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="details" className="text-right">Details</Label>
+                      <Textarea id="details" placeholder="Please describe your request..." className="col-span-3" />
+                  </div>
+              </div>
+              <DialogFooter>
+                  <Button onClick={() => setIsNewRequestDialogOpen(false)} variant="outline">Cancel</Button>
+                  <Button onClick={() => setIsNewRequestDialogOpen(false)}>Submit Request</Button>
+              </DialogFooter>
+          </DialogContent>
+      </Dialog>
+      
+      {/* View Request Details Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{selectedRequest?.service}</DialogTitle>
+            <DialogDescription>
+              Status: <Badge variant={getStatusVariant(selectedRequest?.status || '') as any}>{selectedRequest?.status}</Badge> | Submitted: {selectedRequest?.date}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 text-sm text-muted-foreground">
+            <p className="font-semibold text-foreground mb-2">Details:</p>
+            {selectedRequest?.details}
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setIsViewDialogOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }

@@ -161,7 +161,7 @@ export default function DashboardLayout({
             <div className="flex items-center gap-4">
                 <ThemeSwitcher />
                 <Button variant="outline" asChild>
-                    <Link href="/">
+                    <Link href="/" target="_blank" rel="noopener noreferrer">
                         <Home className="mr-2 h-4 w-4" />
                         View Site
                     </Link>
