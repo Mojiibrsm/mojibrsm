@@ -10,14 +10,16 @@ import { Check, X, Eye } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 
-const initialRequests = [
-  { id: 'REQ-001', service: 'Web Development (Basic)', status: 'Approved', date: '2025-07-20', client: 'Client A', email: 'client.a@example.com', details: 'Need a 5-page portfolio website. Content and images are ready.' },
-  { id: 'REQ-002', service: 'SEO & Digital Marketing', status: 'Pending', date: '2025-07-22', client: 'Client B', email: 'client.b@example.com', details: 'Looking for a 3-month SEO campaign to boost local traffic.' },
-  { id: 'REQ-003', service: 'Android App Development', status: 'Rejected', date: '2025-07-18', client: 'Client C', email: 'client.c@example.com', details: 'A complex social media app. Scope was too large for the budget.' },
-  { id: 'REQ-004', service: 'UI/UX Design', status: 'Pending', date: '2025-07-23', client: 'Client D', email: 'client.d@example.com', details: 'Redesign of our existing mobile app for better user experience.' },
-];
-
-type Request = typeof initialRequests[0];
+// Note: Real data will be fetched from a database. This is a placeholder type.
+type Request = {
+    id: string;
+    service: string;
+    status: 'Approved' | 'Pending' | 'Rejected';
+    date: string;
+    client: string;
+    email: string;
+    details: string;
+};
 
 const getStatusVariant = (status: string) => {
     switch (status) {
@@ -29,7 +31,7 @@ const getStatusVariant = (status: string) => {
 }
 
 export default function AdminRequestsPage() {
-  const [requests, setRequests] = useState(initialRequests);
+  const [requests, setRequests] = useState<Request[]>([]);
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const { toast } = useToast();
@@ -70,34 +72,42 @@ export default function AdminRequestsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {requests.map((request) => (
-                <TableRow key={request.id}>
-                  <TableCell className="font-medium">{request.client}</TableCell>
-                   <TableCell>{request.service}</TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusVariant(request.status) as any}>{request.status}</Badge>
-                  </TableCell>
-                  <TableCell>{request.date}</TableCell>
-                  <TableCell className="text-right space-x-2">
-                    <Button variant="ghost" size="icon" onClick={() => handleViewRequest(request)}>
-                        <Eye className="h-4 w-4" />
-                        <span className="sr-only">View</span>
-                    </Button>
-                    {request.status === 'Pending' && (
-                        <>
-                        <Button variant="outline" size="icon" className="text-green-600 hover:border-green-600 hover:bg-green-100 dark:hover:bg-green-900/50 border-green-600/50" onClick={() => handleStatusChange(request.id, 'Approved')}>
-                            <Check className="h-4 w-4" />
-                            <span className="sr-only">Approve</span>
-                        </Button>
-                         <Button variant="outline" size="icon" className="text-red-600 hover:border-red-600 hover:bg-red-100 dark:hover:bg-red-900/50 border-red-600/50" onClick={() => handleStatusChange(request.id, 'Rejected')}>
-                            <X className="h-4 w-4" />
-                            <span className="sr-only">Reject</span>
-                        </Button>
-                        </>
-                    )}
-                  </TableCell>
+              {requests.length === 0 ? (
+                 <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                        No client requests found.
+                    </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                requests.map((request) => (
+                  <TableRow key={request.id}>
+                    <TableCell className="font-medium">{request.client}</TableCell>
+                    <TableCell>{request.service}</TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusVariant(request.status) as any}>{request.status}</Badge>
+                    </TableCell>
+                    <TableCell>{request.date}</TableCell>
+                    <TableCell className="text-right space-x-2">
+                      <Button variant="ghost" size="icon" onClick={() => handleViewRequest(request)}>
+                          <Eye className="h-4 w-4" />
+                          <span className="sr-only">View</span>
+                      </Button>
+                      {request.status === 'Pending' && (
+                          <>
+                          <Button variant="outline" size="icon" className="text-green-600 hover:border-green-600 hover:bg-green-100 dark:hover:bg-green-900/50 border-green-600/50" onClick={() => handleStatusChange(request.id, 'Approved')}>
+                              <Check className="h-4 w-4" />
+                              <span className="sr-only">Approve</span>
+                          </Button>
+                          <Button variant="outline" size="icon" className="text-red-600 hover:border-red-600 hover:bg-red-100 dark:hover:bg-red-900/50 border-red-600/50" onClick={() => handleStatusChange(request.id, 'Rejected')}>
+                              <X className="h-4 w-4" />
+                              <span className="sr-only">Reject</span>
+                          </Button>
+                          </>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>

@@ -10,14 +10,15 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { MoreHorizontal, ShieldCheck, UserCog, UserX } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-const mockUsers = [
-  { id: 'usr_1', name: 'Alice Johnson', email: 'alice@example.com', role: 'Client', joinDate: '2025-07-01', avatar: 'https://placehold.co/40x40.png' },
-  { id: 'usr_2', name: 'Bob Williams', email: 'bob@example.com', role: 'Client', joinDate: '2025-06-15', avatar: 'https://placehold.co/40x40.png' },
-  { id: 'usr_3', name: 'Charlie Brown', email: 'charlie@example.com', role: 'Client', joinDate: '2025-05-20', avatar: 'https://placehold.co/40x40.png' },
-  { id: 'usr_4', name: 'Diana Prince', email: 'diana@example.com', role: 'Admin', joinDate: '2025-01-10', avatar: 'https://placehold.co/40x40.png' },
-];
-
-type User = typeof mockUsers[0];
+// Note: Real data will be fetched from a database. This is a placeholder type.
+type User = {
+    id: string;
+    name: string;
+    email: string;
+    role: 'Admin' | 'Client';
+    joinDate: string;
+    avatar: string;
+};
 
 const getRoleVariant = (role: string) => {
   switch (role) {
@@ -28,7 +29,7 @@ const getRoleVariant = (role: string) => {
 };
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState(mockUsers);
+  const [users, setUsers] = useState<User[]>([]);
   const { toast } = useToast();
 
   const handleRoleChange = (userId: string, newRole: 'Admin' | 'Client') => {
@@ -72,52 +73,60 @@ export default function AdminUsersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarImage src={user.avatar} alt={user.name} />
-                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">{user.name}</p>
-                        <p className="text-sm text-muted-foreground">{user.email}</p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={getRoleVariant(user.role) as any}>{user.role}</Badge>
-                  </TableCell>
-                  <TableCell>{user.joinDate}</TableCell>
-                  <TableCell className="text-right">
-                     <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Actions</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Change Role</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'Admin')}>
-                          <ShieldCheck className="mr-2 h-4 w-4" />
-                          Make Admin
-                        </DropdownMenuItem>
-                         <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'Client')}>
-                          <UserCog className="mr-2 h-4 w-4" />
-                          Make Client
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                         <DropdownMenuItem className="text-destructive" onClick={() => handleSuspendUser(user.id, user.name)}>
-                          <UserX className="mr-2 h-4 w-4" />
-                          Suspend User
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+              {users.length === 0 ? (
+                <TableRow>
+                    <TableCell colSpan={4} className="h-24 text-center">
+                        No users found.
+                    </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                users.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarImage src={user.avatar} alt={user.name} />
+                          <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">{user.name}</p>
+                          <p className="text-sm text-muted-foreground">{user.email}</p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getRoleVariant(user.role) as any}>{user.role}</Badge>
+                    </TableCell>
+                    <TableCell>{user.joinDate}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Actions</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Change Role</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'Admin')}>
+                            <ShieldCheck className="mr-2 h-4 w-4" />
+                            Make Admin
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'Client')}>
+                            <UserCog className="mr-2 h-4 w-4" />
+                            Make Client
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-destructive" onClick={() => handleSuspendUser(user.id, user.name)}>
+                            <UserX className="mr-2 h-4 w-4" />
+                            Suspend User
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>

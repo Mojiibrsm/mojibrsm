@@ -1,5 +1,7 @@
+
 'use client';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Settings } from 'lucide-react';
 
 export default function AdminSettingsPage() {
   return (
@@ -10,11 +12,14 @@ export default function AdminSettingsPage() {
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Coming Soon</CardTitle>
-           <CardDescription>This feature is currently under development.</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="h-5 w-5" />
+            Feature Under Development
+            </CardTitle>
+           <CardDescription>This settings panel is currently being built.</CardDescription>
         </CardHeader>
         <CardContent>
-          <p>The admin settings panel will be available here shortly.</p>
+          <p>Global site settings, such as API key management, email configurations, and other administrative options will be available here soon. This will allow for centralized control over the application's core functionalities.</p>
         </CardContent>
       </Card>
     </div>

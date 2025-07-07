@@ -10,36 +10,19 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 
-const mockMessages = [
-  {
-    id: 1,
-    clientName: 'Alice Johnson',
-    lastMessage: 'Sure, that sounds good. Please send over the invoice.',
-    timestamp: '2 hours ago',
-    avatar: 'https://placehold.co/40x40.png',
-    unread: true,
-    thread: [
-        { from: 'client', text: 'Hey, I reviewed the mockups. They look great!' },
-        { from: 'admin', text: 'Glad you like them! Any changes needed?' },
-        { from: 'client', text: 'Sure, that sounds good. Please send over the invoice.' },
-    ]
-  },
-  {
-    id: 2,
-    clientName: 'Bob Williams',
-    lastMessage: 'Can we schedule a call for tomorrow to discuss the project?',
-    timestamp: '1 day ago',
-    avatar: 'https://placehold.co/40x40.png',
-    unread: false,
-     thread: [
-        { from: 'client', text: 'Can we schedule a call for tomorrow to discuss the project?' },
-    ]
-  },
-];
-
-type MessageThread = typeof mockMessages[0];
+// Note: Real data will be fetched from a database. This is a placeholder type.
+type MessageThread = {
+    id: number;
+    clientName: string;
+    lastMessage: string;
+    timestamp: string;
+    avatar: string;
+    unread: boolean;
+    thread: { from: 'client' | 'admin'; text: string }[];
+};
 
 export default function AdminMessagesPage() {
+  const [messages, setMessages] = useState<MessageThread[]>([]);
   const [selectedThread, setSelectedThread] = useState<MessageThread | null>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
 
@@ -57,27 +40,34 @@ export default function AdminMessagesPage() {
       <Card>
         <CardHeader>
           <CardTitle>Client Conversations</CardTitle>
-           <CardDescription>You have {mockMessages.filter(m => m.unread).length} unread conversations.</CardDescription>
+           <CardDescription>You have {messages.filter(m => m.unread).length} unread conversations.</CardDescription>
         </CardHeader>
         <CardContent>
-          <ul className="space-y-2">
-            {mockMessages.map((thread) => (
-              <li key={thread.id} className={`p-4 rounded-lg flex items-start gap-4 cursor-pointer hover:bg-muted/50 ${thread.unread ? 'bg-muted' : ''}`} onClick={() => handleViewThread(thread)}>
-                <Avatar className="h-12 w-12">
-                  <AvatarImage src={thread.avatar} />
-                  <AvatarFallback>{thread.clientName.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div className="grid gap-1 flex-1">
-                    <div className="flex items-center justify-between">
-                        <p className={`font-semibold ${thread.unread ? 'text-foreground' : ''}`}>{thread.clientName}</p>
-                        <p className="text-xs text-muted-foreground">{thread.timestamp}</p>
-                    </div>
-                  <p className={`text-sm text-muted-foreground line-clamp-2 ${thread.unread ? 'font-medium text-foreground' : ''}`}>{thread.lastMessage}</p>
+           {messages.length === 0 ? (
+                <div className="text-center text-muted-foreground py-12">
+                    <p>No messages yet.</p>
+                    <p className="text-sm">When a client sends a message, it will appear here.</p>
                 </div>
-                 {thread.unread && <div className="h-2.5 w-2.5 rounded-full bg-primary mt-1" />}
-              </li>
-            ))}
-          </ul>
+            ) : (
+                <ul className="space-y-2">
+                    {messages.map((thread) => (
+                    <li key={thread.id} className={`p-4 rounded-lg flex items-start gap-4 cursor-pointer hover:bg-muted/50 ${thread.unread ? 'bg-muted' : ''}`} onClick={() => handleViewThread(thread)}>
+                        <Avatar className="h-12 w-12">
+                        <AvatarImage src={thread.avatar} />
+                        <AvatarFallback>{thread.clientName.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className="grid gap-1 flex-1">
+                            <div className="flex items-center justify-between">
+                                <p className={`font-semibold ${thread.unread ? 'text-foreground' : ''}`}>{thread.clientName}</p>
+                                <p className="text-xs text-muted-foreground">{thread.timestamp}</p>
+                            </div>
+                        <p className={`text-sm text-muted-foreground line-clamp-2 ${thread.unread ? 'font-medium text-foreground' : ''}`}>{thread.lastMessage}</p>
+                        </div>
+                        {thread.unread && <div className="h-2.5 w-2.5 rounded-full bg-primary mt-1" />}
+                    </li>
+                    ))}
+                </ul>
+            )}
         </CardContent>
       </Card>
       

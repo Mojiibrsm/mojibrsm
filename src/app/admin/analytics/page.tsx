@@ -1,5 +1,7 @@
+
 'use client';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { LineChart } from 'lucide-react';
 
 export default function AdminAnalyticsPage() {
   return (
@@ -10,11 +12,14 @@ export default function AdminAnalyticsPage() {
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Coming Soon</CardTitle>
-           <CardDescription>This feature is currently under development.</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <LineChart className="h-5 w-5" />
+            Feature Under Development
+          </CardTitle>
+           <CardDescription>This analytics dashboard is currently being built.</CardDescription>
         </CardHeader>
         <CardContent>
-          <p>The analytics dashboard will be available here shortly.</p>
+          <p>Soon, you will be able to see detailed analytics about your website's traffic, user engagement, and project statistics here. This will help you make data-driven decisions.</p>
         </CardContent>
       </Card>
     </div>
