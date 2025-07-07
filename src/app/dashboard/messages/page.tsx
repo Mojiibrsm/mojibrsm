@@ -1,57 +1,104 @@
 
 'use client';
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/auth-context';
+import { useToast } from '@/hooks/use-toast';
+import { createMessageThread, getMessageThreadsForUser, addMessageToThread, markThreadAsRead, IMessage, IMessageThread } from '@/services/firestore';
+import { Timestamp } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
+import { PlusCircle, Send } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 
-const messages = [
-  {
-    id: 1,
-    sender: 'Mojib Rsm',
-    subject: 'Re: Project Update',
-    snippet: 'Hey, just wanted to give you a quick update on the e-commerce redesign. We are on track...',
-    content: 'Hey, just wanted to give you a quick update on the e-commerce redesign. We are on track to meet the deadline. The latest mockups are attached. Please review and provide feedback. Thanks!',
-    avatar: 'https://placehold.co/40x40.png',
-    read: false,
-  },
-  {
-    id: 2,
-    sender: 'Client Support',
-    subject: 'Your request #REQ-002 has been received',
-    snippet: 'Thank you for your request. We have received it and will get back to you shortly.',
-    content: 'Thank you for your request. We have received it and will get back to you shortly. Our team will review the details and provide an update within 24 hours.',
-    avatar: 'https://placehold.co/40x40.png',
-    read: true,
-  },
-  {
-    id: 3,
-    sender: 'Mojib Rsm',
-    subject: 'Welcome to the platform!',
-    snippet: 'Hi there, welcome! Let me know if you have any questions about getting started.',
-    content: 'Hi there, welcome! We are thrilled to have you on board. Let me know if you have any questions about getting started. You can check our documentation or reply to this message directly.',
-    avatar: 'https://placehold.co/40x40.png',
-    read: true,
-  },
-];
-
-type Message = typeof messages[0];
-
 export default function MessagesPage() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [threads, setThreads] = useState<IMessageThread[]>([]);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isComposeOpen, setIsComposeOpen] = useState(false);
-  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+  const [selectedThread, setSelectedThread] = useState<IMessageThread | null>(null);
+  const [replyText, setReplyText] = useState("");
+  const [newMessageSubject, setNewMessageSubject] = useState("");
+  const [newMessageBody, setNewMessageBody] = useState("");
 
-  const handleViewMessage = (message: Message) => {
-    setSelectedMessage(message);
+  useEffect(() => {
+    if (user) {
+      const unsubscribe = getMessageThreadsForUser(user.uid, (fetchedThreads) => {
+        setThreads(fetchedThreads);
+      });
+      return () => unsubscribe();
+    }
+  }, [user]);
+
+  const handleViewMessage = async (thread: IMessageThread) => {
+    setSelectedThread(thread);
     setIsViewOpen(true);
+    if (thread.id && thread.unreadByUser) {
+        await markThreadAsRead(thread.id, 'user');
+    }
   };
+
+  const handleSendMessage = async () => {
+    if (!user || !newMessageSubject || !newMessageBody) {
+        toast({ variant: "destructive", title: "Error", description: "Subject and message body cannot be empty." });
+        return;
+    }
+    
+    try {
+        const threadData = {
+            userId: user.uid,
+            clientName: user.displayName || 'Anonymous',
+            clientEmail: user.email || 'No Email',
+            clientAvatar: user.photoURL || '',
+            subject: newMessageSubject,
+            unreadByAdmin: true,
+            unreadByUser: false,
+        };
+
+        const initialMessage: IMessage = {
+            from: 'client',
+            text: newMessageBody,
+            timestamp: Timestamp.now(),
+        };
+        
+        // @ts-ignore
+        await createMessageThread(threadData, initialMessage);
+
+        toast({ title: "Message Sent", description: "Your message has been sent to the site owner." });
+        setIsComposeOpen(false);
+        setNewMessageSubject("");
+        setNewMessageBody("");
+    } catch (error) {
+        console.error(error);
+        toast({ variant: "destructive", title: "Error", description: "Failed to send message. Please try again." });
+    }
+  };
+  
+  const handleReply = async () => {
+    if (!selectedThread?.id || !replyText) return;
+
+    const newMessage: IMessage = {
+        from: 'client',
+        text: replyText,
+        timestamp: Timestamp.now()
+    };
+    
+    try {
+        await addMessageToThread(selectedThread.id, newMessage, 'client');
+        setReplyText("");
+    } catch (error) {
+        toast({ variant: "destructive", title: "Error", description: "Failed to send reply." });
+    }
+  }
+
+  const formatTimestamp = (timestamp: Timestamp | undefined) => {
+    if (!timestamp) return '';
+    return timestamp.toDate().toLocaleString();
+  }
 
   return (
     <div className="space-y-6">
@@ -63,73 +110,86 @@ export default function MessagesPage() {
         <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Inbox</CardTitle>
-              <CardDescription>You have {messages.filter(m => !m.read).length} unread messages.</CardDescription>
+              <CardDescription>You have {threads.filter(t => t.unreadByUser).length} unread messages.</CardDescription>
             </div>
-            <Button onClick={() => setIsComposeOpen(true)}>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                New Message
-            </Button>
+            <Dialog open={isComposeOpen} onOpenChange={setIsComposeOpen}>
+                <DialogTrigger asChild>
+                    <Button><PlusCircle className="mr-2 h-4 w-4" />New Message</Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Compose New Message</DialogTitle>
+                        <DialogDescription>Send a message to the site owner.</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="subject">Subject</Label>
+                          <Input id="subject" placeholder="Your message subject" value={newMessageSubject} onChange={(e) => setNewMessageSubject(e.target.value)} />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="body">Message</Label>
+                          <Textarea id="body" placeholder="Please describe your message..." className="min-h-[120px]" value={newMessageBody} onChange={(e) => setNewMessageBody(e.target.value)} />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={() => setIsComposeOpen(false)} variant="outline">Cancel</Button>
+                        <Button onClick={handleSendMessage}>Send Message</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </CardHeader>
         <CardContent>
-          <ul className="space-y-4">
-            {messages.map((message) => (
-              <li key={message.id} className={`p-4 rounded-lg flex items-start gap-4 cursor-pointer hover:bg-muted/50 ${!message.read ? 'bg-muted' : ''}`} onClick={() => handleViewMessage(message)}>
-                <Avatar>
-                  <AvatarImage src={message.avatar} />
-                  <AvatarFallback>{message.sender.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div className="grid gap-1 flex-1">
-                    <div className="flex items-center justify-between">
-                        <p className={`font-semibold ${!message.read ? 'text-foreground' : ''}`}>{message.sender}</p>
-                        {!message.read && <div className="h-2 w-2 rounded-full bg-primary" />}
+          {threads.length === 0 ? (
+             <div className="text-center text-muted-foreground py-12">
+                <p>No messages yet.</p>
+                <p className="text-sm">Click "New Message" to start a conversation.</p>
+            </div>
+          ) : (
+             <ul className="space-y-2">
+                {threads.map((thread) => (
+                <li key={thread.id} className={`p-4 rounded-lg flex items-start gap-4 cursor-pointer hover:bg-muted/50 ${thread.unreadByUser ? 'bg-muted' : ''}`} onClick={() => handleViewMessage(thread)}>
+                    <Avatar className="h-12 w-12">
+                        <AvatarImage src={'https://placehold.co/40x40.png'} />
+                        <AvatarFallback>A</AvatarFallback>
+                    </Avatar>
+                    <div className="grid gap-1 flex-1">
+                        <div className="flex items-center justify-between">
+                            <p className={`font-semibold ${thread.unreadByUser ? 'text-foreground' : ''}`}>{thread.subject}</p>
+                            <p className="text-xs text-muted-foreground">{formatTimestamp(thread.lastMessageTimestamp)}</p>
+                        </div>
+                    <p className={`text-sm text-muted-foreground line-clamp-2 ${thread.unreadByUser ? 'font-medium text-foreground' : ''}`}>{thread.lastMessage}</p>
                     </div>
-                  <p className={`text-sm ${!message.read ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>{message.subject}</p>
-                  <p className="text-sm text-muted-foreground line-clamp-1">{message.snippet}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
+                    {thread.unreadByUser && <div className="h-2.5 w-2.5 rounded-full bg-primary mt-1" />}
+                </li>
+                ))}
+            </ul>
+          )}
         </CardContent>
       </Card>
       
-      {/* View Message Dialog */}
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
-        <DialogContent className="sm:max-w-[625px]">
+        <DialogContent className="sm:max-w-[625px] flex flex-col h-[70vh]">
           <DialogHeader>
-            <DialogTitle>{selectedMessage?.subject}</DialogTitle>
-            <DialogDescription>From: {selectedMessage?.sender}</DialogDescription>
+            <DialogTitle>{selectedThread?.subject}</DialogTitle>
           </DialogHeader>
-          <div className="py-4 text-sm text-muted-foreground">
-            {selectedMessage?.content}
+          <div className="py-4 flex-1 overflow-y-auto space-y-4 pr-4">
+            {selectedThread?.messages.sort((a, b) => a.timestamp.toMillis() - b.timestamp.toMillis()).map((message, index) => (
+                <div key={index} className={`flex items-end gap-2 ${message.from === 'client' ? 'justify-end' : 'justify-start'}`}>
+                   {message.from === 'admin' && <Avatar className="h-8 w-8"><AvatarImage src={''} /><AvatarFallback>A</AvatarFallback></Avatar>}
+                   <div className={`max-w-xs md:max-w-md p-3 rounded-2xl ${message.from === 'client' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-muted rounded-bl-none'}`}>
+                        <p className="text-sm">{message.text}</p>
+                        <p className="text-xs text-right mt-1 opacity-70">{formatTimestamp(message.timestamp)}</p>
+                   </div>
+                </div>
+            ))}
           </div>
-          <DialogFooter>
-            <Button onClick={() => setIsViewOpen(false)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Compose Message Dialog */}
-      <Dialog open={isComposeOpen} onOpenChange={setIsComposeOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Compose New Message</DialogTitle>
-            <DialogDescription>
-              Send a message to the site owner.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="subject">Subject</Label>
-              <Input id="subject" placeholder="Your message subject" />
+          <DialogFooter className="mt-auto pt-4 border-t">
+            <div className="relative w-full flex items-center gap-2">
+                 <Textarea placeholder="Type your message..." className="pr-12" rows={1} value={replyText} onChange={(e) => setReplyText(e.target.value)} />
+                 <Button size="icon" className="h-9 w-9" onClick={handleReply} disabled={!replyText}>
+                    <Send className="h-4 w-4"/>
+                 </Button>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="body">Message</Label>
-              <Textarea id="body" placeholder="Please describe your message..." className="min-h-[120px]" />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={() => setIsComposeOpen(false)} variant="outline">Cancel</Button>
-            <Button onClick={() => setIsComposeOpen(false)}>Send Message</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

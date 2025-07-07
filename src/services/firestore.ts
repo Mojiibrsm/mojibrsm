@@ -1,5 +1,5 @@
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, updateDoc, deleteDoc, query, where, Timestamp, onSnapshot, Unsubscribe } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, deleteDoc, query, where, Timestamp, onSnapshot, Unsubscribe, arrayUnion } from 'firebase/firestore';
 import type { User as FirebaseAuthUser } from 'firebase/auth';
 
 // --- User Management ---
@@ -108,3 +108,100 @@ export const deleteProject = async (projectId: string) => {
         throw new Error("Could not delete project");
     }
 };
+
+
+// --- Message Management ---
+export interface IMessage {
+    from: 'client' | 'admin';
+    text: string;
+    timestamp: Timestamp;
+}
+
+export interface IMessageThread {
+    id?: string;
+    userId: string;
+    clientName: string;
+    clientEmail: string;
+    clientAvatar: string;
+    subject: string;
+    lastMessage: string;
+    lastMessageTimestamp: Timestamp;
+    unreadByAdmin: boolean;
+    unreadByUser: boolean;
+    messages: IMessage[];
+}
+
+export const createMessageThread = async (threadData: Omit<IMessageThread, 'id' | 'messages' | 'lastMessage' | 'lastMessageTimestamp'>, initialMessage: IMessage) => {
+    try {
+        const docRef = await addDoc(collection(db, "messageThreads"), {
+            ...threadData,
+            messages: [initialMessage],
+            lastMessage: initialMessage.text,
+            lastMessageTimestamp: initialMessage.timestamp,
+            createdAt: Timestamp.now(),
+        });
+        return docRef.id;
+    } catch (e) {
+        console.error("Error creating message thread: ", e);
+        throw new Error("Could not create message thread");
+    }
+};
+
+export const addMessageToThread = async (threadId: string, message: IMessage, from: 'client' | 'admin') => {
+    try {
+        const threadRef = doc(db, "messageThreads", threadId);
+        const updateData: any = {
+            messages: arrayUnion(message),
+            lastMessage: message.text,
+            lastMessageTimestamp: message.timestamp,
+        };
+        if (from === 'client') {
+            updateData.unreadByAdmin = true;
+            updateData.unreadByUser = false;
+        } else { // from admin
+            updateData.unreadByUser = true;
+            updateData.unreadByAdmin = false;
+        }
+        await updateDoc(threadRef, updateData);
+    } catch (e) {
+        console.error("Error adding message to thread: ", e);
+        throw new Error("Could not add message");
+    }
+};
+
+export const getMessageThreadsForUser = (userId: string, callback: (threads: IMessageThread[]) => void): Unsubscribe => {
+    const q = query(collection(db, "messageThreads"), where("userId", "==", userId));
+    return onSnapshot(q, (querySnapshot) => {
+        const threads = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as IMessageThread));
+        callback(threads.sort((a, b) => b.lastMessageTimestamp.toMillis() - a.lastMessageTimestamp.toMillis()));
+    }, (error) => {
+        console.error(`Error fetching message threads for user ${userId}: `, error);
+        callback([]);
+    });
+};
+
+export const getMessageThreads = (callback: (threads: IMessageThread[]) => void): Unsubscribe => {
+    const q = query(collection(db, "messageThreads"));
+    return onSnapshot(q, (querySnapshot) => {
+        const threads = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as IMessageThread));
+        callback(threads.sort((a, b) => b.lastMessageTimestamp.toMillis() - a.lastMessageTimestamp.toMillis()));
+    }, (error) => {
+        console.error("Error fetching message threads: ", error);
+        callback([]);
+    });
+};
+
+export const markThreadAsRead = async (threadId: string, userType: 'admin' | 'user') => {
+    try {
+        const threadRef = doc(db, "messageThreads", threadId);
+        const updateData: any = {};
+        if (userType === 'admin') {
+            updateData.unreadByAdmin = false;
+        } else {
+            updateData.unreadByUser = false;
+        }
+        await updateDoc(threadRef, updateData);
+    } catch (e) {
+        console.error("Error marking thread as read: ", e);
+    }
+}

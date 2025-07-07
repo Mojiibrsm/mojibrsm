@@ -1,6 +1,9 @@
 
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { getMessageThreads, addMessageToThread, markThreadAsRead, IMessage, IMessageThread } from '@/services/firestore';
+import { Timestamp } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -9,38 +12,54 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
-
-// Note: Real data will be fetched from a database. This is a placeholder type.
-type MessageThread = {
-    id: number;
-    clientName: string;
-    lastMessage: string;
-    timestamp: string;
-    avatar: string;
-    unread: boolean;
-    thread: { from: 'client' | 'admin'; text: string }[];
-};
 
 export default function AdminMessagesPage() {
-  const [messages, setMessages] = useState<MessageThread[]>([]);
-  const [selectedThread, setSelectedThread] = useState<MessageThread | null>(null);
+  const [threads, setThreads] = useState<IMessageThread[]>([]);
+  const [selectedThread, setSelectedThread] = useState<IMessageThread | null>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
-  const [isComposeOpen, setIsComposeOpen] = useState(false);
+  const [replyText, setReplyText] = useState("");
   const { toast } = useToast();
 
-  const handleViewThread = (thread: MessageThread) => {
+  useEffect(() => {
+    const unsubscribe = getMessageThreads((fetchedThreads) => {
+        setThreads(fetchedThreads);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleViewThread = async (thread: IMessageThread) => {
     setSelectedThread(thread);
     setIsViewOpen(true);
+    if (thread.id && thread.unreadByAdmin) {
+        await markThreadAsRead(thread.id, 'admin');
+    }
   };
   
-  const handleSendMessage = () => {
-      toast({
-          title: "Message Sent",
-          description: "Your message has been sent to the user.",
-      });
-      setIsComposeOpen(false);
+  const handleReply = async () => {
+    if (!selectedThread?.id || !replyText) return;
+
+    const newMessage: IMessage = {
+        from: 'admin',
+        text: replyText,
+        timestamp: Timestamp.now()
+    };
+    
+    try {
+        await addMessageToThread(selectedThread.id, newMessage, 'admin');
+        setReplyText("");
+    } catch (error) {
+        toast({ variant: "destructive", title: "Error", description: "Failed to send reply." });
+    }
   }
+
+  const formatTimestamp = (timestamp: Timestamp | undefined) => {
+    if (!timestamp) return '';
+    return timestamp.toDate().toLocaleString();
+  }
+  
+  // Note: 'New Message' from Admin is a more complex feature (requires user selection)
+  // and is scoped out for this update to focus on fixing replies.
+  // A placeholder dialog is kept for future implementation.
 
   return (
     <div className="space-y-6">
@@ -49,9 +68,9 @@ export default function AdminMessagesPage() {
                 <h1 className="text-2xl font-bold">Manage Messages</h1>
                 <p className="text-muted-foreground">View and respond to all client conversations.</p>
             </div>
-            <Dialog open={isComposeOpen} onOpenChange={setIsComposeOpen}>
+            <Dialog>
                 <DialogTrigger asChild>
-                    <Button>
+                    <Button disabled>
                         <PlusCircle className="mr-2 h-4 w-4" />
                         New Message
                     </Button>
@@ -59,57 +78,38 @@ export default function AdminMessagesPage() {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Compose New Message</DialogTitle>
-                        <DialogDescription>Send a direct message to a user.</DialogDescription>
+                        <DialogDescription>This feature is under development. You can reply to existing conversations.</DialogDescription>
                     </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                           <Label htmlFor="email">Recipient Email</Label>
-                           <Input id="email" type="email" placeholder="user@example.com" />
-                        </div>
-                        <div className="grid gap-2">
-                           <Label htmlFor="message">Message</Label>
-                           <Textarea id="message" placeholder="Type your message..." />
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <DialogClose asChild>
-                            <Button variant="outline">Cancel</Button>
-                        </DialogClose>
-                        <Button onClick={handleSendMessage}>
-                            <Send className="mr-2 h-4 w-4"/>
-                            Send Message
-                        </Button>
-                    </DialogFooter>
                 </DialogContent>
             </Dialog>
       </div>
       <Card>
         <CardHeader>
           <CardTitle>Client Conversations</CardTitle>
-           <CardDescription>You have {messages.filter(m => m.unread).length} unread conversations.</CardDescription>
+           <CardDescription>You have {threads.filter(t => t.unreadByAdmin).length} unread conversations.</CardDescription>
         </CardHeader>
         <CardContent>
-           {messages.length === 0 ? (
+           {threads.length === 0 ? (
                 <div className="text-center text-muted-foreground py-12">
                     <p>No messages yet.</p>
                     <p className="text-sm">When a client sends a message, it will appear here.</p>
                 </div>
             ) : (
                 <ul className="space-y-2">
-                    {messages.map((thread) => (
-                    <li key={thread.id} className={`p-4 rounded-lg flex items-start gap-4 cursor-pointer hover:bg-muted/50 ${thread.unread ? 'bg-muted' : ''}`} onClick={() => handleViewThread(thread)}>
+                    {threads.map((thread) => (
+                    <li key={thread.id} className={`p-4 rounded-lg flex items-start gap-4 cursor-pointer hover:bg-muted/50 ${thread.unreadByAdmin ? 'bg-muted' : ''}`} onClick={() => handleViewThread(thread)}>
                         <Avatar className="h-12 w-12">
-                        <AvatarImage src={thread.avatar} />
+                        <AvatarImage src={thread.clientAvatar} />
                         <AvatarFallback>{thread.clientName.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div className="grid gap-1 flex-1">
                             <div className="flex items-center justify-between">
-                                <p className={`font-semibold ${thread.unread ? 'text-foreground' : ''}`}>{thread.clientName}</p>
-                                <p className="text-xs text-muted-foreground">{thread.timestamp}</p>
+                                <p className={`font-semibold ${thread.unreadByAdmin ? 'text-foreground' : ''}`}>{thread.clientName} - <span className="font-normal text-muted-foreground">{thread.subject}</span></p>
+                                <p className="text-xs text-muted-foreground">{formatTimestamp(thread.lastMessageTimestamp)}</p>
                             </div>
-                        <p className={`text-sm text-muted-foreground line-clamp-2 ${thread.unread ? 'font-medium text-foreground' : ''}`}>{thread.lastMessage}</p>
+                        <p className={`text-sm text-muted-foreground line-clamp-2 ${thread.unreadByAdmin ? 'font-medium text-foreground' : ''}`}>{thread.lastMessage}</p>
                         </div>
-                        {thread.unread && <div className="h-2.5 w-2.5 rounded-full bg-primary mt-1" />}
+                        {thread.unreadByAdmin && <div className="h-2.5 w-2.5 rounded-full bg-primary mt-1" />}
                     </li>
                     ))}
                 </ul>
@@ -117,26 +117,27 @@ export default function AdminMessagesPage() {
         </CardContent>
       </Card>
       
-      {/* View Message Dialog */}
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
         <DialogContent className="sm:max-w-[625px] flex flex-col h-[70vh]">
           <DialogHeader>
             <DialogTitle>Conversation with {selectedThread?.clientName}</DialogTitle>
+            <DialogDescription>{selectedThread?.subject}</DialogDescription>
           </DialogHeader>
           <div className="py-4 flex-1 overflow-y-auto space-y-4 pr-4">
-            {selectedThread?.thread.map((message, index) => (
+            {selectedThread?.messages.sort((a, b) => a.timestamp.toMillis() - b.timestamp.toMillis()).map((message, index) => (
                 <div key={index} className={`flex items-end gap-2 ${message.from === 'admin' ? 'justify-end' : 'justify-start'}`}>
-                   {message.from === 'client' && <Avatar className="h-8 w-8"><AvatarImage src={selectedThread.avatar} /><AvatarFallback>{selectedThread.clientName.charAt(0)}</AvatarFallback></Avatar>}
+                   {message.from === 'client' && <Avatar className="h-8 w-8"><AvatarImage src={selectedThread.clientAvatar} /><AvatarFallback>{selectedThread.clientName.charAt(0)}</AvatarFallback></Avatar>}
                    <div className={`max-w-xs md:max-w-md p-3 rounded-2xl ${message.from === 'admin' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-muted rounded-bl-none'}`}>
                         <p className="text-sm">{message.text}</p>
+                        <p className="text-xs text-right mt-1 opacity-70">{formatTimestamp(message.timestamp)}</p>
                    </div>
                 </div>
             ))}
           </div>
           <DialogFooter className="mt-auto pt-4 border-t">
-            <div className="relative w-full">
-                 <Textarea placeholder="Type your message..." className="pr-12" rows={1} />
-                 <Button size="icon" className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8">
+            <div className="relative w-full flex items-center gap-2">
+                 <Textarea placeholder="Type your message..." className="pr-12" rows={1} value={replyText} onChange={(e) => setReplyText(e.target.value)} />
+                 <Button size="icon" className="h-9 w-9" onClick={handleReply} disabled={!replyText}>
                     <Send className="h-4 w-4"/>
                  </Button>
             </div>
