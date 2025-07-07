@@ -1,5 +1,5 @@
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, updateDoc, deleteDoc, query, where, Timestamp, onSnapshot, Unsubscribe, arrayUnion, setDoc, getDoc, getDocs, orderBy } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, deleteDoc, query, where, Timestamp, onSnapshot, Unsubscribe, arrayUnion, setDoc, getDoc, getDocs, orderBy, serverTimestamp } from 'firebase/firestore';
 import type { User as FirebaseAuthUser } from 'firebase/auth';
 
 // --- User Management ---
@@ -26,7 +26,7 @@ export const addUser = async (user: FirebaseAuthUser) => {
                 displayName: user.displayName,
                 email: user.email,
                 photoURL: user.photoURL,
-                createdAt: Timestamp.now(),
+                createdAt: serverTimestamp(),
                 // Assign 'Admin' role if it's the first user, otherwise 'Client'
                 role: isFirstUser ? 'Admin' : 'Client',
             });
@@ -93,7 +93,7 @@ export const addProject = async (projectData: Omit<Project, 'id' | 'createdAt'>)
     try {
         const docRef = await addDoc(collection(db, "projects"), {
             ...projectData,
-            createdAt: Timestamp.now(),
+            createdAt: serverTimestamp(),
         });
         return docRef.id;
     } catch (e) {
@@ -168,12 +168,13 @@ export interface IMessageThread {
 
 export const createMessageThread = async (threadData: Omit<IMessageThread, 'id' | 'messages' | 'lastMessage' | 'lastMessageTimestamp' | 'createdAt'>, initialMessage: IMessage) => {
     try {
+        const timestamp = serverTimestamp();
         const docRef = await addDoc(collection(db, "messageThreads"), {
             ...threadData,
-            messages: [initialMessage],
+            messages: [{ ...initialMessage, timestamp }],
             lastMessage: initialMessage.text,
-            lastMessageTimestamp: initialMessage.timestamp,
-            createdAt: Timestamp.now(),
+            lastMessageTimestamp: timestamp,
+            createdAt: timestamp,
         });
         return docRef.id;
     } catch (e) {
@@ -185,10 +186,11 @@ export const createMessageThread = async (threadData: Omit<IMessageThread, 'id' 
 export const addMessageToThread = async (threadId: string, message: IMessage, from: 'client' | 'admin') => {
     try {
         const threadRef = doc(db, "messageThreads", threadId);
+        const timestamp = serverTimestamp();
         const updateData: any = {
-            messages: arrayUnion(message),
+            messages: arrayUnion({ ...message, timestamp }),
             lastMessage: message.text,
-            lastMessageTimestamp: message.timestamp,
+            lastMessageTimestamp: timestamp,
         };
         if (from === 'client') {
             updateData.unreadByAdmin = true;
@@ -259,7 +261,7 @@ export const addRequest = async (requestData: Omit<IRequest, 'id' | 'createdAt'>
     try {
         const docRef = await addDoc(collection(db, "requests"), {
             ...requestData,
-            createdAt: Timestamp.now(),
+            createdAt: serverTimestamp(),
         });
         return docRef.id;
     } catch (e) {

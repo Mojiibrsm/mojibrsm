@@ -2,51 +2,58 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper function to check for Admin role
+
+    // Helper function to check if a user is an Admin
     function isAdmin() {
-      // Check if the user document exists and has the role 'Admin'.
-      return exists(/databases/$(database)/documents/users/$(request.auth.uid))
-             && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Admin';
+      // Check if user exists and has the Admin role
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Admin';
     }
 
-    // Users Collection
-    // - Anyone can create their own user document.
-    // - Only the authenticated user can read or update their own document.
-    // - Admins can read/write any user document.
+    // --- Rules for 'users' collection ---
     match /users/{userId} {
-      allow read, update, delete: if request.auth != null && (request.auth.uid == userId || isAdmin());
-      allow create: if request.auth != null;
+      // An admin can read any user document. A user can only read their own.
+      allow read: if request.auth.uid == userId || isAdmin();
+      // Only an authenticated user can create their own user document, with a server timestamp.
+      allow create: if request.auth.uid == userId && request.resource.data.createdAt == request.time;
+      // Only admins can update user roles.
+      allow update: if isAdmin();
     }
-
-    // Projects Collection
-    // - Only admins can create, update, or delete projects.
-    // - Any authenticated user can read projects.
+    
+    // --- Rules for 'projects' collection ---
     match /projects/{projectId} {
-      allow read: if request.auth != null;
-      allow create, update, delete: if isAdmin();
+      // Anyone can read projects (for the portfolio).
+      allow read: if true;
+      // Only admins can create, update, or delete projects. Creation requires a server timestamp.
+      allow create: if isAdmin() && request.resource.data.createdAt == request.time;
+      allow update, delete: if isAdmin();
     }
 
-    // Requests Collection
-    // - Authenticated users can create their own requests.
-    // - Users can read, update, or delete their own requests.
-    // - Admins can read, update and delete any request.
+    // --- Rules for 'requests' collection ---
     match /requests/{requestId} {
-      // A user can create a request for themselves.
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      // A user can read, update, or delete their own request. Admins can do anything.
-      allow read, update, delete: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
+      // A user can create a request for themselves, using a server timestamp.
+      allow create: if request.auth.uid == request.resource.data.userId && request.resource.data.createdAt == request.time;
+      // A user can read their own requests. Admins can read all requests.
+      allow read: if request.auth.uid == resource.data.userId || isAdmin();
+      // Only admins can update the status of a request.
+      allow update: if isAdmin();
+      // No one can delete requests.
+      allow delete: if false;
     }
-
-    // MessageThreads Collection
-    // - Users can create threads for themselves.
-    // - Users can read and update (add messages to) threads they are part of.
-    // - Admins can read and update any thread.
+    
+    // --- Rules for 'messageThreads' collection ---
     match /messageThreads/{threadId} {
-      // A user can create a thread for themselves.
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      // A user can read/update their own thread. Admins can read/update any thread.
-      allow read, update: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
+      // A user can create a message thread for themselves, using a server timestamp.
+      allow create: if request.auth.uid == request.resource.data.userId &&
+                       request.resource.data.createdAt == request.time;
+                       
+      // A user can read their own threads. Admins can read all threads.
+      allow read: if request.auth.uid == resource.data.userId || isAdmin();
+      
+      // A user can update their own thread (add a message). Admins can update any thread.
+      // The update must include a server timestamp for the last message.
+      allow update: if (request.auth.uid == resource.data.userId || isAdmin()) &&
+                       request.resource.data.lastMessageTimestamp == request.time;
     }
   }
 }
