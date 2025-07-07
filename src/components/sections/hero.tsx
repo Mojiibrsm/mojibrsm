@@ -82,10 +82,10 @@ export default function Hero() {
              animate="visible"
             className="relative flex justify-center items-center"
           >
-            <div className="absolute w-full h-full max-w-xs bg-primary/20 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute w-full h-full max-w-xs bg-gradient-to-br from-primary via-accent to-secondary/30 rounded-full blur-3xl animate-pulse"></div>
             <Image
               src="https://placehold.co/600x600.png"
-              alt="Mojib Rsm"
+              alt={t.hero.name}
               width={600}
               height={600}
               className="relative mx-auto rounded-full object-cover aspect-square w-full max-w-sm shadow-2xl"

@@ -26,7 +26,7 @@ export default function About() {
   };
 
   return (
-    <section id="about" className="w-full py-16 md:py-24 bg-background">
+    <section id="about" className="w-full py-16 md:py-24 bg-card">
       <motion.div
         ref={ref}
         className="container"
@@ -39,7 +39,7 @@ export default function About() {
              <div className="absolute -inset-1.5 bg-gradient-to-r from-primary via-accent to-secondary rounded-full blur opacity-75 animate-pulse group-hover:opacity-100 transition duration-1000"></div>
              <Image
               src="https://placehold.co/600x600.png"
-              alt="Mojib Rsm"
+              alt={t.hero.name}
               width={600}
               height={600}
               className="relative rounded-lg shadow-lg w-full"
@@ -49,7 +49,7 @@ export default function About() {
           <motion.div variants={itemVariants} className="space-y-6">
              <div className="space-y-4">
                 <h2 className="text-4xl font-bold text-foreground font-headline leading-tight">{t.about.title}</h2>
-                <div className="h-1.5 w-24 bg-primary rounded-full"></div>
+                <div className="h-1.5 w-24 bg-gradient-to-r from-primary via-accent to-secondary rounded-full"></div>
             </div>
             <p className="text-muted-foreground">{t.about.bio}</p>
             <p className="text-muted-foreground">{t.about.mission}</p>

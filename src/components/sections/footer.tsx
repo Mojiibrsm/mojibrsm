@@ -11,12 +11,15 @@ export default function Footer() {
       <div className="container py-6">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <span className="font-bold text-lg">Mojib Rsm</span>
-            <div className="flex items-center gap-2 md:gap-4">
+            <div className="flex items-center gap-1 md:gap-2 flex-wrap justify-center">
                <Button variant="link" asChild>
                   <Link href="#home" className="text-muted-foreground hover:text-primary">{t.footer.nav.home}</Link>
               </Button>
               <Button variant="link" asChild>
                   <Link href="#about" className="text-muted-foreground hover:text-primary">{t.footer.nav.about}</Link>
+              </Button>
+               <Button variant="link" asChild>
+                  <Link href="/blog" className="text-muted-foreground hover:text-primary">{t.footer.nav.blog}</Link>
               </Button>
               <Button variant="link" asChild>
                   <Link href="#portfolio" className="text-muted-foreground hover:text-primary">{t.footer.nav.portfolio}</Link>

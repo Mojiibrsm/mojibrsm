@@ -36,7 +36,7 @@ export default function Services() {
   };
 
   return (
-    <section id="services" className="w-full py-16 md:py-24 bg-card">
+    <section id="services" className="w-full py-16 md:py-24 bg-background">
       <div className="container">
         <motion.div
            initial={{ opacity: 0, y: -20 }}
@@ -57,8 +57,8 @@ export default function Services() {
               const Icon = iconComponents[service.icon] || Code;
               return (
                 <motion.div key={index} variants={itemVariants} className="relative group h-full">
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-accent rounded-lg blur opacity-0 group-hover:opacity-75 transition duration-500"></div>
-                  <Card className="relative text-center p-6 flex flex-col items-center shadow-lg transition-all duration-300 h-full">
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-primary via-accent to-secondary rounded-lg blur opacity-0 group-hover:opacity-75 transition duration-500"></div>
+                  <Card className="relative text-center p-6 flex flex-col items-center shadow-lg transition-all duration-300 h-full bg-card">
                     <CardHeader className="p-0">
                       <div className="p-4 bg-accent/10 rounded-full mb-4 inline-block">
                         <Icon className="w-10 h-10 text-accent" />

@@ -36,7 +36,7 @@ export default function Experience() {
           className="text-center mb-12"
         >
           <h2 className="text-4xl font-bold font-headline">{t.experience.title}</h2>
-          <div className="mt-4 h-1.5 w-24 bg-primary mx-auto rounded-full"></div>
+          <div className="mt-4 h-1.5 w-24 bg-gradient-to-r from-primary via-accent to-secondary mx-auto rounded-full"></div>
         </motion.div>
         
         <motion.div
@@ -48,26 +48,20 @@ export default function Experience() {
         >
           {t.experience.jobs.map((job, index) => (
             <motion.div key={index} variants={itemVariants} className="h-full">
-              <Card className="h-full flex flex-col shadow-lg hover:shadow-primary/20 transition-shadow duration-300 rounded-xl bg-card">
-                <CardHeader>
-                    <div className="flex flex-col sm:flex-row gap-4 items-start">
-                        <div className="p-4 bg-primary/10 rounded-lg text-primary">
-                            <Briefcase className="w-8 h-8" />
-                        </div>
-                        <div className="flex-1">
-                            <CardTitle className="text-xl font-bold mb-1">{job.role}</CardTitle>
-                            <p className="text-primary font-semibold text-lg">{job.company}</p>
-                            <p className="text-sm text-muted-foreground mt-1">{job.period}</p>
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <ul className="list-disc list-inside text-muted-foreground space-y-2 pl-2">
-                    {job.responsibilities.map((resp, i) => (
-                      <li key={i}>{resp}</li>
-                    ))}
+              <Card className="w-full bg-card p-6 rounded-2xl shadow-lg hover:shadow-primary/20 transition-all duration-300 border-l-4 border-primary h-full">
+                  <div className="flex items-center mb-4">
+                      <Briefcase className="w-8 h-8 text-primary mr-4 flex-shrink-0" />
+                      <div>
+                          <h3 className="text-2xl font-bold text-foreground">{job.role}</h3>
+                          <p className="text-lg font-semibold text-primary">{job.company}</p>
+                      </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4 font-mono">{job.period}</p>
+                  <ul className="space-y-2 text-muted-foreground list-disc list-inside pl-2">
+                      {job.responsibilities.map((resp, i) => (
+                          <li key={i}>{resp}</li>
+                      ))}
                   </ul>
-                </CardContent>
               </Card>
             </motion.div>
           ))}

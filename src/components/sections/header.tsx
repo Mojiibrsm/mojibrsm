@@ -27,6 +27,7 @@ export default function Header() {
     { href: '#experience', label: t.nav.experience },
     { href: '#skills', label: t.nav.skills },
     { href: '#portfolio', label: t.nav.portfolio },
+    { href: '/blog', label: t.nav.blog },
   ];
 
   const NavItems = ({ isMobile = false }) => (

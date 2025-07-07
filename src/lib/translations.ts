@@ -7,6 +7,7 @@ export const translations = {
       experience: 'Experience',
       skills: 'Skills',
       portfolio: 'Portfolio',
+      blog: 'Blog',
       contact: 'Contact',
     },
     hero: {
@@ -41,13 +42,23 @@ export const translations = {
           ]
         },
         {
-          role: "Junior Web Developer",
-          company: "Freelancer",
-          period: "2022 - Present",
+          role: "Lead UI/UX Designer",
+          company: "Creative Solutions Inc.",
+          period: "2022 - 2023",
           responsibilities: [
-            "Developed custom websites for local businesses.",
-            "Provided maintenance and support for existing websites.",
-            "Collaborated with clients to bring their vision to life."
+            "Lead the design team for a major e-commerce platform redesign.",
+            "Conducted user research and usability testing sessions.",
+            "Created wireframes, prototypes, and high-fidelity mockups."
+          ]
+        },
+        {
+          role: "WordPress Theme Developer",
+          company: "ThemeForest Marketplace",
+          period: "2021 - 2022",
+          responsibilities: [
+            "Developed and maintained popular WordPress themes.",
+            "Provided technical support to thousands of customers.",
+            "Ensured themes meet high-quality coding standards."
           ]
         },
         {
@@ -145,6 +156,38 @@ export const translations = {
         }
       ]
     },
+    blog: {
+      title: "From My Blog",
+      description: "Here are some of my thoughts on web development, design, and technology.",
+      viewAll: "View All Posts",
+      readMore: "Read More",
+      posts: [
+        {
+          title: "The Importance of UI/UX in Modern Web Design",
+          excerpt: "An in-depth look at why a great user experience is crucial for success in today's digital landscape.",
+          image: "https://placehold.co/600x400.png",
+          imageHint: "design charts",
+          link: "#",
+          date: "July 15, 2025"
+        },
+        {
+          title: "Getting Started with React in 2025",
+          excerpt: "A beginner-friendly guide to setting up your first React project and understanding the core concepts.",
+          image: "https://placehold.co/600x400.png",
+          imageHint: "code screen",
+          link: "#",
+          date: "July 10, 2025"
+        },
+        {
+          title: "10 SEO Tips to Boost Your Website Ranking",
+          excerpt: "Practical and effective SEO strategies to help your website climb the search engine rankings.",
+          image: "https://placehold.co/600x400.png",
+          imageHint: "marketing analytics",
+          link: "#",
+          date: "July 05, 2025"
+        }
+      ]
+    },
     contact: {
       title: "Get In Touch",
       description: "Have a project in mind? I'd love to hear from you. Fill out the form or contact me directly.",
@@ -166,6 +209,7 @@ export const translations = {
         home: 'Home',
         about: 'About',
         portfolio: 'Portfolio',
+        blog: 'Blog',
         contact: 'Contact',
       },
       copyright: "© 2025 Mojib Rsm. All Rights Reserved."
@@ -179,6 +223,7 @@ export const translations = {
       experience: 'অভিজ্ঞতা',
       skills: 'দক্ষতা',
       portfolio: 'পোর্টফোলিও',
+      blog: 'ব্লগ',
       contact: 'যোগাযোগ',
     },
     hero: {
@@ -213,13 +258,23 @@ export const translations = {
           ]
         },
         {
-          role: "জুনিয়র ওয়েব ডেভেলপার",
-          company: "ফ্রিল্যান্সার",
-          period: "২০২২ - বর্তমান",
+          role: "লিড UI/UX ডিজাইনার",
+          company: "ক্রিয়েটিভ সলিউশনস ইনকর্পোরেটেড",
+          period: "২০২২ - ২০২৩",
           responsibilities: [
-            "স্থানীয় ব্যবসার জন্য কাস্টম ওয়েবসাইট তৈরি করেছি।",
-            "বিদ্যমান ওয়েবসাইটের জন্য রক্ষণাবেক্ষণ এবং সহায়তা প্রদান করেছি।",
-            "ক্লায়েন্টদের দৃষ্টিভঙ্গি বাস্তবে রূপান্তরিত করতে সহযোগিতা করেছি।"
+            "একটি প্রধান ই-কমার্স প্ল্যাটফর্ম পুনরায় ডিজাইনের জন্য ডিজাইন দলের নেতৃত্ব দিয়েছি।",
+            "ব্যবহারকারী গবেষণা এবং ব্যবহারযোগ্যতা পরীক্ষার সেশন পরিচালনা করেছি।",
+            "ওয়্যারফ্রেম, প্রোটোটাইপ এবং উচ্চ-মানের মকআপ তৈরি করেছি।"
+          ]
+        },
+        {
+          role: "ওয়ার্ডপ্রেস থিম ডেভেলপার",
+          company: "থিমফরেস্ট মার্কেটপ্লেস",
+          period: "২০২১ - ২০২২",
+          responsibilities: [
+            "জনপ্রিয় ওয়ার্ডপ্রেস থিম তৈরি এবং রক্ষণাবেক্ষণ করেছি।",
+            "হাজার হাজার গ্রাহককে প্রযুক্তিগত সহায়তা প্রদান করেছি।",
+            "থিমগুলো উচ্চ-মানের কোডিং মান পূরণ করে তা নিশ্চিত করেছি।"
           ]
         },
         {
@@ -317,6 +372,38 @@ export const translations = {
         }
       ]
     },
+     blog: {
+      title: "আমার ব্লগ থেকে",
+      description: "ওয়েব ডেভেলপমেন্ট, ডিজাইন এবং প্রযুক্তি সম্পর্কে আমার কিছু চিন্তাভাবনা এখানে দেওয়া হলো।",
+      viewAll: "সব পোস্ট দেখুন",
+      readMore: "আরও পড়ুন",
+      posts: [
+        {
+          title: "আধুনিক ওয়েব ডিজাইনে UI/UX এর গুরুত্ব",
+          excerpt: "আজকের ডিজিটাল বিশ্বে সাফল্যের জন্য কেন একটি দুর্দান্ত ব্যবহারকারীর অভিজ্ঞতা অত্যন্ত গুরুত্বপূর্ণ তার উপর একটি গভীর দৃষ্টি।",
+          image: "https://placehold.co/600x400.png",
+          imageHint: "design charts",
+          link: "#",
+          date: "জুলাই ১৫, ২০২৫"
+        },
+        {
+          title: "২০২৫ সালে রিঅ্যাক্ট দিয়ে শুরু",
+          excerpt: "আপনার প্রথম রিঅ্যাক্ট প্রজেক্ট সেট আপ করার এবং মূল ধারণাগুলো বোঝার জন্য একটি শিক্ষানবিস-বান্ধব গাইড।",
+          image: "https://placehold.co/600x400.png",
+          imageHint: "code screen",
+          link: "#",
+          date: "জুলাই ১০, ২০২৫"
+        },
+        {
+          title: "আপনার ওয়েবসাইট র‍্যাঙ্কিং বাড়ানোর জন্য ১০টি এসইও টিপস",
+          excerpt: "আপনার ওয়েবসাইটকে সার্চ ইঞ্জিন র‍্যাঙ্কিংয়ে উপরে তুলতে সাহায্য করার জন্য ব্যবহারিক এবং কার্যকর এসইও কৌশল।",
+          image: "https://placehold.co/600x400.png",
+          imageHint: "marketing analytics",
+          link: "#",
+          date: "জুলাই ০৫, ২০২৫"
+        }
+      ]
+    },
     contact: {
       title: "যোগাযোগ করুন",
       description: "আপনার কি কোনো প্রকল্প আছে? আমি আপনার কাছ থেকে শুনতে আগ্রহী। ফর্মটি পূরণ করুন বা সরাসরি আমার সাথে যোগাযোগ করুন।",
@@ -338,6 +425,7 @@ export const translations = {
         home: 'হোম',
         about: 'সম্পর্কে',
         portfolio: 'পোর্টফোলিও',
+        blog: 'ব্লগ',
         contact: 'যোগাযোগ',
       },
       copyright: "© ২০২৫ মুজিব আরএসএম। সর্বস্বত্ব সংরক্ষিত।"
