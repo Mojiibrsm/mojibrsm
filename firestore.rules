@@ -2,55 +2,51 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper function to check if a user is an Admin by checking their role in the 'users' collection.
-    function isAdmin() {
-      // Ensure the user is authenticated before checking for role.
-      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Admin';
-    }
     
-    // Helper function to check if the currently authenticated user is the owner of a document.
-    function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
+    // Helper function to check for Admin role
+    function isAdmin() {
+      // Check if the user document exists and has the role 'Admin'.
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid))
+             && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Admin';
     }
 
-    // Rules for the 'users' collection
+    // Users Collection
+    // - Anyone can create their own user document.
+    // - Only the authenticated user can read or update their own document.
+    // - Admins can read/write any user document.
     match /users/{userId} {
-      // Any authenticated user can create their own user document upon sign-up.
+      allow read, update, delete: if request.auth != null && (request.auth.uid == userId || isAdmin());
       allow create: if request.auth != null;
-      
-      // Users can only read or update their own data. Admins can read any user's data.
-      allow read, update: if isOwner(userId) || isAdmin();
     }
 
-    // Rules for the 'projects' collection
+    // Projects Collection
+    // - Only admins can create, update, or delete projects.
+    // - Any authenticated user can read projects.
     match /projects/{projectId} {
-      // An authenticated user can only read a project if they are the assigned user, or if they are an admin.
-      allow read: if (request.auth != null && resource.data.userId == request.auth.uid) || isAdmin();
-      
-      // Only admins can create, update, or delete projects.
+      allow read: if request.auth != null;
       allow create, update, delete: if isAdmin();
     }
-    
-    // Rules for the 'requests' collection
+
+    // Requests Collection
+    // - Authenticated users can create their own requests.
+    // - Users can read, update, or delete their own requests.
+    // - Admins can read, update and delete any request.
     match /requests/{requestId} {
-      // An authenticated user can create a request for themselves.
+      // A user can create a request for themselves.
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      
-      // Users can only read their own requests. Admins can read all requests.
-      allow read: if (request.auth != null && resource.data.userId == request.auth.uid) || isAdmin();
-      
-      // Only admins can update the status of a request.
-      allow update: if isAdmin();
+      // A user can read, update, or delete their own request. Admins can do anything.
+      allow read, update, delete: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
     }
 
-    // Rules for the 'messageThreads' collection
+    // MessageThreads Collection
+    // - Users can create threads for themselves.
+    // - Users can read and update (add messages to) threads they are part of.
+    // - Admins can read and update any thread.
     match /messageThreads/{threadId} {
-        // An authenticated user can create a message thread for themselves.
-        allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-        
-        // The user who owns the thread and admins can read or write (add messages) to it.
-        allow read, write: if (request.auth != null && resource.data.userId == request.auth.uid) || isAdmin();
+      // A user can create a thread for themselves.
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      // A user can read/update their own thread. Admins can read/update any thread.
+      allow read, update: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
     }
   }
 }
