@@ -26,13 +26,10 @@ export default function Portfolio() {
     <section id="portfolio" className="w-full py-16 md:py-24">
       <div className="container">
         <motion.div 
-          ref={ref}
-          initial="hidden"
-          animate={isInView ? 'visible' : 'hidden'}
-          variants={{
-            hidden: { opacity: 0, y: -20 },
-            visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
-          }}
+          initial={{ opacity: 0, y: -20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.5 }}
           className="text-center mb-12">
             <h2 className="text-4xl font-bold font-headline">{t.portfolio.title}</h2>
         </motion.div>
@@ -44,9 +41,10 @@ export default function Portfolio() {
           animate={isInView ? 'visible' : 'hidden'}
         >
           {t.portfolio.projects.map((project, index) => (
-            <motion.div key={project.title} variants={itemVariants}>
-              <Card className="overflow-hidden group shadow-md hover:shadow-2xl transition-all duration-300 rounded-2xl flex flex-col bg-card h-full">
-                <div className="relative">
+            <motion.div key={project.title} variants={itemVariants} className="relative group h-full">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-primary to-accent rounded-xl blur opacity-0 group-hover:opacity-75 transition duration-500"></div>
+              <Card className="relative overflow-hidden shadow-md transition-all duration-300 rounded-2xl flex flex-col bg-card h-full">
+                <div className="relative overflow-hidden rounded-t-2xl">
                   <Image
                     src={project.image}
                     alt={project.title}
@@ -56,27 +54,29 @@ export default function Portfolio() {
                     data-ai-hint={project.imageHint}
                   />
                 </div>
-                <CardHeader>
-                  <CardTitle>{project.title}</CardTitle>
-                  <CardDescription>{project.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="flex-grow flex flex-col">
-                  <div className="mb-4">
-                    <h4 className="font-semibold mb-2 text-sm text-muted-foreground">{t.portfolio.techUsed}</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {project.tech.map((tech) => (
-                        <Badge key={tech} variant="secondary">{tech}</Badge>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="mt-auto">
-                      <Button asChild className="w-full">
-                          <a href={project.link} target="_blank" rel="noopener noreferrer">
-                              {t.portfolio.viewButton}
-                          </a>
-                      </Button>
-                  </div>
-                </CardContent>
+                <div className='relative bg-card rounded-b-2xl flex flex-col flex-grow'>
+                    <CardHeader>
+                      <CardTitle>{project.title}</CardTitle>
+                      <CardDescription>{project.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex-grow flex flex-col">
+                      <div className="mb-4">
+                        <h4 className="font-semibold mb-2 text-sm text-muted-foreground">{t.portfolio.techUsed}</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {project.tech.map((tech) => (
+                            <Badge key={tech} variant="secondary">{tech}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="mt-auto">
+                          <Button asChild className="w-full">
+                              <a href={project.link} target="_blank" rel="noopener noreferrer">
+                                  {t.portfolio.viewButton}
+                              </a>
+                          </Button>
+                      </div>
+                    </CardContent>
+                </div>
               </Card>
             </motion.div>
           ))}

@@ -24,7 +24,7 @@ export default function Hero() {
 
   const imageVariants = {
     hidden: { opacity: 0, scale: 0.8 },
-    visible: { opacity: 1, scale: 1, transition: { ease: "easeOut", duration: 0.8 } },
+    visible: { opacity: 1, scale: 1, transition: { ease: "easeOut", duration: 0.8, delay: 0.4 } },
   };
 
 
@@ -43,7 +43,7 @@ export default function Hero() {
                 variants={itemVariants}
                 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none font-headline"
               >
-                {t.hero.greeting} <span className="text-primary">{t.hero.name}</span>
+                {t.hero.greeting} <span className="text-accent">{t.hero.name}</span>
               </motion.h1>
               <motion.h2 
                 variants={itemVariants}
@@ -60,7 +60,7 @@ export default function Hero() {
             </div>
             <motion.div variants={itemVariants} className="flex flex-col gap-3 min-[400px]:flex-row">
               <Button size="lg" asChild>
-                <a href="/mojib-rsm-cv.pdf" download>
+                <a href="/mojib-rsm-cv.html" target="_blank" rel="noopener noreferrer">
                   {t.hero.buttons.cv}
                 </a>
               </Button>
@@ -82,7 +82,7 @@ export default function Hero() {
              animate="visible"
             className="relative flex justify-center items-center"
           >
-            <div className="absolute w-full h-full max-w-xs bg-primary/20 rounded-full blur-3xl"></div>
+            <div className="absolute w-full h-full max-w-xs bg-primary/20 rounded-full blur-3xl animate-pulse"></div>
             <Image
               src="https://storage.googleapis.com/aip-dev-img-repo/6a297298-0c64-4e42-a982-f79a9f24e4c2.png"
               alt="Mojib Rsm"
