@@ -46,6 +46,18 @@ const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 );
 
+const Logo = () => (
+    <svg width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style={{ stopColor: 'hsl(var(--primary))', stopOpacity: 1 }} />
+                <stop offset="100%" style={{ stopColor: 'hsl(var(--accent))', stopOpacity: 1 }} />
+            </linearGradient>
+        </defs>
+        <path d="M50 0 L100 25 V75 L50 100 L0 75 V25 Z" fill="url(#grad1)" />
+        <text x="50" y="62" fontSize="40" fill="hsl(var(--primary-foreground))" textAnchor="middle" dy=".3em" fontFamily="sans-serif" fontWeight="bold">M</text>
+    </svg>
+)
 
 export default function DashboardLayout({
   children,
@@ -88,7 +100,8 @@ export default function DashboardLayout({
     <SidebarProvider>
       <Sidebar>
         <SidebarHeader>
-           <Link href="/" className="flex items-center gap-2">
+           <Link href="/" className="flex items-center gap-3">
+             <Logo />
              <span className="font-bold text-xl group-data-[collapsible=icon]:hidden">Mojib Rsm</span>
            </Link>
         </SidebarHeader>
@@ -108,16 +121,16 @@ export default function DashboardLayout({
         </SidebarContent>
         <SidebarFooter className="mt-auto flex flex-col gap-4">
             <div className="group-data-[collapsible=icon]:hidden px-2">
-                <Separator className="mb-4 bg-muted-foreground/20" />
+                <Separator className="mb-4 bg-sidebar-border" />
                 <p className="text-xs font-medium text-muted-foreground mb-2">Contact Owner</p>
                 <div className="flex items-center justify-start gap-2">
-                    <Button variant="ghost" size="icon" asChild className="h-8 w-8"><a href="https://wa.me/8801601519007" target="_blank" rel="noopener noreferrer"><WhatsAppIcon className="h-5 w-5 fill-current"/></a></Button>
-                    <Button variant="ghost" size="icon" asChild className="h-8 w-8"><a href="https://facebook.com/mojibrsm" target="_blank" rel="noopener noreferrer"><FacebookIcon className="h-5 w-5 fill-current"/></a></Button>
-                    <Button variant="ghost" size="icon" asChild className="h-8 w-8"><a href="https://github.com/mojibrsm" target="_blank" rel="noopener noreferrer"><Github className="h-5 w-5"/></a></Button>
+                    <Button variant="ghost" size="icon" asChild className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent"><a href="https://wa.me/8801601519007" target="_blank" rel="noopener noreferrer"><WhatsAppIcon className="h-5 w-5 fill-current"/></a></Button>
+                    <Button variant="ghost" size="icon" asChild className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent"><a href="https://facebook.com/mojibrsm" target="_blank" rel="noopener noreferrer"><FacebookIcon className="h-5 w-5 fill-current"/></a></Button>
+                    <Button variant="ghost" size="icon" asChild className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent"><a href="https://github.com/mojibrsm" target="_blank" rel="noopener noreferrer"><Github className="h-5 w-5"/></a></Button>
                 </div>
             </div>
 
-            <Separator className="bg-muted-foreground/20"/>
+            <Separator className="bg-sidebar-border"/>
             
             <div className="flex items-center gap-3 p-2">
                 <Avatar className="h-10 w-10">
@@ -128,14 +141,14 @@ export default function DashboardLayout({
                     <span className="text-sm font-semibold">{user.displayName || "User"}</span>
                     <span className="text-xs text-muted-foreground">{user.email}</span>
                 </div>
-                <Button variant="ghost" size="icon" className="ml-auto group-data-[collapsible=icon]:hidden" onClick={handleLogout}>
-                <LogOut className="h-4 w-4"/>
+                <Button variant="ghost" size="icon" className="ml-auto group-data-[collapsible=icon]:hidden text-sidebar-foreground hover:bg-sidebar-accent" onClick={handleLogout}>
+                   <LogOut className="h-4 w-4"/>
                 </Button>
             </div>
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        <header className="flex items-center justify-between p-4 border-b bg-background">
+        <header className="flex items-center justify-between p-4 border-b bg-background sticky top-0 z-40">
             <SidebarTrigger />
             {/* Additional header content can go here */}
         </header>
@@ -143,7 +156,7 @@ export default function DashboardLayout({
             {children}
             <Button
                 asChild
-                className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg"
+                className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90"
                 size="icon"
             >
                 <a href="https://wa.me/8801601519007" target="_blank" rel="noopener noreferrer">

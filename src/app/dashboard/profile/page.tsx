@@ -12,7 +12,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Mail, Phone, Lock, Upload } from 'lucide-react';
+import { User, Mail, Phone, Lock, Upload, Loader2 } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { updateProfile } from 'firebase/auth';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { auth, storage } from '@/lib/firebase';
 
 const profileFormSchema = z.object({
   fullName: z.string().min(1, 'Full name is required'),
@@ -24,6 +28,9 @@ const profileFormSchema = z.object({
 export default function ProfilePage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.photoURL || null);
 
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
@@ -34,6 +41,43 @@ export default function ProfilePage() {
       bio: 'I am a passionate developer and designer.',
     },
   });
+
+  const handlePictureChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    setIsUploading(true);
+
+    try {
+      // Create a reference to the file in Firebase Storage
+      const storageRef = ref(storage, `profile-pictures/${user.uid}`);
+      
+      // Upload the file
+      const snapshot = await uploadBytes(storageRef, file);
+      
+      // Get the download URL
+      const downloadURL = await getDownloadURL(snapshot.ref);
+
+      // Update the user's profile
+      await updateProfile(user, { photoURL: downloadURL });
+
+      setAvatarPreview(downloadURL); // Update avatar preview
+      toast({
+        title: 'Success',
+        description: 'Profile picture updated successfully.',
+      });
+
+    } catch (error) {
+      console.error("Error uploading profile picture:", error);
+      toast({
+        variant: 'destructive',
+        title: 'Upload Failed',
+        description: 'There was an error updating your profile picture.',
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   function onSubmit(data: z.infer<typeof profileFormSchema>) {
     // Here you would typically call an API to update the user profile
@@ -53,16 +97,23 @@ export default function ProfilePage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-4">
-            <Avatar className="h-20 w-20">
-              <AvatarImage src={user?.photoURL || ''} alt={user?.displayName || 'User'} />
+             <Avatar className="h-20 w-20">
+              <AvatarImage src={avatarPreview || ''} alt={user?.displayName || 'User'} />
               <AvatarFallback>{user?.displayName?.charAt(0) || user?.email?.charAt(0)}</AvatarFallback>
             </Avatar>
             <div className="grid gap-1">
               <h2 className="text-xl font-semibold">{user?.displayName}</h2>
               <p className="text-sm text-muted-foreground">{user?.email}</p>
-              <Button size="sm" variant="outline" className="mt-2">
-                <Upload className="mr-2 h-4 w-4" />
-                Change Picture
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handlePictureChange}
+                className="hidden"
+                accept="image/png, image/jpeg, image/gif"
+              />
+              <Button size="sm" variant="outline" className="mt-2" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+                {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                {isUploading ? 'Uploading...' : 'Change Picture'}
               </Button>
             </div>
           </div>

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Bell, FolderKanban, MessageSquare, PlusCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 
 export default function DashboardPage() {
     const { user, loading } = useAuth();
@@ -13,12 +14,12 @@ export default function DashboardPage() {
     const [showWelcome, setShowWelcome] = useState(false);
 
     useEffect(() => {
-        // Show the welcome dialog only once per session
-        if (!sessionStorage.getItem('welcomeShown')) {
+        const welcomeShown = sessionStorage.getItem('welcomeShown');
+        if (!loading && user && !welcomeShown) {
             setShowWelcome(true);
             sessionStorage.setItem('welcomeShown', 'true');
         }
-    }, []);
+    }, [user, loading]);
 
     if (loading) {
       return (
@@ -28,7 +29,6 @@ export default function DashboardPage() {
       )
     }
     
-    // The layout should handle redirecting unauthenticated users.
     if (!user) {
         return null;
     }
@@ -44,6 +44,23 @@ export default function DashboardPage() {
         { label: "View Messages", icon: MessageSquare, href: "/dashboard/messages" },
         { label: "View My Projects", icon: FolderKanban, href: "/dashboard/projects" },
     ];
+
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: { staggerChildren: 0.15, delayChildren: 0.2 }
+        }
+    };
+
+    const itemVariants = {
+        hidden: { y: 20, opacity: 0 },
+        visible: {
+            y: 0,
+            opacity: 1,
+            transition: { type: 'spring', stiffness: 100 }
+        }
+    };
 
     return (
         <>
@@ -63,42 +80,54 @@ export default function DashboardPage() {
                 </DialogContent>
             </Dialog>
 
-            <div className="space-y-8">
-                <div>
+            <motion.div 
+                className="space-y-8"
+                initial="hidden"
+                animate="visible"
+                variants={containerVariants}
+            >
+                <motion.div variants={itemVariants}>
                     <h1 className="text-3xl font-bold">Welcome, {user.displayName || user.email}!</h1>
                     <p className="text-muted-foreground">Here's a summary of your account.</p>
-                </div>
+                </motion.div>
                 
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <motion.div
+                    className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+                    variants={containerVariants}
+                >
                      {stats.map((stat, index) => (
-                        <Card key={index}>
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                                <stat.icon className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{stat.value}</div>
-                                <p className="text-xs text-muted-foreground">{stat.description}</p>
-                            </CardContent>
-                        </Card>
+                        <motion.div key={index} variants={itemVariants}>
+                            <Card>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                                    <stat.icon className="h-4 w-4 text-muted-foreground" />
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold">{stat.value}</div>
+                                    <p className="text-xs text-muted-foreground">{stat.description}</p>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
                      ))}
-                </div>
+                </motion.div>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Quick Actions</CardTitle>
-                        <CardDescription>Easily access your most frequent tasks.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="flex flex-wrap gap-4">
-                         {quickActions.map((action, index) => (
-                            <Button key={index} onClick={() => router.push(action.href)}>
-                                <action.icon className="mr-2 h-4 w-4" />
-                                {action.label}
-                            </Button>
-                         ))}
-                    </CardContent>
-                </Card>
-            </div>
+                <motion.div variants={itemVariants}>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Quick Actions</CardTitle>
+                            <CardDescription>Easily access your most frequent tasks.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex flex-wrap gap-4">
+                            {quickActions.map((action, index) => (
+                                <Button key={index} onClick={() => router.push(action.href)} variant="outline">
+                                    <action.icon className="mr-2 h-4 w-4" />
+                                    {action.label}
+                                </Button>
+                            ))}
+                        </CardContent>
+                    </Card>
+                </motion.div>
+            </motion.div>
         </>
     );
 }
