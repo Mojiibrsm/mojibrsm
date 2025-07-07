@@ -9,9 +9,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Send, PlusCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
+import { useAuth } from '@/contexts/auth-context';
 
 export default function AdminMessagesPage() {
   const [threads, setThreads] = useState<IMessageThread[]>([]);
@@ -19,13 +18,22 @@ export default function AdminMessagesPage() {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [replyText, setReplyText] = useState("");
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
-    const unsubscribe = getMessageThreads((fetchedThreads) => {
-        setThreads(fetchedThreads);
-    });
-    return () => unsubscribe();
-  }, []);
+      if (!user) return;
+      const unsubscribe = getMessageThreads((fetchedThreads) => {
+          setThreads(fetchedThreads);
+          // If a thread is being viewed, update its content in real-time
+          if (selectedThread) {
+            const updatedThread = fetchedThreads.find(t => t.id === selectedThread.id);
+            if (updatedThread) {
+                setSelectedThread(updatedThread);
+            }
+          }
+      });
+      return () => unsubscribe();
+  }, [user, selectedThread]);
 
   const handleViewThread = async (thread: IMessageThread) => {
     setSelectedThread(thread);
@@ -36,7 +44,7 @@ export default function AdminMessagesPage() {
   };
   
   const handleReply = async () => {
-    if (!selectedThread?.id || !replyText) return;
+    if (!selectedThread?.id || !replyText || !user) return;
 
     const newMessage: IMessage = {
         from: 'admin',
@@ -97,14 +105,14 @@ export default function AdminMessagesPage() {
             ) : (
                 <ul className="space-y-2">
                     {threads.map((thread) => (
-                    <li key={thread.id} className={`p-4 rounded-lg flex items-start gap-4 cursor-pointer hover:bg-muted/50 ${thread.unreadByAdmin ? 'bg-muted' : ''}`} onClick={() => handleViewThread(thread)}>
+                    <li key={thread.id} className={`p-4 rounded-lg flex items-start gap-4 cursor-pointer hover:bg-muted/50 ${thread.unreadByAdmin ? 'bg-primary/10' : ''}`} onClick={() => handleViewThread(thread)}>
                         <Avatar className="h-12 w-12">
-                        <AvatarImage src={thread.clientAvatar} />
+                        <AvatarImage src={thread.clientAvatar} alt={thread.clientName} />
                         <AvatarFallback>{thread.clientName.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div className="grid gap-1 flex-1">
                             <div className="flex items-center justify-between">
-                                <p className={`font-semibold ${thread.unreadByAdmin ? 'text-foreground' : ''}`}>{thread.clientName} - <span className="font-normal text-muted-foreground">{thread.subject}</span></p>
+                                <p className={`font-semibold ${thread.unreadByAdmin ? 'text-primary' : ''}`}>{thread.clientName} - <span className="font-normal text-muted-foreground">{thread.subject}</span></p>
                                 <p className="text-xs text-muted-foreground">{formatTimestamp(thread.lastMessageTimestamp)}</p>
                             </div>
                         <p className={`text-sm text-muted-foreground line-clamp-2 ${thread.unreadByAdmin ? 'font-medium text-foreground' : ''}`}>{thread.lastMessage}</p>
@@ -126,17 +134,18 @@ export default function AdminMessagesPage() {
           <div className="py-4 flex-1 overflow-y-auto space-y-4 pr-4">
             {selectedThread?.messages.sort((a, b) => a.timestamp.toMillis() - b.timestamp.toMillis()).map((message, index) => (
                 <div key={index} className={`flex items-end gap-2 ${message.from === 'admin' ? 'justify-end' : 'justify-start'}`}>
-                   {message.from === 'client' && <Avatar className="h-8 w-8"><AvatarImage src={selectedThread.clientAvatar} /><AvatarFallback>{selectedThread.clientName.charAt(0)}</AvatarFallback></Avatar>}
+                   {message.from === 'client' && <Avatar className="h-8 w-8"><AvatarImage src={selectedThread.clientAvatar} alt={selectedThread.clientName}/><AvatarFallback>{selectedThread.clientName.charAt(0)}</AvatarFallback></Avatar>}
                    <div className={`max-w-xs md:max-w-md p-3 rounded-2xl ${message.from === 'admin' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-muted rounded-bl-none'}`}>
                         <p className="text-sm">{message.text}</p>
                         <p className="text-xs text-right mt-1 opacity-70">{formatTimestamp(message.timestamp)}</p>
                    </div>
+                   {message.from === 'admin' && user && <Avatar className="h-8 w-8"><AvatarImage src={user.photoURL || ''} alt={user.displayName || 'Admin'} /><AvatarFallback>{user.displayName?.charAt(0) || 'A'}</AvatarFallback></Avatar>}
                 </div>
             ))}
           </div>
           <DialogFooter className="mt-auto pt-4 border-t">
             <div className="relative w-full flex items-center gap-2">
-                 <Textarea placeholder="Type your message..." className="pr-12" rows={1} value={replyText} onChange={(e) => setReplyText(e.target.value)} />
+                 <Textarea placeholder="Type your message..." className="pr-12" rows={1} value={replyText} onChange={(e) => setReplyText(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleReply(); } }} />
                  <Button size="icon" className="h-9 w-9" onClick={handleReply} disabled={!replyText}>
                     <Send className="h-4 w-4"/>
                  </Button>

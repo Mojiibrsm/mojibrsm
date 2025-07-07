@@ -1,25 +1,16 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Check, X, Eye } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-
-// Note: Real data will be fetched from a database. This is a placeholder type.
-type Request = {
-    id: string;
-    service: string;
-    status: 'Approved' | 'Pending' | 'Rejected';
-    date: string;
-    client: string;
-    email: string;
-    details: string;
-};
+import { getAllRequests, updateRequestStatus, IRequest, RequestStatus } from '@/services/firestore';
+import { useAuth } from '@/contexts/auth-context';
 
 const getStatusVariant = (status: string) => {
     switch (status) {
@@ -31,20 +22,37 @@ const getStatusVariant = (status: string) => {
 }
 
 export default function AdminRequestsPage() {
-  const [requests, setRequests] = useState<Request[]>([]);
-  const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
+  const [requests, setRequests] = useState<IRequest[]>([]);
+  const [selectedRequest, setSelectedRequest] = useState<IRequest | null>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  const handleStatusChange = (id: string, newStatus: 'Approved' | 'Rejected') => {
-    setRequests(requests.map(req => req.id === id ? { ...req, status: newStatus } : req));
-    toast({
-      title: `Request ${newStatus}`,
-      description: `Request ${id} has been marked as ${newStatus.toLowerCase()}.`,
+  useEffect(() => {
+    if (!user) return;
+    const unsubscribe = getAllRequests((fetchedRequests) => {
+        setRequests(fetchedRequests);
     });
+    return () => unsubscribe();
+  }, [user]);
+
+  const handleStatusChange = async (id: string, newStatus: RequestStatus) => {
+    try {
+        await updateRequestStatus(id, newStatus);
+        toast({
+            title: `Request ${newStatus}`,
+            description: `Request has been marked as ${newStatus.toLowerCase()}.`,
+        });
+    } catch (error) {
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Failed to update request status.'
+        });
+    }
   };
   
-  const handleViewRequest = (request: Request) => {
+  const handleViewRequest = (request: IRequest) => {
     setSelectedRequest(request);
     setIsViewOpen(true);
   }
@@ -81,24 +89,24 @@ export default function AdminRequestsPage() {
               ) : (
                 requests.map((request) => (
                   <TableRow key={request.id}>
-                    <TableCell className="font-medium">{request.client}</TableCell>
+                    <TableCell className="font-medium">{request.clientName}</TableCell>
                     <TableCell>{request.service}</TableCell>
                     <TableCell>
                       <Badge variant={getStatusVariant(request.status) as any}>{request.status}</Badge>
                     </TableCell>
-                    <TableCell>{request.date}</TableCell>
+                    <TableCell>{request.createdAt.toDate().toLocaleDateString()}</TableCell>
                     <TableCell className="text-right space-x-2">
                       <Button variant="ghost" size="icon" onClick={() => handleViewRequest(request)}>
                           <Eye className="h-4 w-4" />
                           <span className="sr-only">View</span>
                       </Button>
-                      {request.status === 'Pending' && (
+                      {request.status === 'Pending' && request.id && (
                           <>
-                          <Button variant="outline" size="icon" className="text-green-600 hover:border-green-600 hover:bg-green-100 dark:hover:bg-green-900/50 border-green-600/50" onClick={() => handleStatusChange(request.id, 'Approved')}>
+                          <Button variant="outline" size="icon" className="text-green-600 hover:text-green-500 hover:border-green-600 hover:bg-green-100 dark:hover:bg-green-900/50 border-green-600/50" onClick={() => handleStatusChange(request.id!, 'Approved')}>
                               <Check className="h-4 w-4" />
                               <span className="sr-only">Approve</span>
                           </Button>
-                          <Button variant="outline" size="icon" className="text-red-600 hover:border-red-600 hover:bg-red-100 dark:hover:bg-red-900/50 border-red-600/50" onClick={() => handleStatusChange(request.id, 'Rejected')}>
+                          <Button variant="outline" size="icon" className="text-red-600 hover:text-red-500 hover:border-red-600 hover:bg-red-100 dark:hover:bg-red-900/50 border-red-600/50" onClick={() => handleStatusChange(request.id!, 'Rejected')}>
                               <X className="h-4 w-4" />
                               <span className="sr-only">Reject</span>
                           </Button>
@@ -117,8 +125,8 @@ export default function AdminRequestsPage() {
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Request Details: {selectedRequest?.id}</DialogTitle>
-            <DialogDescription>From: {selectedRequest?.client} ({selectedRequest?.email})</DialogDescription>
+            <DialogTitle>Request Details</DialogTitle>
+            <DialogDescription>From: {selectedRequest?.clientName} ({selectedRequest?.clientEmail})</DialogDescription>
           </DialogHeader>
           <div className="py-4 grid gap-4 text-sm">
             <div>
@@ -127,7 +135,7 @@ export default function AdminRequestsPage() {
             </div>
              <div>
               <h4 className="font-semibold text-foreground">Date Submitted</h4>
-              <p className="text-muted-foreground">{selectedRequest?.date}</p>
+              <p className="text-muted-foreground">{selectedRequest?.createdAt.toDate().toLocaleString()}</p>
             </div>
             <div>
               <h4 className="font-semibold text-foreground">Current Status</h4>
@@ -140,7 +148,7 @@ export default function AdminRequestsPage() {
           </div>
           <DialogFooter>
             <Button onClick={() => setIsViewOpen(false)}>Close</Button>
-            <Button variant="secondary" onClick={() => { setIsViewOpen(false); /* Logic to reply to user */ }}>Reply to Client</Button>
+            {/* Logic to reply to user can be added here, perhaps opening a message dialog */}
           </DialogFooter>
         </DialogContent>
       </Dialog>

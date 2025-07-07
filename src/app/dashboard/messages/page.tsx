@@ -29,10 +29,17 @@ export default function MessagesPage() {
     if (user) {
       const unsubscribe = getMessageThreadsForUser(user.uid, (fetchedThreads) => {
         setThreads(fetchedThreads);
+        // If a thread is being viewed, update its content in real-time
+        if (selectedThread) {
+            const updatedThread = fetchedThreads.find(t => t.id === selectedThread.id);
+            if (updatedThread) {
+                setSelectedThread(updatedThread);
+            }
+        }
       });
       return () => unsubscribe();
     }
-  }, [user]);
+  }, [user, selectedThread]);
 
   const handleViewMessage = async (thread: IMessageThread) => {
     setSelectedThread(thread);
@@ -65,7 +72,6 @@ export default function MessagesPage() {
             timestamp: Timestamp.now(),
         };
         
-        // @ts-ignore
         await createMessageThread(threadData, initialMessage);
 
         toast({ title: "Message Sent", description: "Your message has been sent to the site owner." });
@@ -102,7 +108,7 @@ export default function MessagesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Messages</h1>
         <p className="text-muted-foreground">Your inbox for all communications.</p>
       </div>
@@ -147,14 +153,14 @@ export default function MessagesPage() {
           ) : (
              <ul className="space-y-2">
                 {threads.map((thread) => (
-                <li key={thread.id} className={`p-4 rounded-lg flex items-start gap-4 cursor-pointer hover:bg-muted/50 ${thread.unreadByUser ? 'bg-muted' : ''}`} onClick={() => handleViewMessage(thread)}>
+                <li key={thread.id} className={`p-4 rounded-lg flex items-start gap-4 cursor-pointer hover:bg-muted/50 ${thread.unreadByUser ? 'bg-primary/10' : ''}`} onClick={() => handleViewMessage(thread)}>
                     <Avatar className="h-12 w-12">
-                        <AvatarImage src={'https://placehold.co/40x40.png'} />
+                        <AvatarImage src={thread.clientAvatar} alt="Admin" />
                         <AvatarFallback>A</AvatarFallback>
                     </Avatar>
                     <div className="grid gap-1 flex-1">
                         <div className="flex items-center justify-between">
-                            <p className={`font-semibold ${thread.unreadByUser ? 'text-foreground' : ''}`}>{thread.subject}</p>
+                            <p className={`font-semibold ${thread.unreadByUser ? 'text-primary' : ''}`}>{thread.subject}</p>
                             <p className="text-xs text-muted-foreground">{formatTimestamp(thread.lastMessageTimestamp)}</p>
                         </div>
                     <p className={`text-sm text-muted-foreground line-clamp-2 ${thread.unreadByUser ? 'font-medium text-foreground' : ''}`}>{thread.lastMessage}</p>
@@ -175,17 +181,18 @@ export default function MessagesPage() {
           <div className="py-4 flex-1 overflow-y-auto space-y-4 pr-4">
             {selectedThread?.messages.sort((a, b) => a.timestamp.toMillis() - b.timestamp.toMillis()).map((message, index) => (
                 <div key={index} className={`flex items-end gap-2 ${message.from === 'client' ? 'justify-end' : 'justify-start'}`}>
-                   {message.from === 'admin' && <Avatar className="h-8 w-8"><AvatarImage src={''} /><AvatarFallback>A</AvatarFallback></Avatar>}
+                   {message.from === 'admin' && <Avatar className="h-8 w-8"><AvatarImage src={''} alt="Admin" /><AvatarFallback>A</AvatarFallback></Avatar>}
                    <div className={`max-w-xs md:max-w-md p-3 rounded-2xl ${message.from === 'client' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-muted rounded-bl-none'}`}>
                         <p className="text-sm">{message.text}</p>
                         <p className="text-xs text-right mt-1 opacity-70">{formatTimestamp(message.timestamp)}</p>
                    </div>
+                   {message.from === 'client' && user && <Avatar className="h-8 w-8"><AvatarImage src={user.photoURL || ''} alt={user.displayName || 'You'} /><AvatarFallback>{user.displayName?.charAt(0) || 'U'}</AvatarFallback></Avatar>}
                 </div>
             ))}
           </div>
           <DialogFooter className="mt-auto pt-4 border-t">
             <div className="relative w-full flex items-center gap-2">
-                 <Textarea placeholder="Type your message..." className="pr-12" rows={1} value={replyText} onChange={(e) => setReplyText(e.target.value)} />
+                 <Textarea placeholder="Type your message..." className="pr-12" rows={1} value={replyText} onChange={(e) => setReplyText(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleReply(); } }} />
                  <Button size="icon" className="h-9 w-9" onClick={handleReply} disabled={!replyText}>
                     <Send className="h-4 w-4"/>
                  </Button>

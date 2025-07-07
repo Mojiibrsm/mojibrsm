@@ -9,16 +9,8 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, ShieldCheck, UserCog, UserX } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getUsers, FirestoreUser } from '@/services/firestore';
-
-type User = {
-    uid: string;
-    name: string;
-    email: string;
-    role: 'Admin' | 'Client';
-    joinDate: string;
-    avatar: string;
-};
+import { getUsers, FirestoreUser, updateUserRole } from '@/services/firestore';
+import { useAuth } from '@/contexts/auth-context';
 
 const getRoleVariant = (role: string) => {
   switch (role) {
@@ -29,42 +21,51 @@ const getRoleVariant = (role: string) => {
 };
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<FirestoreUser[]>([]);
   const { toast } = useToast();
+  const { user: adminUser } = useAuth();
 
   useEffect(() => {
     const unsubscribe = getUsers((fetchedUsers: FirestoreUser[]) => {
-      const formattedUsers: User[] = fetchedUsers.map(u => ({
-        uid: u.uid,
-        name: u.displayName || 'No Name Provided',
-        email: u.email || 'No Email Provided',
-        role: u.role || 'Client',
-        joinDate: u.createdAt?.toDate().toLocaleDateString() || 'N/A',
-        avatar: u.photoURL || '',
-      }));
-      setUsers(formattedUsers);
+      setUsers(fetchedUsers);
     });
 
     return () => unsubscribe();
   }, []);
 
-  const handleRoleChange = (userId: string, newRole: 'Admin' | 'Client') => {
-    // In a real app, you would call a Firestore update function here.
-    // For now, this is a UI-only simulation.
-    setUsers(users.map(u => u.uid === userId ? { ...u, role: newRole } : u));
-    toast({
-      title: "User Role Updated (Simulation)",
-      description: `User's role has been changed to ${newRole}. This is a simulation and not saved to the database yet.`
-    });
+  const handleRoleChange = async (userId: string, newRole: 'Admin' | 'Client') => {
+    if (userId === adminUser?.uid && newRole === 'Client') {
+        toast({
+            variant: "destructive",
+            title: "Action Forbidden",
+            description: "You cannot remove your own admin role."
+        });
+        return;
+    }
+
+    try {
+        await updateUserRole(userId, newRole);
+        toast({
+          title: "User Role Updated",
+          description: `User's role has been changed to ${newRole}.`
+        });
+    } catch (error) {
+         toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to update user role."
+        });
+    }
   };
 
   const handleSuspendUser = (userId: string, userName: string) => {
     // In a real app, this would make an API call to disable the user in Firebase Auth.
+    // This requires a backend (like Cloud Functions) to manage user auth state.
     console.log(`Suspending user ${userId}`);
     toast({
       variant: "destructive",
       title: "User Suspended (Simulation)",
-      description: `${userName} has been suspended. This is a simulation.`,
+      description: `${userName} has been suspended. This is a UI simulation.`,
     });
   };
   
@@ -102,11 +103,11 @@ export default function AdminUsersPage() {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar>
-                          <AvatarImage src={user.avatar} alt={user.name} />
-                          <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                          <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'} />
+                          <AvatarFallback>{user.displayName?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium">{user.name}</p>
+                          <p className="font-medium">{user.displayName}</p>
                           <p className="text-sm text-muted-foreground">{user.email}</p>
                         </div>
                       </div>
@@ -114,7 +115,7 @@ export default function AdminUsersPage() {
                     <TableCell>
                       <Badge variant={getRoleVariant(user.role) as any}>{user.role}</Badge>
                     </TableCell>
-                    <TableCell>{user.joinDate}</TableCell>
+                    <TableCell>{user.createdAt?.toDate().toLocaleDateString() || 'N/A'}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -134,7 +135,7 @@ export default function AdminUsersPage() {
                             Make Client
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-destructive" onClick={() => handleSuspendUser(user.uid, user.name)}>
+                          <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleSuspendUser(user.uid, user.displayName || 'User')}>
                             <UserX className="mr-2 h-4 w-4" />
                             Suspend User
                           </DropdownMenuItem>

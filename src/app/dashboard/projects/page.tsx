@@ -102,8 +102,10 @@ export default function ProjectsPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="py-4 text-sm text-muted-foreground">
+            <p className="font-semibold text-foreground mb-1">Client:</p>
+            <p>{selectedProject?.client}</p>
             {/* In a real app, you would fetch project description from Firestore as well */}
-            This is a placeholder description. You can add a 'description' field to your project in Firestore.
+            <p className="mt-4">This is a placeholder description. You can add a 'description' field to your project in Firestore.</p>
           </div>
           <DialogFooter>
             <Button onClick={() => setIsDialogOpen(false)}>Close</Button>

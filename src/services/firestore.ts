@@ -1,5 +1,5 @@
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, updateDoc, deleteDoc, query, where, Timestamp, onSnapshot, Unsubscribe, arrayUnion, setDoc, getDoc, getDocs } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, deleteDoc, query, where, Timestamp, onSnapshot, Unsubscribe, arrayUnion, setDoc, getDoc, getDocs, orderBy } from 'firebase/firestore';
 import type { User as FirebaseAuthUser } from 'firebase/auth';
 
 // --- User Management ---
@@ -17,6 +17,7 @@ export const addUser = async (user: FirebaseAuthUser) => {
     try {
         const docSnap = await getDoc(userRef);
         if (!docSnap.exists()) {
+            // Check if this is the very first user
             const usersQuery = query(collection(db, "users"));
             const querySnapshot = await getDocs(usersQuery);
             const isFirstUser = querySnapshot.empty;
@@ -26,6 +27,7 @@ export const addUser = async (user: FirebaseAuthUser) => {
                 email: user.email,
                 photoURL: user.photoURL,
                 createdAt: Timestamp.now(),
+                // Assign 'Admin' role if it's the first user, otherwise 'Client'
                 role: isFirstUser ? 'Admin' : 'Client',
             });
         }
@@ -35,7 +37,7 @@ export const addUser = async (user: FirebaseAuthUser) => {
 };
 
 export const getUsers = (callback: (users: FirestoreUser[]) => void): Unsubscribe => {
-    const q = query(collection(db, "users"));
+    const q = query(collection(db, "users"), orderBy("createdAt", "desc"));
     return onSnapshot(q, (querySnapshot) => {
         const users = querySnapshot.docs.map(doc => ({
             uid: doc.id,
@@ -63,6 +65,16 @@ export const getUserDoc = (uid: string, callback: (user: FirestoreUser | null) =
     });
 };
 
+export const updateUserRole = async (uid: string, role: 'Admin' | 'Client') => {
+    try {
+        const userRef = doc(db, "users", uid);
+        await updateDoc(userRef, { role });
+    } catch (error) {
+        console.error("Error updating user role: ", error);
+        throw new Error("Could not update user role");
+    }
+};
+
 
 // --- Project Management ---
 export type ProjectStatus = 'Pending' | 'In Progress' | 'Completed';
@@ -74,9 +86,10 @@ export interface Project {
     client: string;
     deadline: string; // Should be in YYYY-MM-DD format
     userId: string | null; // To associate with a user
+    createdAt: Timestamp;
 }
 
-export const addProject = async (projectData: Omit<Project, 'id'>) => {
+export const addProject = async (projectData: Omit<Project, 'id' | 'createdAt'>) => {
     try {
         const docRef = await addDoc(collection(db, "projects"), {
             ...projectData,
@@ -90,7 +103,7 @@ export const addProject = async (projectData: Omit<Project, 'id'>) => {
 };
 
 export const getProjects = (callback: (projects: Project[]) => void): Unsubscribe => {
-    const q = query(collection(db, "projects"));
+    const q = query(collection(db, "projects"), orderBy("createdAt", "desc"));
     return onSnapshot(q, (querySnapshot) => {
         const projects = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
         callback(projects);
@@ -101,7 +114,7 @@ export const getProjects = (callback: (projects: Project[]) => void): Unsubscrib
 };
 
 export const getProjectsByUserId = (userId: string, callback: (projects: Project[]) => void): Unsubscribe => {
-    const q = query(collection(db, "projects"), where("userId", "==", userId));
+    const q = query(collection(db, "projects"), where("userId", "==", userId), orderBy("createdAt", "desc"));
     return onSnapshot(q, (querySnapshot) => {
         const projects = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
         callback(projects);
@@ -150,9 +163,10 @@ export interface IMessageThread {
     unreadByAdmin: boolean;
     unreadByUser: boolean;
     messages: IMessage[];
+    createdAt: Timestamp;
 }
 
-export const createMessageThread = async (threadData: Omit<IMessageThread, 'id' | 'messages' | 'lastMessage' | 'lastMessageTimestamp'>, initialMessage: IMessage) => {
+export const createMessageThread = async (threadData: Omit<IMessageThread, 'id' | 'messages' | 'lastMessage' | 'lastMessageTimestamp' | 'createdAt'>, initialMessage: IMessage) => {
     try {
         const docRef = await addDoc(collection(db, "messageThreads"), {
             ...threadData,
@@ -191,10 +205,10 @@ export const addMessageToThread = async (threadId: string, message: IMessage, fr
 };
 
 export const getMessageThreadsForUser = (userId: string, callback: (threads: IMessageThread[]) => void): Unsubscribe => {
-    const q = query(collection(db, "messageThreads"), where("userId", "==", userId));
+    const q = query(collection(db, "messageThreads"), where("userId", "==", userId), orderBy("lastMessageTimestamp", "desc"));
     return onSnapshot(q, (querySnapshot) => {
         const threads = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as IMessageThread));
-        callback(threads.sort((a, b) => b.lastMessageTimestamp.toMillis() - a.lastMessageTimestamp.toMillis()));
+        callback(threads);
     }, (error) => {
         console.error(`Error fetching message threads for user ${userId}: `, error);
         callback([]);
@@ -202,10 +216,10 @@ export const getMessageThreadsForUser = (userId: string, callback: (threads: IMe
 };
 
 export const getMessageThreads = (callback: (threads: IMessageThread[]) => void): Unsubscribe => {
-    const q = query(collection(db, "messageThreads"));
+    const q = query(collection(db, "messageThreads"), orderBy("lastMessageTimestamp", "desc"));
     return onSnapshot(q, (querySnapshot) => {
         const threads = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as IMessageThread));
-        callback(threads.sort((a, b) => b.lastMessageTimestamp.toMillis() - a.lastMessageTimestamp.toMillis()));
+        callback(threads);
     }, (error) => {
         console.error("Error fetching message threads: ", error);
         callback([]);
@@ -226,3 +240,62 @@ export const markThreadAsRead = async (threadId: string, userType: 'admin' | 'us
         console.error("Error marking thread as read: ", e);
     }
 }
+
+// --- Request Management ---
+export type RequestStatus = 'Pending' | 'Approved' | 'Rejected';
+
+export interface IRequest {
+    id?: string;
+    userId: string;
+    clientName: string;
+    clientEmail: string;
+    service: string;
+    details: string;
+    status: RequestStatus;
+    createdAt: Timestamp;
+}
+
+export const addRequest = async (requestData: Omit<IRequest, 'id' | 'createdAt'>) => {
+    try {
+        const docRef = await addDoc(collection(db, "requests"), {
+            ...requestData,
+            createdAt: Timestamp.now(),
+        });
+        return docRef.id;
+    } catch (e) {
+        console.error("Error adding request: ", e);
+        throw new Error("Could not add request");
+    }
+};
+
+export const getRequestsByUserId = (userId: string, callback: (requests: IRequest[]) => void): Unsubscribe => {
+    const q = query(collection(db, "requests"), where("userId", "==", userId), orderBy("createdAt", "desc"));
+    return onSnapshot(q, (querySnapshot) => {
+        const requests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as IRequest));
+        callback(requests);
+    }, (error) => {
+        console.error(`Error fetching requests for user ${userId}: `, error);
+        callback([]);
+    });
+};
+
+export const getAllRequests = (callback: (requests: IRequest[]) => void): Unsubscribe => {
+    const q = query(collection(db, "requests"), orderBy("createdAt", "desc"));
+    return onSnapshot(q, (querySnapshot) => {
+        const requests = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as IRequest));
+        callback(requests);
+    }, (error) => {
+        console.error("Error fetching all requests: ", error);
+        callback([]);
+    });
+};
+
+export const updateRequestStatus = async (requestId: string, status: RequestStatus) => {
+    try {
+        const requestRef = doc(db, "requests", requestId);
+        await updateDoc(requestRef, { status });
+    } catch (e) {
+        console.error("Error updating request status: ", e);
+        throw new Error("Could not update request status");
+    }
+};

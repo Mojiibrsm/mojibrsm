@@ -34,11 +34,12 @@ export default function AdminProjectsPage() {
   const { user } = useAuth();
 
   useEffect(() => {
+    if (!user) return;
     const unsubscribe = getProjects((fetchedProjects) => {
       setProjects(fetchedProjects);
     });
     return () => unsubscribe();
-  }, []);
+  }, [user]);
 
   const handleAddNew = () => {
     setEditingProject(null);
@@ -59,7 +60,7 @@ export default function AdminProjectsPage() {
     }
   };
   
-  const handleSave = async (formData: Omit<Project, 'id' | 'userId'>) => {
+  const handleSave = async (formData: Omit<Project, 'id' | 'userId' | 'createdAt'>) => {
     if (!user) {
         toast({ title: "Authentication Error", description: "You must be logged in.", variant: "destructive" });
         return;
@@ -69,7 +70,7 @@ export default function AdminProjectsPage() {
         await updateProject(editingProject.id!, { ...formData });
         toast({ title: "Project Updated", description: "The project has been successfully updated." });
       } else {
-        const newProject: Omit<Project, 'id'> = { ...formData, userId: user.uid };
+        const newProject: Omit<Project, 'id' | 'createdAt'> = { ...formData, userId: user.uid };
         await addProject(newProject);
         toast({ title: "Project Added", description: "A new project has been successfully added." });
       }
@@ -105,13 +106,14 @@ export default function AdminProjectsPage() {
                 <TableHead>Client</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Deadline</TableHead>
+                <TableHead>Created</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {projects.length === 0 ? (
                 <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
+                    <TableCell colSpan={6} className="h-24 text-center">
                         No projects found. Add one to get started.
                     </TableCell>
                 </TableRow>
@@ -124,6 +126,7 @@ export default function AdminProjectsPage() {
                       <Badge variant={getStatusVariant(project.status) as any}>{project.status}</Badge>
                     </TableCell>
                     <TableCell>{project.deadline}</TableCell>
+                     <TableCell>{project.createdAt.toDate().toLocaleDateString()}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -139,7 +142,7 @@ export default function AdminProjectsPage() {
                           </DropdownMenuItem>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
+                              <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive">
                                   <Trash2 className="mr-2 h-4 w-4" />
                                   Delete
                               </DropdownMenuItem>
@@ -183,17 +186,20 @@ export default function AdminProjectsPage() {
 // Sub-component for the Project Form Dialog
 function ProjectFormDialog({ isOpen, onOpenChange, project, onSave }: { isOpen: boolean; onOpenChange: (open: boolean) => void; project: Project | null; onSave: (data: any) => Promise<void>; }) {
   const [formData, setFormData] = useState({ name: '', client: '', status: 'Pending' as ProjectStatus, deadline: '' });
-
+  const { user } = useAuth();
+  
   React.useEffect(() => {
-    if (project) {
-      setFormData({
-          name: project.name,
-          client: project.client,
-          status: project.status,
-          deadline: project.deadline,
-      });
-    } else {
-      setFormData({ name: '', client: '', status: 'Pending', deadline: '' });
+    if (isOpen) {
+        if (project) {
+          setFormData({
+              name: project.name,
+              client: project.client,
+              status: project.status,
+              deadline: project.deadline,
+          });
+        } else {
+          setFormData({ name: '', client: '', status: 'Pending', deadline: '' });
+        }
     }
   }, [project, isOpen]);
 
@@ -208,11 +214,17 @@ function ProjectFormDialog({ isOpen, onOpenChange, project, onSave }: { isOpen: 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSave(formData);
+    if (!user) return;
+    
+    // For new projects, we associate them with a user.
+    // If client name is not provided, we can use an associated user's name later if needed.
+    const projectData = { ...formData, userId: project?.userId || user.uid };
+    
+    await onSave(projectData);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={(open) => { onOpenChange(open); if (!open) setFormData({ name: '', client: '', status: 'Pending', deadline: '' }); }}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{project ? 'Edit Project' : 'Add New Project'}</DialogTitle>
