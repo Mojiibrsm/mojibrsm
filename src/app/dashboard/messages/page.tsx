@@ -1,7 +1,10 @@
+
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { PlusCircle } from 'lucide-react';
 
 const messages = [
   {
@@ -38,9 +41,15 @@ export default function MessagesPage() {
         <p className="text-muted-foreground">Your inbox for all communications.</p>
       </div>
       <Card>
-        <CardHeader>
-          <CardTitle>Inbox</CardTitle>
-          <CardDescription>You have {messages.filter(m => !m.read).length} unread messages.</CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Inbox</CardTitle>
+              <CardDescription>You have {messages.filter(m => !m.read).length} unread messages.</CardDescription>
+            </div>
+            <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                New Message
+            </Button>
         </CardHeader>
         <CardContent>
           <ul className="space-y-4">

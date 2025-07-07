@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/contexts/auth-context';
@@ -13,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, Mail, Phone, Lock, Upload, Loader2 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { updateProfile } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { auth, storage } from '@/lib/firebase';
@@ -26,11 +27,17 @@ const profileFormSchema = z.object({
 });
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, reloadUser } = useAuth();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.photoURL || null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user?.photoURL) {
+      setAvatarPreview(user.photoURL);
+    }
+  }, [user]);
 
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
@@ -44,24 +51,20 @@ export default function ProfilePage() {
 
   const handlePictureChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !user) return;
+    if (!file || !auth.currentUser) return;
 
     setIsUploading(true);
 
     try {
-      // Create a reference to the file in Firebase Storage
-      const storageRef = ref(storage, `profile-pictures/${user.uid}`);
-      
-      // Upload the file
+      const storageRef = ref(storage, `profile-pictures/${auth.currentUser.uid}`);
       const snapshot = await uploadBytes(storageRef, file);
-      
-      // Get the download URL
       const downloadURL = await getDownloadURL(snapshot.ref);
 
-      // Update the user's profile
-      await updateProfile(user, { photoURL: downloadURL });
+      await updateProfile(auth.currentUser, { photoURL: downloadURL });
+      
+      setAvatarPreview(downloadURL);
+      await reloadUser();
 
-      setAvatarPreview(downloadURL); // Update avatar preview
       toast({
         title: 'Success',
         description: 'Profile picture updated successfully.',
@@ -80,11 +83,24 @@ export default function ProfilePage() {
   };
 
   function onSubmit(data: z.infer<typeof profileFormSchema>) {
-    // Here you would typically call an API to update the user profile
     console.log(data);
-    toast({
-      title: 'Profile Updated',
-      description: 'Your profile information has been successfully updated.',
+    if (!auth.currentUser) return;
+
+    updateProfile(auth.currentUser, {
+      displayName: data.fullName,
+    }).then(() => {
+        reloadUser();
+        toast({
+          title: 'Profile Updated',
+          description: 'Your profile information has been successfully updated.',
+        });
+    }).catch((error) => {
+        console.error("Error updating profile:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Update Failed',
+            description: 'There was an error updating your profile.',
+        });
     });
   }
 

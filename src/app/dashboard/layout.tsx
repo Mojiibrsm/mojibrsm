@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/contexts/auth-context';
@@ -25,12 +26,16 @@ import {
   Settings,
   LogOut,
   Github,
+  Home,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { ThemeSwitcher } from '@/components/theme-switcher';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+
 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -100,7 +105,7 @@ export default function DashboardLayout({
     <SidebarProvider>
       <Sidebar>
         <SidebarHeader>
-           <Link href="/" className="flex items-center gap-3">
+           <Link href="/dashboard" className="flex items-center gap-3">
              <Logo />
              <span className="font-bold text-xl group-data-[collapsible=icon]:hidden">Mojib Rsm</span>
            </Link>
@@ -149,8 +154,53 @@ export default function DashboardLayout({
       </Sidebar>
       <SidebarInset>
         <header className="flex items-center justify-between p-4 border-b bg-background sticky top-0 z-40">
-            <SidebarTrigger />
-            {/* Additional header content can go here */}
+            <div className="flex items-center gap-2">
+                <SidebarTrigger />
+                <h1 className="text-lg font-semibold hidden md:block">Dashboard</h1>
+            </div>
+            <div className="flex items-center gap-4">
+                <ThemeSwitcher />
+                <Button variant="outline" asChild>
+                    <Link href="/">
+                        <Home className="mr-2 h-4 w-4" />
+                        View Site
+                    </Link>
+                </Button>
+                {user && (
+                     <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'} />
+                              <AvatarFallback>{user.displayName?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                          </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-56" align="end" forceMount>
+                         <DropdownMenuLabel className="font-normal">
+                            <div className="flex flex-col space-y-1">
+                              <p className="text-sm font-medium leading-none">{user.displayName}</p>
+                              <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                            </div>
+                         </DropdownMenuLabel>
+                         <DropdownMenuSeparator />
+                         <DropdownMenuItem onClick={() => router.push('/dashboard/profile')}>
+                            <User className="mr-2 h-4 w-4" />
+                            <span>My Profile</span>
+                         </DropdownMenuItem>
+                         <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>
+                            <Settings className="mr-2 h-4 w-4" />
+                            <span>Settings</span>
+                         </DropdownMenuItem>
+                         <DropdownMenuSeparator />
+                         <DropdownMenuItem onClick={handleLogout}>
+                            <LogOut className="mr-2 h-4 w-4" />
+                            <span>Log out</span>
+                         </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                )}
+            </div>
         </header>
         <main className="flex-1 p-4 md:p-6 lg:p-8 bg-muted/40 overflow-auto relative">
             {children}

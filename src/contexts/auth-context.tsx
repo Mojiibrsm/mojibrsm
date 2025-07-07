@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { User } from 'firebase/auth';
@@ -10,11 +11,13 @@ import { LanguageProvider } from './language-context';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  reloadUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  reloadUser: async () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -30,7 +33,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  const value = { user, loading };
+  const reloadUser = async () => {
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      await currentUser.reload();
+      // After reloading, get the fresh user object from auth
+      const refreshedUser = auth.currentUser;
+      setUser(refreshedUser);
+    }
+  };
+
+  const value = { user, loading, reloadUser };
 
   return (
     <AuthContext.Provider value={value}>
