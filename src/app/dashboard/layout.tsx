@@ -20,13 +20,8 @@ import {
   LayoutDashboard,
   User,
   FolderKanban,
-  FilePlus2,
   GitPullRequest,
   MessageSquare,
-  Wrench,
-  AreaChart,
-  Rss,
-  Folder,
   Settings,
   LogOut,
 } from 'lucide-react';
@@ -58,13 +53,8 @@ export default function DashboardLayout({
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/dashboard/profile', label: 'My Profile', icon: User },
     { href: '/dashboard/projects', label: 'My Projects', icon: FolderKanban },
-    { href: '/dashboard/projects/add', label: 'Add Project', icon: FilePlus2 },
-    { href: '/dashboard/requests', label: 'Client Requests', icon: GitPullRequest },
+    { href: '/dashboard/requests', label: 'My Requests', icon: GitPullRequest },
     { href: '/dashboard/messages', label: 'Messages', icon: MessageSquare },
-    { href: '/dashboard/services', label: 'Services', icon: Wrench },
-    { href: '/dashboard/analytics', label: 'Analytics', icon: AreaChart },
-    { href: '/dashboard/blog', label: 'Blog Manager', icon: Rss },
-    { href: '/dashboard/files', label: 'File Manager', icon: Folder },
     { href: '/dashboard/settings', label: 'Settings', icon: Settings },
   ];
 
@@ -86,7 +76,7 @@ export default function DashboardLayout({
                 <AvatarFallback>{user.displayName?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
              </Avatar>
              <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-                <span className="text-lg font-semibold">{user.displayName || "Admin"}</span>
+                <span className="text-lg font-semibold">{user.displayName || "User"}</span>
                 <span className="text-xs text-muted-foreground">{user.email}</span>
              </div>
           </div>

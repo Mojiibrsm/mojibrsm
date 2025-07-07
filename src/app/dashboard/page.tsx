@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Bell, Eye, FolderKanban, FilePlus2, MessageSquare } from 'lucide-react';
+import { Bell, FolderKanban, MessageSquare, PlusCircle } from 'lucide-react';
 
 export default function DashboardPage() {
     const { user, loading } = useAuth();
@@ -23,22 +23,22 @@ export default function DashboardPage() {
     }
 
     const stats = [
-        { title: "Today's Notifications", value: "12", icon: Bell, description: "+5% from yesterday" },
-        { title: "Total Projects", value: "35", icon: FolderKanban, description: "2 ongoing, 3 completed" },
-        { title: "Today's Visitors", value: "1,204", icon: Eye, description: "+15% from last week" },
+        { title: "Active Projects", value: "2", icon: FolderKanban, description: "1 waiting for review" },
+        { title: "Pending Requests", value: "1", icon: Bell, description: "Awaiting approval" },
+        { title: "Unread Messages", value: "3", icon: MessageSquare, description: "+2 from yesterday" },
     ];
     
     const quickActions = [
-        { label: "Add New Project", icon: FilePlus2, href: "/dashboard/projects/add" },
-        { label: "View Portfolio", icon: FolderKanban, href: "/#portfolio" },
-        { label: "Contact Client", icon: MessageSquare, href: "/dashboard/messages" },
+        { label: "Make a New Request", icon: PlusCircle, href: "/dashboard/requests/add" },
+        { label: "View Messages", icon: MessageSquare, href: "/dashboard/messages" },
+        { label: "View My Projects", icon: FolderKanban, href: "/dashboard/projects" },
     ];
 
     return (
         <div className="space-y-8">
             <div>
                 <h1 className="text-3xl font-bold">Welcome, {user.displayName || user.email}!</h1>
-                <p className="text-muted-foreground">Here's a quick overview of your dashboard.</p>
+                <p className="text-muted-foreground">Here's a summary of your account.</p>
             </div>
             
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -59,7 +59,7 @@ export default function DashboardPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Quick Actions</CardTitle>
-                    <CardDescription>Get started with your most common tasks.</CardDescription>
+                    <CardDescription>Easily access your most frequent tasks.</CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-wrap gap-4">
                      {quickActions.map((action, index) => (
