@@ -1,7 +1,55 @@
+
 'use client';
+import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { MoreHorizontal, ShieldCheck, UserCog, UserX } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
+const mockUsers = [
+  { id: 'usr_1', name: 'Alice Johnson', email: 'alice@example.com', role: 'Client', joinDate: '2025-07-01', avatar: 'https://placehold.co/40x40.png' },
+  { id: 'usr_2', name: 'Bob Williams', email: 'bob@example.com', role: 'Client', joinDate: '2025-06-15', avatar: 'https://placehold.co/40x40.png' },
+  { id: 'usr_3', name: 'Charlie Brown', email: 'charlie@example.com', role: 'Client', joinDate: '2025-05-20', avatar: 'https://placehold.co/40x40.png' },
+  { id: 'usr_4', name: 'Diana Prince', email: 'diana@example.com', role: 'Admin', joinDate: '2025-01-10', avatar: 'https://placehold.co/40x40.png' },
+];
+
+type User = typeof mockUsers[0];
+
+const getRoleVariant = (role: string) => {
+  switch (role) {
+    case 'Admin': return 'default';
+    case 'Client': return 'secondary';
+    default: return 'outline';
+  }
+};
 
 export default function AdminUsersPage() {
+  const [users, setUsers] = useState(mockUsers);
+  const { toast } = useToast();
+
+  const handleRoleChange = (userId: string, newRole: 'Admin' | 'Client') => {
+    setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
+    toast({
+      title: "User Role Updated",
+      description: `User's role has been changed to ${newRole}.`
+    });
+  };
+
+  const handleSuspendUser = (userId: string, userName: string) => {
+    // In a real app, this would make an API call.
+    // Here we'll just show a toast.
+    console.log(`Suspending user ${userId}`);
+    toast({
+      variant: "destructive",
+      title: "User Suspended",
+      description: `${userName} has been suspended.`,
+    });
+  };
+  
   return (
     <div className="space-y-6">
        <div>
@@ -10,11 +58,68 @@ export default function AdminUsersPage() {
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Coming Soon</CardTitle>
-           <CardDescription>This feature is currently under development.</CardDescription>
+          <CardTitle>All Users</CardTitle>
+          <CardDescription>A list of all users who have an account.</CardDescription>
         </CardHeader>
         <CardContent>
-          <p>The user management system will be available here shortly.</p>
+           <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>User</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Join Date</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {users.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Avatar>
+                        <AvatarImage src={user.avatar} alt={user.name} />
+                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">{user.name}</p>
+                        <p className="text-sm text-muted-foreground">{user.email}</p>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={getRoleVariant(user.role) as any}>{user.role}</Badge>
+                  </TableCell>
+                  <TableCell>{user.joinDate}</TableCell>
+                  <TableCell className="text-right">
+                     <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Actions</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Change Role</DropdownMenuLabel>
+                        <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'Admin')}>
+                          <ShieldCheck className="mr-2 h-4 w-4" />
+                          Make Admin
+                        </DropdownMenuItem>
+                         <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'Client')}>
+                          <UserCog className="mr-2 h-4 w-4" />
+                          Make Client
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                         <DropdownMenuItem className="text-destructive" onClick={() => handleSuspendUser(user.id, user.name)}>
+                          <UserX className="mr-2 h-4 w-4" />
+                          Suspend User
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>

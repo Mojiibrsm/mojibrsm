@@ -36,7 +36,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 
 // IMPORTANT: Replace this with your actual Firebase Admin User UID
 // You can find your UID in the Firebase console under Authentication > Users tab.
-const ADMIN_UID = 'REPLACE_WITH_YOUR_FIREBASE_ADMIN_UID';
+const ADMIN_UID = 'YL4kT1aXv5WU8QUhfeY2FhfeJFu2';
 
 const Logo = () => (
     <svg width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
