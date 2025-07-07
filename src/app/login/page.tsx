@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { signInWithEmailAndPassword, signInWithPopup, AuthErrorCodes } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
 import { useLanguage } from '@/contexts/language-context';
 import { Button } from '@/components/ui/button';
@@ -57,7 +57,7 @@ export default function LoginPage() {
         console.error("Login failed:", error);
         let description = "An unexpected error occurred. Please try again.";
         switch(error.code) {
-            case AuthErrorCodes.INVALID_LOGIN_CREDENTIALS:
+            case 'auth/invalid-credential':
                 description = "Invalid email or password. Please try again.";
                 break;
             case 'auth/operation-not-allowed':

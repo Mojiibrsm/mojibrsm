@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, AuthErrorCodes } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
 import { useLanguage } from '@/contexts/language-context';
 import { Button } from '@/components/ui/button';
@@ -60,7 +60,7 @@ export default function SignupPage() {
         console.error("Sign up failed:", error);
         let description = "An unexpected error occurred. Please try again.";
         switch(error.code) {
-            case AuthErrorCodes.EMAIL_EXISTS:
+            case 'auth/email-already-in-use':
                 description = "An account with this email already exists.";
                 break;
             case 'auth/operation-not-allowed':
