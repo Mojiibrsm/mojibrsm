@@ -5,10 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Send, PlusCircle } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 
 // Note: Real data will be fetched from a database. This is a placeholder type.
 type MessageThread = {
@@ -25,17 +26,62 @@ export default function AdminMessagesPage() {
   const [messages, setMessages] = useState<MessageThread[]>([]);
   const [selectedThread, setSelectedThread] = useState<MessageThread | null>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
+  const [isComposeOpen, setIsComposeOpen] = useState(false);
+  const { toast } = useToast();
 
   const handleViewThread = (thread: MessageThread) => {
     setSelectedThread(thread);
     setIsViewOpen(true);
   };
+  
+  const handleSendMessage = () => {
+      toast({
+          title: "Message Sent",
+          description: "Your message has been sent to the user.",
+      });
+      setIsComposeOpen(false);
+  }
 
   return (
     <div className="space-y-6">
-       <div>
-        <h1 className="text-2xl font-bold">Manage Messages</h1>
-        <p className="text-muted-foreground">View and respond to all client conversations.</p>
+       <div className="flex items-center justify-between">
+            <div>
+                <h1 className="text-2xl font-bold">Manage Messages</h1>
+                <p className="text-muted-foreground">View and respond to all client conversations.</p>
+            </div>
+            <Dialog open={isComposeOpen} onOpenChange={setIsComposeOpen}>
+                <DialogTrigger asChild>
+                    <Button>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        New Message
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Compose New Message</DialogTitle>
+                        <DialogDescription>Send a direct message to a user.</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                           <Label htmlFor="email">Recipient Email</Label>
+                           <Input id="email" type="email" placeholder="user@example.com" />
+                        </div>
+                        <div className="grid gap-2">
+                           <Label htmlFor="message">Message</Label>
+                           <Textarea id="message" placeholder="Type your message..." />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button variant="outline">Cancel</Button>
+                        </DialogClose>
+                        <Button onClick={handleSendMessage}>
+                            <Send className="mr-2 h-4 w-4"/>
+                            Send Message
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
       </div>
       <Card>
         <CardHeader>

@@ -1,3 +1,4 @@
+
 'use client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -5,31 +6,40 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { FolderKanban, GitPullRequest, MessageSquare, Users, PlusCircle } from 'lucide-react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
-
-const chartData = [
-  { name: "Jan", total: Math.floor(Math.random() * 5000) + 1000 },
-  { name: "Feb", total: Math.floor(Math.random() * 5000) + 1000 },
-  { name: "Mar", total: Math.floor(Math.random() * 5000) + 1000 },
-  { name: "Apr", total: Math.floor(Math.random() * 5000) + 1000 },
-  { name: "May", total: Math.floor(Math.random() * 5000) + 1000 },
-  { name: "Jun", total: Math.floor(Math.random() * 5000) + 1000 },
-  { name: "Jul", total: Math.floor(Math.random() * 5000) + 1000 },
-  { name: "Aug", total: Math.floor(Math.random() * 5000) + 1000 },
-  { name: "Sep", total: Math.floor(Math.random() * 5000) + 1000 },
-  { name: "Oct", total: Math.floor(Math.random() * 5000) + 1000 },
-  { name: "Nov", total: Math.floor(Math.random() * 5000) + 1000 },
-  { name: "Dec", total: Math.floor(Math.random() * 5000) + 1000 },
-];
+import { useEffect, useState } from 'react';
 
 export default function AdminDashboardPage() {
     const { user } = useAuth();
     const router = useRouter();
+    const [chartData, setChartData] = useState([]);
+
+    useEffect(() => {
+        // This useEffect will run only once on the client-side
+        const generateChartData = () => {
+          return [
+            { name: "Jan", total: Math.floor(Math.random() * 5000) + 1000 },
+            { name: "Feb", total: Math.floor(Math.random() * 5000) + 1000 },
+            { name: "Mar", total: Math.floor(Math.random() * 5000) + 1000 },
+            { name: "Apr", total: Math.floor(Math.random() * 5000) + 1000 },
+            { name: "May", total: Math.floor(Math.random() * 5000) + 1000 },
+            { name: "Jun", total: Math.floor(Math.random() * 5000) + 1000 },
+            { name: "Jul", total: Math.floor(Math.random() * 5000) + 1000 },
+            { name: "Aug", total: Math.floor(Math.random() * 5000) + 1000 },
+            { name: "Sep", total: Math.floor(Math.random() * 5000) + 1000 },
+            { name: "Oct", total: Math.floor(Math.random() * 5000) + 1000 },
+            { name: "Nov", total: Math.floor(Math.random() * 5000) + 1000 },
+            { name: "Dec", total: Math.floor(Math.random() * 5000) + 1000 },
+          ];
+        };
+        // @ts-ignore
+        setChartData(generateChartData());
+    }, []);
 
     const stats = [
-        { title: "Total Projects", value: "15", icon: FolderKanban, description: "3 active projects" },
-        { title: "Pending Requests", value: "5", icon: GitPullRequest, description: "Awaiting approval" },
-        { title: "Total Users", value: "125", icon: Users, description: "+10 this month" },
-        { title: "New Messages", value: "8", icon: MessageSquare, description: "+2 from yesterday" },
+        { title: "Total Projects", value: "0", icon: FolderKanban, description: "0 active projects" },
+        { title: "Pending Requests", value: "0", icon: GitPullRequest, description: "Awaiting approval" },
+        { title: "Total Users", value: "1", icon: Users, description: "Just the admin for now" },
+        { title: "New Messages", value: "0", icon: MessageSquare, description: "No new messages" },
     ];
 
     return (
@@ -75,7 +85,7 @@ export default function AdminDashboardPage() {
                                 fontSize={12}
                                 tickLine={false}
                                 axisLine={false}
-                                tickFormatter={(value) => `$${value}`}
+                                tickFormatter={(value) => `৳${value}`}
                                 />
                                 <Bar dataKey="total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                             </BarChart>

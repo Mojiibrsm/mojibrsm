@@ -1,6 +1,6 @@
 
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -9,8 +9,9 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, ShieldCheck, UserCog, UserX } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/auth-context';
 
-// Note: Real data will be fetched from a database. This is a placeholder type.
+// Note: This is a placeholder type. Real data will be fetched from a database.
 type User = {
     id: string;
     name: string;
@@ -31,12 +32,29 @@ const getRoleVariant = (role: string) => {
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const { toast } = useToast();
+  const { user: adminUser } = useAuth();
+
+  useEffect(() => {
+    // In a real app, you would fetch all users.
+    // For now, we'll just show the currently logged-in admin user.
+    if (adminUser) {
+        const loggedInAdmin: User = {
+            id: adminUser.uid,
+            name: adminUser.displayName || 'Admin User',
+            email: adminUser.email || 'No email provided',
+            role: 'Admin',
+            joinDate: adminUser.metadata.creationTime ? new Date(adminUser.metadata.creationTime).toLocaleDateString() : 'N/A',
+            avatar: adminUser.photoURL || '',
+        };
+        setUsers([loggedInAdmin]);
+    }
+  }, [adminUser]);
 
   const handleRoleChange = (userId: string, newRole: 'Admin' | 'Client') => {
     setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
     toast({
       title: "User Role Updated",
-      description: `User's role has been changed to ${newRole}.`
+      description: `User's role has been changed to ${newRole}. (This is a simulation)`
     });
   };
 
@@ -46,7 +64,7 @@ export default function AdminUsersPage() {
     console.log(`Suspending user ${userId}`);
     toast({
       variant: "destructive",
-      title: "User Suspended",
+      title: "User Suspended (Simulation)",
       description: `${userName} has been suspended.`,
     });
   };
@@ -60,7 +78,7 @@ export default function AdminUsersPage() {
       <Card>
         <CardHeader>
           <CardTitle>All Users</CardTitle>
-          <CardDescription>A list of all users who have an account.</CardDescription>
+          <CardDescription>A list of all users who have an account. Currently showing admin user only.</CardDescription>
         </CardHeader>
         <CardContent>
            <Table>
