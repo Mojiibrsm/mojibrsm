@@ -7,6 +7,7 @@ export const translations = {
       experience: 'Experience',
       skills: 'Skills',
       portfolio: 'Portfolio',
+      pricing: 'Pricing',
       blog: 'Blog',
       contact: 'Contact',
     },
@@ -188,6 +189,78 @@ export const translations = {
         }
       ]
     },
+    pricing: {
+      title: "My Packages",
+      description: "Choose a package that suits your needs or contact me for a custom quote.",
+      popular: "Popular",
+      buttonText: "Order Now",
+      paymentMethods: {
+          title: "We accept:",
+          bkash: "bKash",
+          nagad: "Nagad"
+      },
+      packages: [
+          {
+              name: "Basic Website",
+              price: "৳15,000",
+              billing: "one-time",
+              popular: false,
+              features: [
+                  "5 Pages",
+                  "Responsive Design",
+                  "Contact Form",
+                  "Basic SEO",
+                  "1 Month Support"
+              ]
+          },
+          {
+              name: "Standard Business",
+              price: "৳35,000",
+              billing: "one-time",
+              popular: true,
+              features: [
+                  "10 Pages",
+                  "Custom Design",
+                  "CMS Integration",
+                  "Advanced SEO",
+                  "3 Months Support"
+              ]
+          },
+          {
+              name: "E-commerce",
+              price: "৳70,000",
+              billing: "one-time",
+              popular: false,
+              features: [
+                  "Unlimited Products",
+                  "Payment Gateway",
+                  "Admin Panel",
+                  "Premium SEO",
+                  "6 Months Support"
+              ]
+          }
+      ]
+    },
+    login: {
+      title: "Login",
+      description: "Enter your email below to login to your account.",
+      emailLabel: "Email",
+      passwordLabel: "Password",
+      forgotPassword: "Forgot your password?",
+      buttonText: "Login",
+      signupText: "Don't have an account?",
+      signupLink: "Sign up"
+    },
+    signup: {
+        title: "Sign Up",
+        description: "Enter your information to create an account.",
+        nameLabel: "Full Name",
+        emailLabel: "Email",
+        passwordLabel: "Password",
+        buttonText: "Sign Up",
+        loginText: "Already have an account?",
+        loginLink: "Login"
+    },
     contact: {
       title: "Get In Touch",
       description: "Have a project in mind? I'd love to hear from you. Fill out the form or contact me directly.",
@@ -223,6 +296,7 @@ export const translations = {
       experience: 'অভিজ্ঞতা',
       skills: 'দক্ষতা',
       portfolio: 'পোর্টফোলিও',
+      pricing: 'প্যাকেজ',
       blog: 'ব্লগ',
       contact: 'যোগাযোগ',
     },
@@ -403,6 +477,78 @@ export const translations = {
           date: "জুলাই ০৫, ২০২৫"
         }
       ]
+    },
+    pricing: {
+        title: "আমার প্যাকেজসমূহ",
+        description: "আপনার প্রয়োজন অনুযায়ী একটি প্যাকেজ বেছে নিন বা কাস্টম কোটেশনের জন্য আমার সাথে যোগাযোগ করুন।",
+        popular: "জনপ্রিয়",
+        buttonText: "অর্ডার করুন",
+        paymentMethods: {
+            title: "আমরা গ্রহণ করি:",
+            bkash: "বিকাশ",
+            nagad: "নগদ"
+        },
+        packages: [
+            {
+                name: "বেসিক ওয়েবসাইট",
+                price: "৳১৫,০০০",
+                billing: "এককালীন",
+                popular: false,
+                features: [
+                    "৫টি পেজ",
+                    "রেসপনসিভ ডিজাইন",
+                    "যোগাযোগ ফর্ম",
+                    "বেসিক এসইও",
+                    "১ মাসের সাপোর্ট"
+                ]
+            },
+            {
+                name: "স্ট্যান্ডার্ড ব্যবসা",
+                price: "৳৩৫,০০০",
+                billing: "এককালীন",
+                popular: true,
+                features: [
+                    "১০টি পেজ",
+                    "কাস্টম ডিজাইন",
+                    "সিএমএস ইন্টিগ্রেশন",
+                    "অ্যাডভান্সড এসইও",
+                    "৩ মাসের সাপোর্ট"
+                ]
+            },
+            {
+                name: "ই-কমার্স",
+                price: "৳৭০,০০০",
+                billing: "এককালীন",
+                popular: false,
+                features: [
+                    "আনলিমিটেড প্রোডাক্ট",
+                    "পেমেন্ট গেটওয়ে",
+                    "অ্যাডমিন প্যানেল",
+                    "প্রিমিয়াম এসইও",
+                    "৬ মাসের সাপোর্ট"
+                ]
+            }
+        ]
+    },
+    login: {
+        title: "লগইন",
+        description: "আপনার অ্যাকাউন্টে লগইন করতে আপনার ইমেল লিখুন।",
+        emailLabel: "ইমেইল",
+        passwordLabel: "পাসওয়ার্ড",
+        forgotPassword: "পাসওয়ার্ড ভুলে গেছেন?",
+        buttonText: "লগইন করুন",
+        signupText: "অ্যাকাউন্ট নেই?",
+        signupLink: "সাইন আপ করুন"
+    },
+    signup: {
+        title: "সাইন আপ",
+        description: "একটি অ্যাকাউন্ট তৈরি করতে আপনার তথ্য লিখুন।",
+        nameLabel: "পুরো নাম",
+        emailLabel: "ইমেইল",
+        passwordLabel: "পাসওয়ার্ড",
+        buttonText: "সাইন আপ করুন",
+        loginText: "ইতিমধ্যে একটি অ্যাকাউন্ট আছে?",
+        loginLink: "লগইন করুন"
     },
     contact: {
       title: "যোগাযোগ করুন",

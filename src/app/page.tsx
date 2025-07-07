@@ -10,6 +10,7 @@ import Portfolio from '@/components/sections/portfolio';
 import Blog from '@/components/sections/blog';
 import Contact from '@/components/sections/contact';
 import Footer from '@/components/sections/footer';
+import Pricing from '@/components/sections/pricing';
 
 export default function Home() {
   return (
@@ -30,6 +31,7 @@ function PortfolioPage() {
         <Experience />
         <Skills />
         <Portfolio />
+        <Pricing />
         <Blog />
         <Contact />
       </main>

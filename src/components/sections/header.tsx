@@ -5,7 +5,7 @@ import { useLanguage } from '@/contexts/language-context';
 import { LanguageSwitcher } from '../language-switcher';
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
-import { Menu } from 'lucide-react';
+import { Menu, User } from 'lucide-react';
 
 export default function Header() {
   const { t } = useLanguage();
@@ -21,12 +21,13 @@ export default function Header() {
   }, []);
   
   const navLinks = [
-    { href: '#home', label: t.nav.home },
-    { href: '#about', label: t.nav.about },
-    { href: '#services', label: t.nav.services },
-    { href: '#experience', label: t.nav.experience },
-    { href: '#skills', label: t.nav.skills },
-    { href: '#portfolio', label: t.nav.portfolio },
+    { href: '/#home', label: t.nav.home },
+    { href: '/#about', label: t.nav.about },
+    { href: '/#services', label: t.nav.services },
+    { href: '/#experience', label: t.nav.experience },
+    { href: '/#skills', label: t.nav.skills },
+    { href: '/#portfolio', label: t.nav.portfolio },
+    { href: '/#pricing', label: t.nav.pricing },
     { href: '/blog', label: t.nav.blog },
   ];
 
@@ -55,7 +56,7 @@ export default function Header() {
       }`}
     >
       <div className="container flex h-20 items-center">
-        <Link href="#home" className="mr-6 flex items-center space-x-2">
+        <Link href="/#home" className="mr-6 flex items-center space-x-2">
           <span className="font-bold text-xl">Mojib Rsm</span>
         </Link>
         <nav className="hidden md:flex items-center space-x-1 mx-auto">
@@ -65,6 +66,12 @@ export default function Header() {
           <LanguageSwitcher />
           <Button asChild className="hidden md:inline-flex rounded-lg">
             <a href="#contact">{t.nav.contact}</a>
+          </Button>
+          <Button variant="outline" size="icon" asChild>
+            <Link href="/login">
+                <User className="h-5 w-5" />
+                <span className="sr-only">{t.login.title}</span>
+            </Link>
           </Button>
           <div className="md:hidden">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
