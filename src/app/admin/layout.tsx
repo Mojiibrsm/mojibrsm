@@ -93,11 +93,7 @@ export default function AdminLayout({
   ];
 
   if (!isClient || loading || !user || user.uid !== ADMIN_UID) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-background text-foreground">
-        <p>Verifying admin access...</p>
-      </div>
-    );
+    return null;
   }
 
   return (

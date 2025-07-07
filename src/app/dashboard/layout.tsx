@@ -99,11 +99,7 @@ export default function DashboardLayout({
   ];
 
   if (!isClient || loading || !user) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-background text-foreground">
-        <p>Loading...</p>
-      </div>
-    );
+    return null;
   }
 
   return (
