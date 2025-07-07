@@ -3,7 +3,7 @@
 
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   SidebarProvider,
@@ -72,12 +72,17 @@ export default function DashboardLayout({
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (isClient && !loading && !user) {
       router.push('/login');
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, isClient]);
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -93,7 +98,7 @@ export default function DashboardLayout({
     { href: '/dashboard/settings', label: 'Settings', icon: Settings },
   ];
 
-  if (loading || !user) {
+  if (!isClient || loading || !user) {
     return (
       <div className="flex items-center justify-center h-screen bg-background text-foreground">
         <p>Loading...</p>
