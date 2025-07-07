@@ -5,7 +5,7 @@ import { useLanguage } from '@/contexts/language-context';
 import { LanguageSwitcher } from '../language-switcher';
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
-import { Menu, Code } from 'lucide-react';
+import { Menu } from 'lucide-react';
 
 export default function Header() {
   const { t } = useLanguage();
@@ -23,10 +23,7 @@ export default function Header() {
   const navLinks = [
     { href: '#home', label: t.nav.home },
     { href: '#about', label: t.nav.about },
-    { href: '#experience', label: t.nav.experience },
-    { href: '#skills', label: t.nav.skills },
     { href: '#services', label: t.nav.services },
-    { href: '#portfolio', label: t.nav.portfolio },
   ];
 
   const NavItems = ({ isMobile = false }) => (
@@ -35,7 +32,7 @@ export default function Header() {
         <Button key={link.href} variant="link" asChild>
           <Link
             href={link.href}
-            className={`text-sm font-medium transition-colors hover:text-primary ${isMobile ? 'text-foreground text-lg w-full justify-start' : 'text-muted-foreground'}`}
+            className={`font-medium transition-colors hover:text-primary ${isMobile ? 'text-foreground text-lg w-full justify-start' : 'text-muted-foreground text-base'}`}
             onClick={() => isMobile && setIsMobileMenuOpen(false)}
           >
             {link.label}
@@ -49,20 +46,19 @@ export default function Header() {
   return (
     <header
       className={`sticky top-0 z-50 w-full transition-all duration-300 ${
-        isScrolled ? 'border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60' : 'bg-transparent'
+        isScrolled ? 'border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60' : 'bg-transparent'
       }`}
     >
-      <div className="container flex h-16 items-center">
+      <div className="container flex h-20 items-center">
         <Link href="#home" className="mr-6 flex items-center space-x-2">
-          <Code className="h-6 w-6 text-primary" />
-          <span className="font-bold">Mojib Rsm</span>
+          <span className="font-bold text-xl">Mrstudio</span>
         </Link>
-        <nav className="hidden md:flex items-center space-x-1">
+        <nav className="hidden md:flex items-center space-x-4 mx-auto">
           <NavItems />
         </nav>
         <div className="flex flex-1 items-center justify-end space-x-2">
           <LanguageSwitcher />
-          <Button asChild className="hidden md:inline-flex">
+          <Button asChild className="hidden md:inline-flex rounded-lg">
             <a href="#contact">{t.nav.contact}</a>
           </Button>
           <div className="md:hidden">

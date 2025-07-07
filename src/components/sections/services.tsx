@@ -1,41 +1,51 @@
 'use client';
 import { useLanguage } from '@/contexts/language-context';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Laptop, PenTool, LineChart, Smartphone, Wrench, ArrowRight } from 'lucide-react';
+import { Code, PenTool, Rocket, ChevronDown } from 'lucide-react';
+import Image from 'next/image';
 
-const icons = [Laptop, PenTool, LineChart, Smartphone, Wrench];
+const icons = [Code, PenTool, Rocket];
 
 export default function Services() {
   const { t } = useLanguage();
 
   return (
-    <section id="services" className="w-full py-16 md:py-24 bg-card">
+    <section id="services" className="w-full py-16 md:py-24">
       <div className="container">
-        <h2 className="text-3xl font-bold text-center mb-12 font-headline">{t.services.title}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {t.services.items.map((service, index) => {
-            const Icon = icons[index % icons.length];
-            return (
-              <Card key={service.title} className="flex flex-col text-center hover:border-primary transition-colors duration-300 shadow-sm hover:shadow-xl">
-                <CardHeader className="items-center">
-                  <div className="p-4 bg-primary/10 rounded-full">
-                    <Icon className="w-10 h-10 text-primary" />
-                  </div>
-                  <CardTitle className="pt-4">{service.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                  <CardDescription>{service.description}</CardDescription>
-                </CardContent>
-                <CardFooter className="justify-center">
-                  <Button variant="ghost" className="text-primary hover:text-primary">
-                    {service.action}
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </CardFooter>
-              </Card>
-            );
-          })}
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="space-y-4">
+            <div className="space-y-6">
+                {t.services.items.map((service, index) => {
+                  const Icon = icons[index % icons.length];
+                  return (
+                    <Card key={service.title} className="flex items-center p-4 gap-4 shadow-sm hover:shadow-lg transition-shadow rounded-2xl bg-gradient-to-r from-card to-accent/50">
+                        <div className="p-3 bg-card rounded-full shadow">
+                            <Icon className="w-8 h-8 text-primary" />
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-bold">{service.title}</h3>
+                            <p className="text-muted-foreground">{service.description}</p>
+                        </div>
+                    </Card>
+                  );
+                })}
+            </div>
+            <div className="text-center mt-6">
+                <Button variant="outline" size="lg" className="rounded-full border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+                    <ChevronDown className="mr-2 h-5 w-5"/>
+                    More
+                </Button>
+            </div>
+          </div>
+          <div className="space-y-6">
+            <h2 className="text-4xl font-bold font-headline leading-tight">{t.services.title}</h2>
+            <p className="text-muted-foreground">{t.services.description1}</p>
+            <p className="text-muted-foreground">{t.services.description2}</p>
+            <Button size="lg" asChild>
+                <a href="#contact">{t.services.hire}</a>
+            </Button>
+          </div>
         </div>
       </div>
     </section>

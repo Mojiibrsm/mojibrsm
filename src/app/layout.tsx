@@ -1,10 +1,17 @@
 import type {Metadata} from 'next';
 import { Toaster } from "@/components/ui/toaster"
 import './globals.css';
+import { Poppins } from 'next/font/google';
+
+const poppins = Poppins({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700', '800', '900'],
+  variable: '--font-poppins',
+});
 
 export const metadata: Metadata = {
-  title: 'Mojib Rsm | Portfolio',
-  description: 'Personal portfolio of Mojib Rsm, a full stack developer.',
+  title: 'Mrstudio | Portfolio',
+  description: 'Product designer and digital creative director working in design.',
 };
 
 export default function RootLayout({
@@ -13,13 +20,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="!scroll-smooth">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-      </head>
-      <body className="font-body antialiased">
+    <html lang="en" className={`${poppins.variable} !scroll-smooth`}>
+      <body className="font-body antialiased bg-background text-foreground">
         {children}
         <Toaster />
       </body>

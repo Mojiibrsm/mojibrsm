@@ -1,22 +1,29 @@
 'use client';
 import { useLanguage } from '@/contexts/language-context';
 import { Button } from '@/components/ui/button';
-import { Download, Briefcase, Send } from 'lucide-react';
+import Image from 'next/image';
+import { Award, Code, Droplet, Rss } from 'lucide-react';
 
 export default function Hero() {
   const { t } = useLanguage();
 
+  const brands = [
+    { name: "Brand 1", icon: <Code className="h-6 w-6" /> },
+    { name: "Brand 2", icon: <Award className="h-6 w-6" /> },
+    { name: "Brand 3", icon: <Droplet className="h-6 w-6" /> },
+    { name: "Brand 4", icon: <Rss className="h-6 w-6" /> },
+  ]
+
   return (
-    <section id="home" className="w-full py-24 md:py-32 lg:py-40 bg-card">
+    <section id="home" className="w-full pt-16 md:pt-24 lg:pt-32">
       <div className="container px-4 md:px-6">
-        <div className="grid gap-6 lg:grid-cols-2 lg:gap-12">
-          <div className="flex flex-col justify-center space-y-4">
-            <div className="space-y-2">
-              <span className="text-primary font-semibold tracking-wide">{t.hero.greeting}</span>
-              <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none font-headline">
-                {t.hero.name}
+        <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
+          <div className="flex flex-col justify-center space-y-6">
+            <div className="space-y-4">
+              <h1 className="text-5xl font-bold tracking-tighter sm:text-6xl xl:text-7xl/none font-headline">
+                {t.hero.greeting} <span className="text-primary">{t.hero.name}</span>
               </h1>
-              <h2 className="text-2xl font-medium text-primary sm:text-3xl font-headline">
+              <h2 className="text-2xl font-semibold text-foreground sm:text-3xl font-headline">
                 {t.hero.title}
               </h2>
               <p className="max-w-[600px] text-muted-foreground md:text-xl">
@@ -25,42 +32,50 @@ export default function Hero() {
             </div>
             <div className="flex flex-col gap-2 min-[400px]:flex-row">
               <Button size="lg" asChild>
-                <a href="/mojib-rsm-cv.pdf" download>
-                  <Download className="mr-2 h-5 w-5" />
-                  {t.hero.cv}
-                </a>
-              </Button>
-              <Button size="lg" variant="secondary" asChild>
-                <a href="#portfolio">
-                  <Briefcase className="mr-2 h-5 w-5" />
-                  {t.hero.work}
-                </a>
-              </Button>
-              <Button size="lg" variant="outline" asChild>
                 <a href="#contact">
-                  <Send className="mr-2 h-5 w-5" />
-                  {t.hero.contact}
+                  {t.hero.hire}
                 </a>
               </Button>
             </div>
           </div>
-          <div className="hidden lg:block">
-            <div className="w-full max-w-md mx-auto aspect-square rounded-full bg-gradient-to-tr from-primary/20 via-primary/50 to-accent/30 p-2">
-              <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
-                 <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 200 200"
-                    className="w-4/5 h-4/5 text-primary"
-                    fill="currentColor"
-                  >
-                    <path
-                      d="M62.5,-63.9C77.4,-49.9,83.5,-24.9,82.4,-0.8C81.3,23.4,73,46.8,56.6,59.3C40.2,71.8,15.7,73.4,-6.9,71.1C-29.5,68.8,-50.2,62.6,-62,49.8C-73.8,37,-76.8,17.7,-74,0.1C-71.2,-17.4,-62.6,-34.8,-50.1,-48.7C-37.6,-62.6,-21.2,-73,-2.3,-71.8C16.5,-70.6,33.1,-58.9,46.2,-48.9C49.5,-56.4,52.8,-60.9,62.5,-63.9Z"
-                      transform="translate(100 100)"
-                    ></path>
-                 </svg>
-              </div>
+          <div className="relative">
+            <Image
+              src="https://placehold.co/600x700.png"
+              alt="Brunao Dev"
+              width={600}
+              height={700}
+              className="mx-auto aspect-[6/7] overflow-hidden rounded-xl object-cover"
+              data-ai-hint="man developer"
+            />
+            <div className="absolute top-1/4 -left-12 bg-card/80 backdrop-blur-sm p-4 rounded-lg shadow-lg flex items-center gap-3">
+                <div className="bg-green-100 p-2 rounded-full">
+                    <Award className="w-6 h-6 text-green-600" />
+                </div>
+                <div>
+                    <p className="font-bold">{t.hero.awards}</p>
+                </div>
+            </div>
+            <div className="absolute bottom-1/4 -right-12 bg-card/80 backdrop-blur-sm p-4 rounded-lg shadow-lg flex items-center gap-3">
+                <div className="bg-orange-100 p-2 rounded-full">
+                    <span className="text-2xl">🎉</span>
+                </div>
+                <div>
+                    <p className="font-bold">{t.hero.uiUx}</p>
+                    <p className="text-sm text-muted-foreground">{t.hero.uiUxDesc}</p>
+                </div>
             </div>
           </div>
+        </div>
+        <div className="mt-16 md:mt-24">
+            <h3 className="text-center text-lg font-semibold text-muted-foreground mb-6">{t.hero.brandsTitle}</h3>
+            <div className="flex flex-wrap justify-center items-center gap-x-8 md:gap-x-12 gap-y-4">
+                {brands.map((brand, index) => (
+                    <div key={index} className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+                        {brand.icon}
+                        <span className="font-semibold text-lg">{brand.name}</span>
+                    </div>
+                ))}
+            </div>
         </div>
       </div>
     </section>
