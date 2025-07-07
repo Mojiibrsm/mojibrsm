@@ -1,5 +1,4 @@
 'use client';
-import { LanguageProvider } from '@/contexts/language-context';
 import Header from '@/components/sections/header';
 import Footer from '@/components/sections/footer';
 import { useLanguage } from '@/contexts/language-context';
@@ -9,15 +8,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 
-export default function BlogPageContainer() {
-  return (
-    <LanguageProvider>
-      <BlogPage />
-    </LanguageProvider>
-  );
-}
-
-function BlogPage() {
+export default function BlogPage() {
     const { t } = useLanguage();
 
     const containerVariants = {

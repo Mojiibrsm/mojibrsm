@@ -2,6 +2,7 @@ import type {Metadata} from 'next';
 import { Toaster } from "@/components/ui/toaster"
 import './globals.css';
 import { Poppins } from 'next/font/google';
+import { AuthProvider } from '@/contexts/auth-context';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -22,7 +23,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${poppins.variable} !scroll-smooth`} suppressHydrationWarning>
       <body className="font-body antialiased bg-background text-foreground" suppressHydrationWarning>
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
         <Toaster />
       </body>
     </html>

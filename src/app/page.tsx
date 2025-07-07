@@ -1,5 +1,4 @@
 'use client';
-import { LanguageProvider } from '@/contexts/language-context';
 import Header from '@/components/sections/header';
 import Hero from '@/components/sections/hero';
 import About from '@/components/sections/about';
@@ -14,9 +13,7 @@ import Pricing from '@/components/sections/pricing';
 
 export default function Home() {
   return (
-    <LanguageProvider>
-      <PortfolioPage />
-    </LanguageProvider>
+    <PortfolioPage />
   );
 }
 
