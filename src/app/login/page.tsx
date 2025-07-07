@@ -54,15 +54,24 @@ export default function LoginPage() {
       toast({ title: "Success", description: "Logged in successfully." });
       router.push('/dashboard');
     } catch (error: any) {
+        console.error("Login failed:", error);
         let description = "An unexpected error occurred. Please try again.";
-        if (error.code === AuthErrorCodes.INVALID_LOGIN_CREDENTIALS) {
-            description = "Invalid email or password. Please try again.";
+        switch(error.code) {
+            case AuthErrorCodes.INVALID_LOGIN_CREDENTIALS:
+                description = "Invalid email or password. Please try again.";
+                break;
+            case 'auth/operation-not-allowed':
+                description = "Login method is not enabled in the Firebase console.";
+                break;
+            case 'auth/invalid-api-key':
+                description = "Invalid Firebase API Key. Please check your configuration.";
+                break;
         }
-      toast({
-        variant: "destructive",
-        title: "Login Failed",
-        description,
-      });
+        toast({
+            variant: "destructive",
+            title: "Login Failed",
+            description,
+        });
     } finally {
       setIsLoading(false);
     }
@@ -75,10 +84,23 @@ export default function LoginPage() {
       toast({ title: "Success", description: "Logged in successfully." });
       router.push('/dashboard');
     } catch (error: any) {
+      console.error("Google Login failed:", error);
+      let description = "Could not log in with Google. Please try again.";
+       switch(error.code) {
+            case 'auth/operation-not-allowed':
+                description = "Google sign-in is not enabled in the Firebase console.";
+                break;
+            case 'auth/invalid-api-key':
+                description = "Invalid Firebase API Key. Please check your configuration.";
+                break;
+            case 'auth/popup-closed-by-user':
+                description = "The sign-in window was closed. Please try again.";
+                break;
+        }
       toast({
         variant: "destructive",
         title: "Google Login Failed",
-        description: "Could not log in with Google. Please try again.",
+        description,
       });
     } finally {
         setIsGoogleLoading(false);

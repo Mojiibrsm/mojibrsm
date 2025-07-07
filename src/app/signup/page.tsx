@@ -57,9 +57,21 @@ export default function SignupPage() {
       toast({ title: "Success", description: "Account created successfully." });
       router.push('/dashboard');
     } catch (error: any) {
+        console.error("Sign up failed:", error);
         let description = "An unexpected error occurred. Please try again.";
-        if (error.code === AuthErrorCodes.EMAIL_EXISTS) {
-            description = "An account with this email already exists.";
+        switch(error.code) {
+            case AuthErrorCodes.EMAIL_EXISTS:
+                description = "An account with this email already exists.";
+                break;
+            case 'auth/operation-not-allowed':
+                description = "Sign-up method is not enabled in the Firebase console.";
+                break;
+            case 'auth/invalid-api-key':
+                description = "Invalid Firebase API Key. Please check your configuration.";
+                break;
+            case 'auth/weak-password':
+                description = "The password is too weak. Please choose a stronger password.";
+                break;
         }
         toast({
             variant: "destructive",
@@ -78,10 +90,23 @@ export default function SignupPage() {
       toast({ title: "Success", description: "Logged in successfully." });
       router.push('/dashboard');
     } catch (error: any) {
+      console.error("Google Sign up failed:", error);
+      let description = "Could not sign up with Google. Please try again.";
+      switch(error.code) {
+        case 'auth/operation-not-allowed':
+            description = "Google sign-in is not enabled in the Firebase console.";
+            break;
+        case 'auth/invalid-api-key':
+            description = "Invalid Firebase API Key. Please check your configuration.";
+            break;
+        case 'auth/popup-closed-by-user':
+            description = "The sign-in window was closed. Please try again.";
+            break;
+      }
       toast({
         variant: "destructive",
         title: "Google Sign Up Failed",
-        description: "Could not sign up with Google. Please try again.",
+        description,
       });
     } finally {
       setIsGoogleLoading(false);
