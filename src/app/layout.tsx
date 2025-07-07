@@ -20,8 +20,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${poppins.variable} !scroll-smooth dark`} suppressHydrationWarning>
-      <body className="font-body antialiased bg-background text-foreground">
+    <html lang="en" className={`${poppins.variable} !scroll-smooth dark`}>
+      <body className="font-body antialiased bg-background text-foreground" suppressHydrationWarning>
         {children}
         <Toaster />
       </body>
