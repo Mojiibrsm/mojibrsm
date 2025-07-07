@@ -1,8 +1,9 @@
+
 'use client';
 
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   SidebarProvider,
@@ -59,6 +60,11 @@ export default function AdminLayout({
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     if (!loading) {
@@ -86,7 +92,7 @@ export default function AdminLayout({
     { href: '/admin/settings', label: 'Settings', icon: Settings },
   ];
 
-  if (loading || !user || user.uid !== ADMIN_UID) {
+  if (!isClient || loading || !user || user.uid !== ADMIN_UID) {
     return (
       <div className="flex items-center justify-center h-screen bg-background text-foreground">
         <p>Verifying admin access...</p>
