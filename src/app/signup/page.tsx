@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { createUserWithEmailAndPassword, updateProfile, signInWithPopup } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, getAdditionalUserInfo } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
 import { useLanguage } from '@/contexts/language-context';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ import Footer from '@/components/sections/footer';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { addUser } from '@/services/firestore';
 
 const formSchema = z.object({
   fullName: z.string().min(1, { message: "Full name is required." }),
@@ -54,6 +55,7 @@ export default function SignupPage() {
       await updateProfile(userCredential.user, {
         displayName: values.fullName,
       });
+      await addUser(userCredential.user);
       toast({ title: "Success", description: "Account created successfully." });
       router.push('/dashboard');
     } catch (error: any) {
@@ -86,7 +88,11 @@ export default function SignupPage() {
   const handleGoogleLogin = async () => {
     setIsGoogleLoading(true);
     try {
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+      const additionalInfo = getAdditionalUserInfo(result);
+      if (additionalInfo?.isNewUser) {
+        await addUser(result.user);
+      }
       toast({ title: "Success", description: "Logged in successfully." });
       router.push('/dashboard');
     } catch (error: any) {

@@ -9,11 +9,12 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, ShieldCheck, UserCog, UserX } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/auth-context';
+import { getUsers } from '@/services/firestore';
 
-// Note: This is a placeholder type. Real data will be fetched from a database.
+// This type now matches the structure in Firestore
 type User = {
     id: string;
+    uid: string;
     name: string;
     email: string;
     role: 'Admin' | 'Client';
@@ -32,35 +33,36 @@ const getRoleVariant = (role: string) => {
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const { toast } = useToast();
-  const { user: adminUser } = useAuth();
 
   useEffect(() => {
-    // In a real app, you would fetch all users.
-    // For now, we'll just show the currently logged-in admin user.
-    if (adminUser) {
-        const loggedInAdmin: User = {
-            id: adminUser.uid,
-            name: adminUser.displayName || 'Admin User',
-            email: adminUser.email || 'No email provided',
-            role: 'Admin',
-            joinDate: adminUser.metadata.creationTime ? new Date(adminUser.metadata.creationTime).toLocaleDateString() : 'N/A',
-            avatar: adminUser.photoURL || '',
-        };
-        setUsers([loggedInAdmin]);
-    }
-  }, [adminUser]);
+    const unsubscribe = getUsers((fetchedUsers) => {
+      const formattedUsers: User[] = fetchedUsers.map(u => ({
+        id: u.id,
+        uid: u.uid,
+        name: u.displayName || 'No Name Provided',
+        email: u.email || 'No Email Provided',
+        role: u.role || 'Client',
+        joinDate: u.createdAt?.toDate().toLocaleDateString() || 'N/A',
+        avatar: u.photoURL || '',
+      }));
+      setUsers(formattedUsers);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleRoleChange = (userId: string, newRole: 'Admin' | 'Client') => {
+    // In a real app, you would call a Firestore update function here.
+    // For now, this is a UI-only simulation.
     setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
     toast({
-      title: "User Role Updated",
-      description: `User's role has been changed to ${newRole}. (This is a simulation)`
+      title: "User Role Updated (Simulation)",
+      description: `User's role has been changed to ${newRole}.`
     });
   };
 
   const handleSuspendUser = (userId: string, userName: string) => {
-    // In a real app, this would make an API call.
-    // Here we'll just show a toast.
+    // In a real app, this would make an API call to disable the user in Firebase Auth.
     console.log(`Suspending user ${userId}`);
     toast({
       variant: "destructive",
@@ -73,12 +75,12 @@ export default function AdminUsersPage() {
     <div className="space-y-6">
        <div>
         <h1 className="text-2xl font-bold">Manage Users</h1>
-        <p className="text-muted-foreground">View and manage all registered users.</p>
+        <p className="text-muted-foreground">View and manage all registered users from the database.</p>
       </div>
       <Card>
         <CardHeader>
           <CardTitle>All Users</CardTitle>
-          <CardDescription>A list of all users who have an account. Currently showing admin user only.</CardDescription>
+          <CardDescription>A list of all users who have an account.</CardDescription>
         </CardHeader>
         <CardContent>
            <Table>
@@ -94,7 +96,7 @@ export default function AdminUsersPage() {
               {users.length === 0 ? (
                 <TableRow>
                     <TableCell colSpan={4} className="h-24 text-center">
-                        No users found.
+                        No users found in the database.
                     </TableCell>
                 </TableRow>
               ) : (

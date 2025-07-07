@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -14,15 +14,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-
-// Note: Real data will be fetched from a database. This is a placeholder type.
-type Project = {
-    id: string;
-    name: string;
-    status: string;
-    client: string;
-    deadline: string;
-};
+import { useAuth } from '@/contexts/auth-context';
+import { addProject, getProjects, updateProject, deleteProject, Project, ProjectStatus } from '@/services/firestore';
 
 const getStatusVariant = (status: string) => {
     switch (status) {
@@ -38,6 +31,14 @@ export default function AdminProjectsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const unsubscribe = getProjects((fetchedProjects) => {
+      setProjects(fetchedProjects);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleAddNew = () => {
     setEditingProject(null);
@@ -49,24 +50,34 @@ export default function AdminProjectsPage() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (projectId: string) => {
-    setProjects(projects.filter(p => p.id !== projectId));
-    toast({ title: "Project Deleted", description: `Project ${projectId} has been successfully deleted.` });
+  const handleDelete = async (projectId: string) => {
+    try {
+      await deleteProject(projectId);
+      toast({ title: "Project Deleted", description: `Project has been successfully deleted.` });
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to delete project.", variant: "destructive" });
+    }
   };
   
-  const handleSave = (formData: Omit<Project, 'id'>) => {
-    if (editingProject) {
-      // Edit existing project
-      setProjects(projects.map(p => p.id === editingProject.id ? { ...editingProject, ...formData } : p));
-      toast({ title: "Project Updated", description: "The project has been successfully updated." });
-    } else {
-      // Add new project
-      const newProject = { id: `PROJ-${String(projects.length + 1).padStart(3, '0')}`, ...formData };
-      setProjects([newProject, ...projects]);
-      toast({ title: "Project Added", description: "A new project has been successfully added." });
+  const handleSave = async (formData: Omit<Project, 'id' | 'userId'>) => {
+    if (!user) {
+        toast({ title: "Authentication Error", description: "You must be logged in.", variant: "destructive" });
+        return;
     }
-    setIsDialogOpen(false);
-    setEditingProject(null);
+    try {
+      if (editingProject) {
+        await updateProject(editingProject.id!, { ...formData });
+        toast({ title: "Project Updated", description: "The project has been successfully updated." });
+      } else {
+        const newProject: Omit<Project, 'id'> = { ...formData, userId: user.uid };
+        await addProject(newProject);
+        toast({ title: "Project Added", description: "A new project has been successfully added." });
+      }
+      setIsDialogOpen(false);
+      setEditingProject(null);
+    } catch (error) {
+      toast({ title: "Save Error", description: "Could not save the project.", variant: "destructive" });
+    }
   };
 
   return (
@@ -101,7 +112,7 @@ export default function AdminProjectsPage() {
               {projects.length === 0 ? (
                 <TableRow>
                     <TableCell colSpan={5} className="h-24 text-center">
-                        No projects found.
+                        No projects found. Add one to get started.
                     </TableCell>
                 </TableRow>
               ) : (
@@ -137,12 +148,12 @@ export default function AdminProjectsPage() {
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  This action cannot be undone. This will permanently delete the project.
+                                  This action cannot be undone. This will permanently delete the project from the database.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDelete(project.id)} className="bg-destructive hover:bg-destructive/90">
+                                <AlertDialogAction onClick={() => handleDelete(project.id!)} className="bg-destructive hover:bg-destructive/90">
                                   Yes, delete project
                                 </AlertDialogAction>
                               </AlertDialogFooter>
@@ -170,12 +181,17 @@ export default function AdminProjectsPage() {
 }
 
 // Sub-component for the Project Form Dialog
-function ProjectFormDialog({ isOpen, onOpenChange, project, onSave }: { isOpen: boolean; onOpenChange: (open: boolean) => void; project: Project | null; onSave: (data: any) => void; }) {
-  const [formData, setFormData] = useState({ name: '', client: '', status: 'Pending', deadline: '' });
+function ProjectFormDialog({ isOpen, onOpenChange, project, onSave }: { isOpen: boolean; onOpenChange: (open: boolean) => void; project: Project | null; onSave: (data: any) => Promise<void>; }) {
+  const [formData, setFormData] = useState({ name: '', client: '', status: 'Pending' as ProjectStatus, deadline: '' });
 
   React.useEffect(() => {
     if (project) {
-      setFormData(project);
+      setFormData({
+          name: project.name,
+          client: project.client,
+          status: project.status,
+          deadline: project.deadline,
+      });
     } else {
       setFormData({ name: '', client: '', status: 'Pending', deadline: '' });
     }
@@ -187,12 +203,12 @@ function ProjectFormDialog({ isOpen, onOpenChange, project, onSave }: { isOpen: 
   };
   
   const handleStatusChange = (value: string) => {
-    setFormData(prev => ({ ...prev, status: value }));
+    setFormData(prev => ({ ...prev, status: value as ProjectStatus }));
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    await onSave(formData);
   };
 
   return (

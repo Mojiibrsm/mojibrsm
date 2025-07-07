@@ -1,38 +1,14 @@
 
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-
-const projects = [
-  {
-    id: 'PROJ-001',
-    name: 'E-commerce Platform Redesign',
-    status: 'In Progress',
-    deadline: '2025-08-30',
-    description: 'A complete overhaul of the existing e-commerce website to improve user experience and performance. This includes a new design, mobile optimization, and faster checkout process.'
-  },
-  {
-    id: 'PROJ-002',
-    name: 'Mobile App for Booking',
-    status: 'Completed',
-    deadline: '2025-06-15',
-    description: 'A native mobile application for both iOS and Android that allows users to book appointments and services on the go. Integrated with a custom backend and payment gateway.'
-  },
-  {
-    id: 'PROJ-003',
-    name: 'Corporate Website Development',
-    status: 'Pending',
-    deadline: '2025-09-10',
-    description: 'Development of a new corporate website from scratch. The project is currently in the requirement gathering and planning phase.'
-  },
-];
-
-type Project = typeof projects[0];
+import { useAuth } from '@/contexts/auth-context';
+import { getProjectsByUserId, Project } from '@/services/firestore';
 
 const getStatusVariant = (status: string) => {
     switch (status) {
@@ -48,8 +24,19 @@ const getStatusVariant = (status: string) => {
 }
 
 export default function ProjectsPage() {
+  const [projects, setProjects] = useState<Project[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      const unsubscribe = getProjectsByUserId(user.uid, (userProjects) => {
+        setProjects(userProjects);
+      });
+      return () => unsubscribe();
+    }
+  }, [user]);
 
   const handleViewProject = (project: Project) => {
     setSelectedProject(project);
@@ -65,7 +52,7 @@ export default function ProjectsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Projects</CardTitle>
-          <CardDescription>A list of all your ongoing and completed projects.</CardDescription>
+          <CardDescription>A list of all your ongoing and completed projects from our database.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -78,21 +65,29 @@ export default function ProjectsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {projects.map((project) => (
-                <TableRow key={project.id}>
-                  <TableCell className="font-medium">{project.name}</TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusVariant(project.status) as any}>{project.status}</Badge>
-                  </TableCell>
-                  <TableCell>{project.deadline}</TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => handleViewProject(project)}>
-                      <Eye className="h-4 w-4" />
-                      <span className="sr-only">View Project</span>
-                    </Button>
+              {projects.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="h-24 text-center">
+                    You have no projects yet.
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                projects.map((project) => (
+                  <TableRow key={project.id}>
+                    <TableCell className="font-medium">{project.name}</TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusVariant(project.status) as any}>{project.status}</Badge>
+                    </TableCell>
+                    <TableCell>{project.deadline}</TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" onClick={() => handleViewProject(project)}>
+                        <Eye className="h-4 w-4" />
+                        <span className="sr-only">View Project</span>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>
@@ -107,7 +102,8 @@ export default function ProjectsPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="py-4 text-sm text-muted-foreground">
-            {selectedProject?.description}
+            {/* In a real app, you would fetch project description from Firestore as well */}
+            This is a placeholder description. You can add a 'description' field to your project in Firestore.
           </div>
           <DialogFooter>
             <Button onClick={() => setIsDialogOpen(false)}>Close</Button>
