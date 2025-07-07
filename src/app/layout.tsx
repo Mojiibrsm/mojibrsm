@@ -10,7 +10,7 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: 'Mrstudio | Portfolio',
+  title: 'Mojib Rsm | Portfolio',
   description: 'Product designer and digital creative director working in design.',
 };
 
@@ -20,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${poppins.variable} !scroll-smooth`}>
+    <html lang="en" className={`${poppins.variable} !scroll-smooth dark`}>
       <body className="font-body antialiased bg-background text-foreground">
         {children}
         <Toaster />

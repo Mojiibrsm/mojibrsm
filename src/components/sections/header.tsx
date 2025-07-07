@@ -24,6 +24,9 @@ export default function Header() {
     { href: '#home', label: t.nav.home },
     { href: '#about', label: t.nav.about },
     { href: '#services', label: t.nav.services },
+    { href: '#experience', label: t.nav.experience },
+    { href: '#skills', label: t.nav.skills },
+    { href: '#portfolio', label: t.nav.portfolio },
   ];
 
   const NavItems = ({ isMobile = false }) => (
@@ -32,7 +35,7 @@ export default function Header() {
         <Button key={link.href} variant="link" asChild>
           <Link
             href={link.href}
-            className={`font-medium transition-colors hover:text-primary ${isMobile ? 'text-foreground text-lg w-full justify-start' : 'text-muted-foreground text-base'}`}
+            className={`font-medium transition-colors hover:text-primary ${isMobile ? 'text-foreground text-lg w-full justify-start py-2' : 'text-muted-foreground text-base'}`}
             onClick={() => isMobile && setIsMobileMenuOpen(false)}
           >
             {link.label}
@@ -45,15 +48,16 @@ export default function Header() {
 
   return (
     <header
+      id="home"
       className={`sticky top-0 z-50 w-full transition-all duration-300 ${
-        isScrolled ? 'border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60' : 'bg-transparent'
+        isScrolled ? 'border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60' : 'bg-transparent'
       }`}
     >
       <div className="container flex h-20 items-center">
         <Link href="#home" className="mr-6 flex items-center space-x-2">
-          <span className="font-bold text-xl">Mrstudio</span>
+          <span className="font-bold text-xl">Mojib Rsm</span>
         </Link>
-        <nav className="hidden md:flex items-center space-x-4 mx-auto">
+        <nav className="hidden md:flex items-center space-x-1 mx-auto">
           <NavItems />
         </nav>
         <div className="flex flex-1 items-center justify-end space-x-2">
@@ -69,10 +73,10 @@ export default function Header() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="right">
-                <div className="flex flex-col space-y-4 p-4">
+                <div className="flex flex-col space-y-2 p-4">
                   <NavItems isMobile={true}/>
-                   <Button asChild>
-                    <a href="#contact">{t.nav.contact}</a>
+                   <Button asChild className="w-full justify-start mt-4">
+                    <a href="#contact" onClick={() => setIsMobileMenuOpen(false)}>{t.nav.contact}</a>
                   </Button>
                 </div>
               </SheetContent>
