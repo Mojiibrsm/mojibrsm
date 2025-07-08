@@ -3,63 +3,54 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    function isAuth() {
-      return request.auth != null;
-    }
-
+    
     function isOwner(userId) {
-      return request.auth.uid == userId;
+      return request.auth != null && request.auth.uid == userId;
     }
 
     function isAdmin() {
-      // Check if the user is authenticated and their document in Firestore has the 'Admin' role.
-      return isAuth() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Admin';
+      return request.auth != null && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+             && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Admin';
     }
 
-    // Users Collection Rules
     match /users/{userId} {
-      // Anyone authenticated can create their OWN user document.
-      allow create: if isAuth() && isOwner(userId);
-      
-      // Users can get/update their own document. Admins can get any.
-      allow get, update: if isAuth() && (isOwner(userId) || isAdmin());
-
-      // Only admins can list all users.
-      allow list: if isAdmin();
-      
+      // Allow list for authenticated users to check for first user.
+      allow list: if request.auth != null;
+      // Admins can get any user doc. Users can get their own.
+      allow get: if isOwner(userId) || isAdmin();
+      // Users can create their own doc on signup. Admins can create any.
+      allow create: if isOwner(userId) || isAdmin();
+      // User can update their own doc (but not their role). Admins can update any.
+      allow update: if (isOwner(userId) && request.resource.data.role == resource.data.role) || isAdmin();
       // Only admins can delete users.
       allow delete: if isAdmin();
     }
 
-    // Projects Collection Rules
     match /projects/{projectId} {
-      // Any authenticated user can view projects (for portfolio).
-      allow read: if isAuth();
-      
-      // Only admins can create, update, or delete projects.
-      allow write: if isAdmin();
+      // Admins can perform any action.
+      allow read, write: if isAdmin();
+      // Users can read projects assigned to them.
+      allow get: if isOwner(resource.data.userId);
     }
 
-    // MessageThreads Collection Rules
-    match /messageThreads/{threadId} {
-      // Users can create threads where they are the owner.
-      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
-      
-      // Users can read/write to their own threads. Admins can read/write any thread.
-      allow read, write: if isAuth() && (resource.data.userId == request.auth.uid || isAdmin());
-    }
-
-    // Requests Collection Rules
     match /requests/{requestId} {
-      // Users can create requests for themselves.
-      allow create: if isAuth() && request.resource.data.userId == request.auth.uid;
-      
-      // Users can read their own requests. Admins can read any.
-      allow read: if isAuth() && (resource.data.userId == request.auth.uid || isAdmin());
-      
-      // Only admins can update (approve/reject) or delete requests.
+      // Admins can do anything.
+      allow read, write: if isAdmin();
+      // Users can read and create their own requests.
+      allow get: if isOwner(resource.data.userId);
+      allow create: if isOwner(request.resource.data.userId);
+      // Users cannot update or delete their requests.
       allow update, delete: if isAdmin();
+    }
+    
+    match /messageThreads/{threadId} {
+      // Admins can do anything.
+      allow read, write: if isAdmin();
+      // Users can read and create their own message threads, and update them (to add new messages).
+      allow get, update: if isOwner(resource.data.userId);
+      allow create: if isOwner(request.resource.data.userId);
+      // Users cannot delete threads.
+      allow delete: if isAdmin();
     }
   }
 }

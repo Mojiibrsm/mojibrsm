@@ -1,6 +1,6 @@
 
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, updateDoc, deleteDoc, query, where, Timestamp, onSnapshot, Unsubscribe, arrayUnion, setDoc, getDoc, getDocs, orderBy, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, deleteDoc, query, where, Timestamp, onSnapshot, Unsubscribe, arrayUnion, setDoc, getDoc, getDocs, orderBy, serverTimestamp, limit } from 'firebase/firestore';
 import type { User as FirebaseAuthUser } from 'firebase/auth';
 
 // --- User Management ---
@@ -14,22 +14,27 @@ export interface FirestoreUser {
 }
 
 // Adds a new user to the 'users' collection in Firestore.
-// NOTE: For security, the first user is no longer automatically assigned the 'Admin' role.
-// After the first user signs up, you must manually change their 'role' field
-// from 'Client' to 'Admin' in the Firebase Firestore console.
+// The first user to sign up is automatically assigned the 'Admin' role.
 export const addUser = async (user: FirebaseAuthUser) => {
     const userRef = doc(db, "users", user.uid);
     try {
         const docSnap = await getDoc(userRef);
         // Only create a new document if one doesn't already exist.
         if (!docSnap.exists()) {
+            // Check if this is the very first user by querying the collection.
+            const usersCollectionRef = collection(db, "users");
+            // We query for just one document to see if the collection is empty.
+            const q = query(usersCollectionRef, limit(1));
+            const querySnapshot = await getDocs(q);
+            
+            const isFirstUser = querySnapshot.empty;
+
             await setDoc(userRef, {
                 displayName: user.displayName,
                 email: user.email,
                 photoURL: user.photoURL,
                 createdAt: serverTimestamp(),
-                // All new users default to 'Client' role.
-                role: 'Client',
+                role: isFirstUser ? 'Admin' : 'Client',
             });
         }
     } catch (error) {
