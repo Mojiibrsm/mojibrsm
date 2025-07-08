@@ -1,3 +1,4 @@
+
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, deleteDoc, query, where, Timestamp, onSnapshot, Unsubscribe, arrayUnion, setDoc, getDoc, getDocs, orderBy, serverTimestamp } from 'firebase/firestore';
 import type { User as FirebaseAuthUser } from 'firebase/auth';
@@ -12,27 +13,28 @@ export interface FirestoreUser {
     createdAt: Timestamp;
 }
 
+// Adds a new user to the 'users' collection in Firestore.
+// NOTE: For security, the first user is no longer automatically assigned the 'Admin' role.
+// After the first user signs up, you must manually change their 'role' field
+// from 'Client' to 'Admin' in the Firebase Firestore console.
 export const addUser = async (user: FirebaseAuthUser) => {
     const userRef = doc(db, "users", user.uid);
     try {
         const docSnap = await getDoc(userRef);
+        // Only create a new document if one doesn't already exist.
         if (!docSnap.exists()) {
-            // Check if this is the very first user
-            const usersQuery = query(collection(db, "users"));
-            const querySnapshot = await getDocs(usersQuery);
-            const isFirstUser = querySnapshot.empty;
-
             await setDoc(userRef, {
                 displayName: user.displayName,
                 email: user.email,
                 photoURL: user.photoURL,
                 createdAt: serverTimestamp(),
-                // Assign 'Admin' role if it's the first user, otherwise 'Client'
-                role: isFirstUser ? 'Admin' : 'Client',
+                // All new users default to 'Client' role.
+                role: 'Client',
             });
         }
     } catch (error) {
         console.error("Error adding user to Firestore: ", error);
+        throw new Error("Could not add user to Firestore");
     }
 };
 
@@ -168,13 +170,12 @@ export interface IMessageThread {
 
 export const createMessageThread = async (threadData: Omit<IMessageThread, 'id' | 'messages' | 'lastMessage' | 'lastMessageTimestamp' | 'createdAt'>, initialMessage: IMessage) => {
     try {
-        const timestamp = serverTimestamp();
         const docRef = await addDoc(collection(db, "messageThreads"), {
             ...threadData,
-            messages: [{ ...initialMessage, timestamp }],
+            messages: [ { ...initialMessage, timestamp: serverTimestamp() } ],
             lastMessage: initialMessage.text,
-            lastMessageTimestamp: timestamp,
-            createdAt: timestamp,
+            lastMessageTimestamp: serverTimestamp(),
+            createdAt: serverTimestamp(),
         });
         return docRef.id;
     } catch (e) {
@@ -186,11 +187,10 @@ export const createMessageThread = async (threadData: Omit<IMessageThread, 'id' 
 export const addMessageToThread = async (threadId: string, message: IMessage, from: 'client' | 'admin') => {
     try {
         const threadRef = doc(db, "messageThreads", threadId);
-        const timestamp = serverTimestamp();
         const updateData: any = {
-            messages: arrayUnion({ ...message, timestamp }),
+            messages: arrayUnion({ ...message, timestamp: serverTimestamp() }),
             lastMessage: message.text,
-            lastMessageTimestamp: timestamp,
+            lastMessageTimestamp: serverTimestamp(),
         };
         if (from === 'client') {
             updateData.unreadByAdmin = true;
