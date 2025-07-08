@@ -46,7 +46,7 @@ export default function Contact() {
           <motion.div variants={itemVariants}>
             <form className="space-y-4">
               <Input type="text" placeholder={t.contact.form.name} />
-              <Input type="email" placeholder={t.contact.form.email} />
+              <Input type="email" placeholder={t.contact.form.email} suppressHydrationWarning />
               <Input type="text" placeholder={t.contact.form.subject} />
               <Textarea placeholder={t.contact.form.message} rows={5} />
               <Button type="submit" size="lg" className="w-full">{t.contact.form.submit}</Button>
