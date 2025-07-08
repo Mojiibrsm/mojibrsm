@@ -14,27 +14,20 @@ export interface FirestoreUser {
 }
 
 // Adds a new user to the 'users' collection in Firestore.
-// The first user to sign up is automatically assigned the 'Admin' role.
 export const addUser = async (user: FirebaseAuthUser) => {
     const userRef = doc(db, "users", user.uid);
     try {
         const docSnap = await getDoc(userRef);
         // Only create a new document if one doesn't already exist.
         if (!docSnap.exists()) {
-            // Check if this is the very first user by querying the collection.
-            const usersCollectionRef = collection(db, "users");
-            // We query for just one document to see if the collection is empty.
-            const q = query(usersCollectionRef, limit(1));
-            const querySnapshot = await getDocs(q);
-            
-            const isFirstUser = querySnapshot.empty;
-
+            // All new users are created as 'Client' by default.
+            // The 'Admin' role must be assigned manually in the Firestore console for security.
             await setDoc(userRef, {
                 displayName: user.displayName,
                 email: user.email,
                 photoURL: user.photoURL,
                 createdAt: serverTimestamp(),
-                role: isFirstUser ? 'Admin' : 'Client',
+                role: 'Client',
             });
         }
     } catch (error) {
@@ -42,6 +35,7 @@ export const addUser = async (user: FirebaseAuthUser) => {
         throw new Error("Could not add user to Firestore");
     }
 };
+
 
 export const getUsers = (callback: (users: FirestoreUser[]) => void): Unsubscribe => {
     const q = query(collection(db, "users"), orderBy("createdAt", "desc"));

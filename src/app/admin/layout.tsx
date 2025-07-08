@@ -35,9 +35,9 @@ import { Button } from '@/components/ui/button';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
-// IMPORTANT: The admin role is now automatically assigned to the first registered user.
-// You no longer need to manually set an ADMIN_UID.
-// To make another user an admin, you can change their role in Firestore.
+// IMPORTANT: To access this page, your user role must be 'Admin' in the Firestore 'users' collection.
+// After signing up, go to your Firebase console, find your user document in the 'users' collection,
+// and change the 'role' field from 'Client' to 'Admin'.
 
 const Logo = () => (
     <svg width="32" height="32" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
