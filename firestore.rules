@@ -1,56 +1,62 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
-    }
 
+    // Helper function to check if the requesting user is an admin.
     function isAdmin() {
-      return request.auth != null && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-             && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Admin';
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Admin';
     }
 
+    // Helper function to check if the user is the owner of the document.
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // --- Users Collection ---
     match /users/{userId} {
-      // Allow list for authenticated users to check for first user.
-      allow list: if request.auth != null;
-      // Admins can get any user doc. Users can get their own.
-      allow get: if isOwner(userId) || isAdmin();
-      // Users can create their own doc on signup. Admins can create any.
-      allow create: if isOwner(userId) || isAdmin();
-      // User can update their own doc (but not their role). Admins can update any.
+      // ANY authenticated user can CREATE their own user document upon signup.
+      // The userId must match their own auth UID.
+      allow create: if request.auth != null && isOwner(userId);
+
+      // Users can READ their own document. Admins can read any user document.
+      allow read: if isOwner(userId) || isAdmin();
+
+      // Users can UPDATE their own displayName, photoURL. They CANNOT change their role.
+      // Admins can update any field for any user.
       allow update: if (isOwner(userId) && request.resource.data.role == resource.data.role) || isAdmin();
-      // Only admins can delete users.
-      allow delete: if isAdmin();
+
+      // Nobody can delete user documents for now to prevent data loss.
+      allow delete: if false;
     }
 
+    // --- Projects Collection ---
     match /projects/{projectId} {
-      // Admins can perform any action.
-      allow read, write: if isAdmin();
-      // Users can read projects assigned to them.
-      allow get: if isOwner(resource.data.userId);
-    }
-
-    match /requests/{requestId} {
-      // Admins can do anything.
-      allow read, write: if isAdmin();
-      // Users can read and create their own requests.
-      allow get: if isOwner(resource.data.userId);
-      allow create: if isOwner(request.resource.data.userId);
-      // Users cannot update or delete their requests.
-      allow update, delete: if isAdmin();
+      // Admins can create, read, update, and delete any project.
+      allow write: if isAdmin();
+      // Clients can only read projects assigned to them.
+      allow read: if request.auth.uid == resource.data.userId;
     }
     
+    // --- Requests Collection ---
+    match /requests/{requestId} {
+       // Admins can read and update any request.
+       allow read, update: if isAdmin();
+       // Clients can create requests for themselves.
+       allow create: if isOwner(request.resource.data.userId);
+       // Clients can read their own requests.
+       allow read: if isOwner(resource.data.userId);
+    }
+
+    // --- MessageThreads Collection ---
     match /messageThreads/{threadId} {
-      // Admins can do anything.
-      allow read, write: if isAdmin();
-      // Users can read and create their own message threads, and update them (to add new messages).
-      allow get, update: if isOwner(resource.data.userId);
-      allow create: if isOwner(request.resource.data.userId);
-      // Users cannot delete threads.
-      allow delete: if isAdmin();
+        // Admins can read and write any message thread.
+        allow read, write: if isAdmin();
+        // Clients can create threads for themselves.
+        allow create: if isOwner(request.resource.data.userId);
+        // Clients can read and update (add messages to) their own threads.
+        allow read, update: if isOwner(resource.data.userId);
     }
   }
 }
