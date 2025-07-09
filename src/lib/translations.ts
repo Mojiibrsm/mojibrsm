@@ -20,6 +20,8 @@ export const translations = {
       name: "Mojib Rsm",
       title: "Full Stack Web & App Developer",
       tagline: "Transforming ideas into impactful digital experiences.",
+      image: "https://placehold.co/600x600.png",
+      imageHint: "man portrait",
       buttons: {
         cv: "Download CV",
         work: "View My Work",
@@ -31,7 +33,9 @@ export const translations = {
       bio: "I am a passionate developer with a knack for creating beautiful and functional digital solutions. My journey in tech is driven by a constant desire to learn and innovate.",
       mission: "My mission is to leverage technology to solve real-world problems and deliver exceptional value to clients and users.",
       educationTitle: "Education",
-      education: "HSC Candidate, 2025 – Business Management & Technology"
+      education: "HSC Candidate, 2025 – Business Management & Technology",
+      image: "https://placehold.co/600x600.png",
+      imageHint: "man portrait"
     },
     experience: {
       title: "My Experience",
@@ -289,6 +293,8 @@ export const translations = {
       name: "মুজিব আরএসএম",
       title: "ফুল স্ট্যাক ওয়েব এবং অ্যাপ ডেভেলপার",
       tagline: "ধারণাকে প্রভাবশালী ডিজিটাল অভিজ্ঞতায় রূপান্তরিত করা।",
+      image: "https://placehold.co/600x600.png",
+      imageHint: "man portrait",
       buttons: {
         cv: "সিভি ডাউনলোড করুন",
         work: "আমার কাজ দেখুন",
@@ -300,7 +306,9 @@ export const translations = {
       bio: "আমি একজন उत्साही ডেভেলপার, সুন্দর এবং কার্যকরী ডিজিটাল সমাধান তৈরিতে আমার বিশেষ দক্ষতা রয়েছে। প্রযুক্তিতে আমার যাত্রা শেখার এবং নতুন কিছু করার constante इच्छा দ্বারা চালিত।",
       mission: "আমার লক্ষ্য হলো প্রযুক্তি ব্যবহার করে বাস্তব-বিশ্বের সমস্যার সমাধান করা এবং ক্লায়েন্ট ও ব্যবহারকারীদের জন্য ব্যতিক্রমী মান সরবরাহ করা।",
       educationTitle: "শিক্ষা",
-      education: "এইচএসসি প্রার্থী, ২০২৫ – ব্যবসায় ব্যবস্থাপনা ও প্রযুক্তি"
+      education: "এইচএসসি প্রার্থী, ২০২৫ – ব্যবসায় ব্যবস্থাপনা ও প্রযুক্তি",
+      image: "https://placehold.co/600x600.png",
+      imageHint: "man portrait"
     },
     experience: {
       title: "আমার অভিজ্ঞতা",

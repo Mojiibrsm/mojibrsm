@@ -38,12 +38,12 @@ export default function About() {
           <motion.div variants={itemVariants} className="relative group w-full max-w-md mx-auto">
              <div className="absolute -inset-1.5 bg-gradient-to-r from-primary via-accent to-secondary rounded-full blur opacity-75 animate-pulse group-hover:opacity-100 transition duration-1000"></div>
              <Image
-              src="https://placehold.co/600x600.png"
+              src={t.about.image}
               alt={t.hero.name}
               width={600}
               height={600}
               className="relative rounded-lg shadow-lg w-full"
-              data-ai-hint="man portrait"
+              data-ai-hint={t.about.imageHint}
             />
           </motion.div>
           <motion.div variants={itemVariants} className="space-y-6">
