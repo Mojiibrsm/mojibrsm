@@ -19,6 +19,8 @@ import { useAuth } from '@/contexts/auth-context';
 import { addProject, getProjects, updateProject, deleteProject, Project, ProjectStatus, addEmailLog } from '@/services/data';
 import { FormattedTimestamp } from '@/components/formatted-timestamp';
 import { sendEmail } from '@/services/email';
+import { translations } from '@/lib/translations';
+
 
 const getStatusVariant = (status: string) => {
     switch (status) {
@@ -30,6 +32,58 @@ const getStatusVariant = (status: string) => {
 }
 
 type ProjectFormData = Omit<Project, 'id' | 'userId' | 'createdAt'>;
+
+const generateProjectEmailHtml = (projectData: ProjectFormData, isNew: boolean): string => {
+    const { name, client, clientEmail, clientPhone, deadline, notes } = projectData;
+    const { name: devName } = translations.en.hero;
+    const { phone: devPhone, email: devEmail } = translations.en.contact.details;
+    
+    const title = isNew ? "A New Project Has Been Created For You" : "Update on Your Project";
+
+    return `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <div style="max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+                <h1 style="color: #4A90E2; text-align: center;">${title}</h1>
+                <p>Hello ${client},</p>
+                <p>${isNew ? 'A new project has been created with the following details:' : 'Your project has been updated. Here are the latest details:'}</p>
+                <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                    <tr style="background-color: #f9f9f9;">
+                        <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">Project Name:</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${name}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">Deadline:</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${deadline}</td>
+                    </tr>
+                    <tr style="background-color: #f9f9f9;">
+                        <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">Client Name:</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${client}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">Client Email:</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${clientEmail}</td>
+                    </tr>
+                    ${clientPhone ? `<tr style="background-color: #f9f9f9;">
+                        <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">Client Phone:</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${clientPhone}</td>
+                    </tr>` : ''}
+                    ${notes ? `<tr>
+                        <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold; vertical-align: top;">Notes:</td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">${notes.replace(/\n/g, '<br>')}</td>
+                    </tr>` : ''}
+                </table>
+                <p>You can track its progress in your dashboard.</p>
+                <p>If you have any questions, feel free to contact me.</p>
+                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+                <div style="text-align: center; color: #777; font-size: 0.9em;">
+                    <p><strong>${devName}</strong></p>
+                    <p>Email: ${devEmail} | Phone: ${devPhone}</p>
+                </div>
+            </div>
+        </div>
+    `;
+};
+
 
 export default function AdminProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -85,35 +139,37 @@ export default function AdminProjectsPage() {
             addProject(newProject);
             toast({ title: "Project Added", description: "A new project has been successfully added." });
         }
+        
+        // Close dialog and refresh data immediately
+        setIsDialogOpen(false);
+        setEditingProject(null);
+        loadProjects();
 
-        // Awaited to prevent race conditions with localStorage logging.
+        // Send email in the background
         if (formData.clientEmail) {
             const isNew = !editingProject;
             const emailSubject = isNew
                 ? `New Project Created: ${formData.name}`
                 : `Update on your project: ${formData.name}`;
-            const emailHtml = isNew
-                ? `<h1>New Project Started</h1><p>A new project, <strong>${formData.name}</strong>, has been created for you.</p><p>The current status is: <strong>${formData.status}</strong>.</p><p>You can track its progress in your dashboard.</p>`
-                : `<h1>Project Updated</h1><p>The status of your project, <strong>${formData.name}</strong>, has been updated to: <strong>${formData.status}</strong>.</p><p>You can view details in your dashboard.</p>`;
             
-            const emailResult = await sendEmail({ to: formData.clientEmail, subject: emailSubject, html: emailHtml });
-            addEmailLog({
-                to: formData.clientEmail,
-                subject: emailSubject,
-                html: emailHtml,
-                success: emailResult.success,
-                message: emailResult.message,
-            });
-            toast({
-                title: "Email Notification Status",
-                description: emailResult.message,
-                variant: emailResult.success ? 'default' : 'destructive'
+            const emailHtml = generateProjectEmailHtml(formData, isNew);
+            
+            sendEmail({ to: formData.clientEmail, subject: emailSubject, html: emailHtml })
+            .then(emailResult => {
+                 addEmailLog({
+                    to: formData.clientEmail,
+                    subject: emailSubject,
+                    html: emailHtml,
+                    success: emailResult.success,
+                    message: emailResult.message,
+                });
+                toast({
+                    title: "Email Notification Status",
+                    description: emailResult.message,
+                    variant: emailResult.success ? 'default' : 'destructive'
+                });
             });
         }
-        
-        setIsDialogOpen(false);
-        setEditingProject(null);
-        loadProjects();
 
     } catch (error: any) {
         console.error("Save Error:", error);

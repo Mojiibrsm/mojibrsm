@@ -14,6 +14,9 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 // Type guard to differentiate logs. `subject` is unique to email logs.
 function isEmailLog(log: any): log is EmailLog {
@@ -24,6 +27,7 @@ export default function AdminHistoryPage() {
   const [emailLogs, setEmailLogs] = useState<EmailLog[]>([]);
   const [smsLogs, setSmsLogs] = useState<SmsLog[]>([]);
   const [selectedLog, setSelectedLog] = useState<EmailLog | SmsLog | null>(null);
+  const [editableLog, setEditableLog] = useState<Partial<EmailLog & SmsLog>>({});
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const { toast } = useToast();
@@ -40,7 +44,13 @@ export default function AdminHistoryPage() {
   
   const handleViewLog = (log: EmailLog | SmsLog) => {
     setSelectedLog(log);
+    setEditableLog({ ...log });
     setIsDialogOpen(true);
+  };
+  
+  const handleEditableLogChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const { name, value } = e.target;
+      setEditableLog(prev => ({ ...prev, [name]: value }));
   };
 
   const handleDeleteLog = () => {
@@ -55,32 +65,36 @@ export default function AdminHistoryPage() {
     toast({ title: 'Log Deleted', description: 'The log has been removed from history.' });
     setIsDialogOpen(false);
     setSelectedLog(null);
+    setEditableLog({});
     loadLogs();
   };
   
   const handleResend = async () => {
-    if (!selectedLog) return;
+    if (!selectedLog || !editableLog) return;
     setIsResending(true);
 
     let result: { success: boolean; message: string };
 
     try {
         if (isEmailLog(selectedLog)) {
-            result = await sendEmail({ to: selectedLog.to, subject: selectedLog.subject, html: selectedLog.html });
+            const { to } = selectedLog;
+            const { subject, html } = editableLog;
+            result = await sendEmail({ to, subject: subject!, html: html! });
             addEmailLog({ 
-                to: selectedLog.to, 
-                subject: selectedLog.subject, 
-                html: selectedLog.html, 
+                to, 
+                subject: subject!, 
+                html: html!, 
                 success: result.success, 
                 message: result.message 
             });
         } else {
             // It's an SMS log
-            const smsLog = selectedLog as SmsLog;
-            result = await sendSms(smsLog.to, smsLog.message);
+            const { to } = selectedLog;
+            const { message } = editableLog;
+            result = await sendSms(to, message!);
             addSmsLog({ 
-                to: smsLog.to, 
-                message: smsLog.message, 
+                to, 
+                message: message!, 
                 success: result.success, 
                 response: result.message 
             });
@@ -102,6 +116,7 @@ export default function AdminHistoryPage() {
         setIsResending(false);
         setIsDialogOpen(false);
         setSelectedLog(null);
+        setEditableLog({});
         loadLogs();
     }
   };
@@ -116,18 +131,16 @@ export default function AdminHistoryPage() {
                 <DialogDescription>To: {selectedLog.to} | Sent: <FormattedTimestamp timestamp={selectedLog.timestamp} /></DialogDescription>
                 <div className="py-4 grid gap-4 text-sm">
                     <div>
-                        <h4 className="font-semibold text-foreground">Subject</h4>
-                        <p className="text-muted-foreground">{selectedLog.subject}</p>
+                        <Label htmlFor="subject" className="text-foreground font-semibold">Subject</Label>
+                        <Input id="subject" name="subject" value={editableLog.subject || ''} onChange={handleEditableLogChange} className="mt-1" />
                     </div>
                     <div>
-                        <h4 className="font-semibold text-foreground">Status</h4>
+                        <h4 className="font-semibold text-foreground">Original Status</h4>
                         <p className="text-muted-foreground">{selectedLog.message}</p>
                     </div>
                     <div>
-                        <h4 className="font-semibold text-foreground">Content</h4>
-                        <div className="mt-2 border rounded-md p-4 bg-muted/30 h-64 overflow-y-auto text-xs">
-                             <div dangerouslySetInnerHTML={{ __html: selectedLog.html }} />
-                        </div>
+                        <Label htmlFor="html" className="text-foreground font-semibold">Content (HTML)</Label>
+                        <Textarea id="html" name="html" value={editableLog.html || ''} onChange={handleEditableLogChange} className="mt-1 h-64 font-mono text-xs" />
                     </div>
                 </div>
             </>
@@ -139,11 +152,11 @@ export default function AdminHistoryPage() {
                 <DialogDescription>To: {selectedLog.to} | Sent: <FormattedTimestamp timestamp={selectedLog.timestamp} /></DialogDescription>
                  <div className="py-4 grid gap-4 text-sm">
                     <div>
-                        <h4 className="font-semibold text-foreground">Message</h4>
-                        <p className="text-muted-foreground bg-muted/50 p-3 rounded-md">{selectedLog.message}</p>
+                        <Label htmlFor="message" className="text-foreground font-semibold">Message</Label>
+                        <Textarea id="message" name="message" value={editableLog.message || ''} onChange={handleEditableLogChange} className="mt-1 h-32" />
                     </div>
                      <div>
-                        <h4 className="font-semibold text-foreground">API Response</h4>
+                        <h4 className="font-semibold text-foreground">Original API Response</h4>
                         <p className="text-muted-foreground">{selectedLog.response}</p>
                     </div>
                 </div>
