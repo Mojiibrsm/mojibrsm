@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarTrigger, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { FileText, FolderKanban, GitPullRequest, LayoutDashboard, LogOut, MessageSquare, History } from 'lucide-react';
+import { FileText, FolderKanban, GitPullRequest, LayoutDashboard, LogOut, MessageSquare, History, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ const adminNavItems = [
     { href: "/admin/requests", label: "Requests", icon: GitPullRequest },
     { href: "/admin/messages", label: "Messages", icon: MessageSquare },
     { href: "/admin/history", label: "History", icon: History },
+    { href: "/admin/settings", label: "Settings", icon: Settings },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

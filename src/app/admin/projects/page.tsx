@@ -16,7 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
-import { addProject, getProjects, updateProject, deleteProject, Project, ProjectStatus } from '@/services/data';
+import { addProject, getProjects, updateProject, deleteProject, Project, ProjectStatus, addEmailLog } from '@/services/data';
 import { FormattedTimestamp } from '@/components/formatted-timestamp';
 import { sendEmail } from '@/services/email';
 
@@ -102,6 +102,12 @@ export default function AdminProjectsPage() {
             
             sendEmail({ to: formData.clientEmail, subject: emailSubject, html: emailHtml })
                 .then(emailResult => {
+                    addEmailLog({
+                        to: formData.clientEmail,
+                        subject: emailSubject,
+                        success: emailResult.success,
+                        message: emailResult.message,
+                    });
                     toast({
                         title: "Email Notification",
                         description: emailResult.message,

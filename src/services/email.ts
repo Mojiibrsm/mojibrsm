@@ -1,7 +1,6 @@
 
 'use server';
 import nodemailer from 'nodemailer';
-import { addEmailLog } from './data';
 
 const smtpConfig = {
     host: 'smtp.hostinger.com',
@@ -20,13 +19,11 @@ interface EmailOptions {
 }
 
 /**
- * Sends an email using Nodemailer and logs the attempt.
+ * Sends an email using Nodemailer. Logging is handled on the client-side.
  */
 export async function sendEmail({ to, subject, html }: EmailOptions): Promise<{ success: boolean; message: string }> {
     const transporter = nodemailer.createTransport(smtpConfig);
     
-    let result: { success: boolean; message: string };
-
     try {
         await transporter.verify(); // Verify connection configuration
         await transporter.sendMail({
@@ -35,19 +32,9 @@ export async function sendEmail({ to, subject, html }: EmailOptions): Promise<{ 
             subject: subject,
             html: html,
         });
-        result = { success: true, message: 'Email sent successfully!' };
+        return { success: true, message: 'Email sent successfully!' };
     } catch (error: any) {
         console.error('Failed to send email:', error);
-        result = { success: false, message: `Failed to send email: ${error.message}` };
+        return { success: false, message: `Failed to send email: ${error.message}` };
     }
-
-    // Log the email attempt regardless of success or failure
-    addEmailLog({
-        to,
-        subject,
-        success: result.success,
-        message: result.message,
-    });
-
-    return result;
 }

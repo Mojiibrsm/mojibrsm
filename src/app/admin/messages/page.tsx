@@ -2,7 +2,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { getMessageThreads, addMessageToThread, markThreadAsRead, createMessageThread, IMessage, IMessageThread } from '@/services/data';
+import { getMessageThreads, addMessageToThread, markThreadAsRead, createMessageThread, IMessage, IMessageThread, addSmsLog } from '@/services/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -117,6 +117,14 @@ export default function AdminMessagesPage() {
       }
       setIsSendingSms(true);
       const result = await sendSms(newThreadData.clientPhone, newThreadData.message);
+      
+      addSmsLog({
+        to: newThreadData.clientPhone,
+        message: newThreadData.message,
+        success: result.success,
+        response: result.message,
+      });
+
       toast({
           title: result.success ? "SMS Status" : "SMS Failed",
           description: result.message,
