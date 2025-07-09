@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import Image from 'next/image';
 
 const SECRET_KEY = 'mojibx';
 
@@ -80,7 +81,7 @@ const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, hand
             
             {typeof item === 'object' && item !== null && (
                 <h5 className="text-sm font-semibold text-muted-foreground mb-2 absolute top-3 left-4">
-                    {capitalizeFirstLetter(String(item.title || item.role || `Item ${index + 1}`))}
+                    {capitalizeFirstLetter(String(item.title || item.role || item.alt || `Item ${index + 1}`))}
                 </h5>
              )}
 
@@ -113,7 +114,37 @@ const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, hand
 
     if (typeof value === 'string') {
       const isTextarea = value.length > 80 || ['description', 'bio', 'mission', 'excerpt', 'details'].some(k => key.toLowerCase().includes(k));
-      
+      const isImageUrlField = key.toLowerCase().includes('image') || key.toLowerCase() === 'src';
+
+      if (isImageUrlField) {
+        return (
+          <div key={elementId} className="space-y-2 mb-4">
+            <Label htmlFor={elementId}>{capitalizeFirstLetter(key)}</Label>
+            <div className="flex items-center gap-4">
+              <Input
+                id={elementId}
+                value={value}
+                onChange={(e) => handleFieldChange(lang, newPath, e.target.value)}
+                className="flex-grow"
+                placeholder="Paste image URL here"
+              />
+              {value && (
+                <div className="w-16 h-16 shrink-0">
+                  <Image
+                    src={value}
+                    alt="Preview"
+                    width={64}
+                    height={64}
+                    className="h-full w-full object-cover rounded-md border"
+                    unoptimized // Allows any hostname in editor preview
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      }
+
       return (
         <div key={elementId} className="space-y-2 mb-4">
           <Label htmlFor={elementId}>{capitalizeFirstLetter(key)}</Label>
@@ -194,7 +225,8 @@ export default function EditPage({ params }: { params: { secret_key: string } })
                   Object.keys(template).forEach(key => {
                       if (Array.isArray(template[key])) template[key] = [];
                       else if (typeof template[key] === 'boolean') template[key] = false;
-                      else template[key] = `New ${key.replace(/([A-Z])/g, ' $1')}`;
+                      else if (key === 'image' || key === 'src') template[key] = 'https://placehold.co/600x400.png';
+                      else template[key] = `New ${capitalizeFirstLetter(key)}`;
                   });
                   newItem = template;
               } else {
@@ -210,6 +242,8 @@ export default function EditPage({ params }: { params: { secret_key: string } })
                   newItem = { icon: 'web', title: 'New Service', description: 'Description of the new service.' };
               } else if (arrayName === 'projects') {
                   newItem = { title: 'New Project', tech: [], description: 'Description of new project.', link: '#', image: 'https://placehold.co/600x400.png', imageHint: 'project work' };
+              } else if (arrayName === 'images' && arrayPath.includes('gallery')) {
+                   newItem = { src: 'https://placehold.co/400x400.png', alt: 'New Image', imageHint: 'gallery image' };
               } else if (arrayName === 'posts') {
                   newItem = { title: 'New Blog Post', excerpt: 'A short excerpt.', image: 'https://placehold.co/600x400.png', imageHint: 'blog post', link: '#', date: 'Month Day, Year' };
               } else if (arrayName === 'packages') {
@@ -352,3 +386,4 @@ export default function EditPage({ params }: { params: { secret_key: string } })
     </div>
   );
 }
+
