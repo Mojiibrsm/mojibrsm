@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, PlusCircle, Pencil, Trash2, Loader2, Image as ImageIcon, Bold, Italic, Strikethrough, List, ListOrdered, Quote, Underline, Palette, ImagePlus, Upload, FolderSearch, Link2 } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Pencil, Trash2, Loader2, ImageIcon, Bold, Italic, Strikethrough, List, ListOrdered, Quote, Underline, Palette, Upload, FolderSearch, Link2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
@@ -205,8 +205,9 @@ export default function AdminBlogPage() {
 // --- Tiptap Editor Components ---
 const TiptapToolbar = ({ editor }: { editor: Editor | null }) => {
   const { toast } = useToast();
+  const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
 
-  const addImage = useCallback(() => {
+  const uploadImage = useCallback(() => {
     if (!editor) return;
 
     const fileInput = document.createElement('input');
@@ -247,6 +248,14 @@ const TiptapToolbar = ({ editor }: { editor: Editor | null }) => {
     document.body.appendChild(fileInput);
     fileInput.click();
   }, [editor, toast]);
+  
+  const handleSelectFromLibrary = useCallback((item: IMediaItem) => {
+    if (editor) {
+      editor.chain().focus().setImage({ src: item.url, alt: item.name }).run();
+      toast({ title: "Image Inserted", description: "Image from library has been inserted into content." });
+    }
+  }, [editor, toast]);
+
 
   const setLink = useCallback(() => {
     if (!editor) return;
@@ -265,7 +274,7 @@ const TiptapToolbar = ({ editor }: { editor: Editor | null }) => {
     return null;
   }
 
-  const ToggleButton = ({ onClick, children, isActive }: { onClick: () => void, children: React.ReactNode, isActive: boolean }) => (
+  const ToggleButton = ({ onClick, children, isActive, title }: { onClick: () => void, children: React.ReactNode, isActive: boolean, title?: string }) => (
     <Button
       type="button"
       size="icon"
@@ -273,33 +282,42 @@ const TiptapToolbar = ({ editor }: { editor: Editor | null }) => {
       onClick={onClick}
       className="h-8 w-8"
       aria-pressed={isActive}
+      title={title}
     >
       {children}
     </Button>
   );
 
   return (
-    <div className="p-2 border-b flex items-center flex-wrap gap-1">
-      <ToggleButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')}><Bold className="h-4 w-4" /></ToggleButton>
-      <ToggleButton onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')}><Italic className="h-4 w-4" /></ToggleButton>
-      <ToggleButton onClick={() => editor.chain().focus().toggleUnderline().run()} isActive={editor.isActive('underline')}><Underline className="h-4 w-4" /></ToggleButton>
-      <ToggleButton onClick={() => editor.chain().focus().toggleStrike().run()} isActive={editor.isActive('strike')}><Strikethrough className="h-4 w-4" /></ToggleButton>
-      <div className="relative inline-flex items-center justify-center h-8 w-8">
-          <input
-            type="color"
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            onInput={event => editor.chain().focus().setColor((event.target as HTMLInputElement).value).run()}
-            value={editor.getAttributes('textStyle').color || '#000000'}
-            title="Text Color"
-          />
-          <Palette className="h-4 w-4 text-muted-foreground" style={{ color: editor.getAttributes('textStyle').color }} />
+    <>
+      <div className="p-2 border-b flex items-center flex-wrap gap-1">
+        <ToggleButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')} title="Bold"><Bold className="h-4 w-4" /></ToggleButton>
+        <ToggleButton onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')} title="Italic"><Italic className="h-4 w-4" /></ToggleButton>
+        <ToggleButton onClick={() => editor.chain().focus().toggleUnderline().run()} isActive={editor.isActive('underline')} title="Underline"><Underline className="h-4 w-4" /></ToggleButton>
+        <ToggleButton onClick={() => editor.chain().focus().toggleStrike().run()} isActive={editor.isActive('strike')} title="Strikethrough"><Strikethrough className="h-4 w-4" /></ToggleButton>
+        <div className="relative inline-flex items-center justify-center h-8 w-8">
+            <input
+              type="color"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              onInput={event => editor.chain().focus().setColor((event.target as HTMLInputElement).value).run()}
+              value={editor.getAttributes('textStyle').color || '#000000'}
+              title="Text Color"
+            />
+            <Palette className="h-4 w-4 text-muted-foreground" style={{ color: editor.getAttributes('textStyle').color }} />
+        </div>
+        <ToggleButton onClick={uploadImage} isActive={false} title="Upload Image"><Upload className="h-4 w-4" /></ToggleButton>
+        <ToggleButton onClick={() => setIsMediaDialogOpen(true)} isActive={false} title="Browse Library"><FolderSearch className="h-4 w-4" /></ToggleButton>
+        <ToggleButton onClick={setLink} isActive={editor.isActive('link')} title="Add Link"><Link2 className="h-4 w-4" /></ToggleButton>
+        <ToggleButton onClick={() => editor.chain().focus().toggleBulletList().run()} isActive={editor.isActive('bulletList')} title="Bullet List"><List className="h-4 w-4" /></ToggleButton>
+        <ToggleButton onClick={() => editor.chain().focus().toggleOrderedList().run()} isActive={editor.isActive('orderedList')} title="Numbered List"><ListOrdered className="h-4 w-4" /></ToggleButton>
+        <ToggleButton onClick={() => editor.chain().focus().toggleBlockquote().run()} isActive={editor.isActive('blockquote')} title="Blockquote"><Quote className="h-4 w-4" /></ToggleButton>
       </div>
-      <ToggleButton onClick={addImage} isActive={false}><ImagePlus className="h-4 w-4" /></ToggleButton>
-      <ToggleButton onClick={setLink} isActive={editor.isActive('link')}><Link2 className="h-4 w-4" /></ToggleButton>
-      <ToggleButton onClick={() => editor.chain().focus().toggleBulletList().run()} isActive={editor.isActive('bulletList')}><List className="h-4 w-4" /></ToggleButton>
-      <ToggleButton onClick={() => editor.chain().focus().toggleOrderedList().run()} isActive={editor.isActive('orderedList')}><ListOrdered className="h-4 w-4" /></ToggleButton>
-      <ToggleButton onClick={() => editor.chain().focus().toggleBlockquote().run()} isActive={editor.isActive('blockquote')}><Quote className="h-4 w-4" /></ToggleButton>
-    </div>
+      <MediaLibraryDialog 
+          isOpen={isMediaDialogOpen} 
+          onOpenChange={setIsMediaDialogOpen} 
+          onSelect={handleSelectFromLibrary} 
+      />
+    </>
   );
 };
 
@@ -429,15 +447,21 @@ function PostFormDialog({ isOpen, onOpenChange, onSave, post, isSaving }: { isOp
                                 <div className="relative w-full aspect-video border rounded-md overflow-hidden bg-muted">
                                     {uploadingImage ? <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div> : <Image src={data.image} alt="Post image" layout="fill" objectFit="cover" unoptimized />}
                                 </div>
-                                <div className="flex gap-2">
-                                    <Button className="w-full" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage}>
-                                        <Upload className="mr-2 h-4 w-4" />
-                                        {uploadingImage ? 'Uploading...' : 'Upload New'}
+                                <div className="flex items-center gap-2">
+                                    <Button size="icon" variant="outline" type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage} title="Upload New">
+                                        <Upload className="h-4 w-4" />
+                                        <span className="sr-only">Upload New</span>
                                     </Button>
-                                    <Button className="w-full" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>
-                                        <FolderSearch className="mr-2 h-4 w-4" />
-                                        Browse
+                                    <Button size="icon" variant="outline" type="button" onClick={() => setIsMediaDialogOpen(true)} title="Browse Library" disabled={uploadingImage}>
+                                        <FolderSearch className="h-4 w-4" />
+                                        <span className="sr-only">Browse Library</span>
                                     </Button>
+                                    {uploadingImage && (
+                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            <span>Uploading...</span>
+                                        </div>
+                                    )}
                                 </div>
                                 <input type="file" ref={fileInputRef} accept="image/*" onChange={handleFileSelect} className="hidden" />
                                 <div className="space-y-1 pt-2">

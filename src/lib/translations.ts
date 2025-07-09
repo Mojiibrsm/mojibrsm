@@ -258,7 +258,7 @@ export const translations = {
       "posts": [
         {
           "slug": "new-post-1752066563820",
-          "title": "New Blog Post ন্নন",
+          "title": "New Blog Post ন্নন Blog Blog ",
           "excerpt": "A short excerpt for the new post.",
           "content": "<p>Start writing your amazing blog content here!</p>",
           "image": "https://placehold.co/800x400.png",
@@ -660,7 +660,7 @@ export const translations = {
       "posts": [
         {
           "slug": "new-post-1752066563820",
-          "title": "New Blog Post ন্নন",
+          "title": "New Blog Post ন্নন Blog Blog ",
           "excerpt": "A short excerpt for the new post.",
           "content": "<p>Start writing your amazing blog content here!</p>",
           "image": "https://placehold.co/800x400.png",
