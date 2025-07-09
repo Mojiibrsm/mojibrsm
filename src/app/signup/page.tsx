@@ -16,6 +16,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/sections/header';
 import Footer from '@/components/sections/footer';
+import { ClientOnly } from '@/components/client-only';
 
 declare global {
   interface Window {
@@ -150,7 +151,9 @@ export default function SignupPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
+       <ClientOnly>
+        <Header />
+      </ClientOnly>
       <main className="flex-grow flex items-center justify-center bg-muted/40 py-12">
         <div id="recaptcha-container"></div>
         <Card className="w-full max-w-md mx-4">
@@ -238,7 +241,9 @@ export default function SignupPage() {
           </CardContent>
         </Card>
       </main>
-      <Footer />
+      <ClientOnly>
+        <Footer />
+      </ClientOnly>
     </div>
   );
 }
