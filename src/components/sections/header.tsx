@@ -2,6 +2,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useLanguage } from '@/contexts/language-context';
 import { LanguageSwitcher } from '../language-switcher';
 import { Button } from '../ui/button';
@@ -60,7 +61,18 @@ export default function Header() {
     >
       <div className="container flex h-20 items-center">
         <Link href="/#home" className="mr-6 flex items-center space-x-2">
-          <span className="font-bold text-xl">Mojib Rsm</span>
+          {t.site.logo ? (
+            <Image
+              src={t.site.logo}
+              alt={t.site.title}
+              width={140}
+              height={35}
+              className="h-8 w-auto"
+              priority
+            />
+          ) : (
+            <span className="font-bold text-xl">{t.site.title}</span>
+          )}
         </Link>
         <nav className="hidden md:flex items-center space-x-1 mx-auto">
           <NavItems />
