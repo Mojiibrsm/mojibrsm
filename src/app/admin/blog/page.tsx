@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -6,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, PlusCircle, Pencil, Trash2, Loader2, Save, Image as ImageIcon } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Pencil, Trash2, Loader2, Save, Image as ImageIcon, Bold, Italic, Strikethrough, List, ListOrdered, Quote } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
@@ -17,25 +18,14 @@ import { useToast } from '@/hooks/use-toast';
 import { translations } from '@/lib/translations';
 import { updateBlogPosts } from './actions';
 import Image from 'next/image';
-import dynamic from 'next/dynamic';
-import 'react-quill/dist/quill.snow.css';
-
-// Dynamically import ReactQuill to avoid SSR issues
-const ReactQuill = dynamic(() => import('react-quill'), { 
-    ssr: false,
-    loading: () => (
-        <div className="h-40 w-full rounded-md border flex items-center justify-center bg-muted">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
-    )
-});
+import { useEditor, EditorContent, Editor } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
 
 type Post = (typeof translations.en.blog.posts)[0];
 type EditablePost = { en: Post; bn: Post; index: number };
 
 const newEnPostTemplate: Post = { slug: 'new-post-slug', title: 'New Blog Post', excerpt: 'A short excerpt for the new post.', content: '<p>Start writing your amazing blog content here!</p>', image: 'https://placehold.co/800x400.png', imageHint: 'blog post', date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), tags: ['New Tag'], metaTitle: 'New Post Meta Title', metaDescription: 'New post meta description for SEO.' };
 const newBnPostTemplate: Post = { slug: 'new-post-slug', title: 'নতুন ব্লগ পোস্ট', excerpt: 'নতুন পোস্টের জন্য একটি সংক্ষিপ্ত অংশ।', content: '<p>আপনার অসাধারণ ব্লগ কন্টেন্ট এখানে লেখা শুরু করুন!</p>', image: 'https://placehold.co/800x400.png', imageHint: 'blog post', date: new Date().toLocaleDateString('bn-BD', { month: 'long', day: 'numeric', year: 'numeric' }), tags: ['নতুন ট্যাগ'], metaTitle: 'নতুন পোস্টের মেটা টাইটেল', metaDescription: 'এসইও এর জন্য নতুন পোস্টের মেটা বিবরণ।' };
-
 
 export default function AdminBlogPage() {
     const [posts, setPosts] = useState<{ en: Post[], bn: Post[] }>({ en: [], bn: [] });
@@ -188,22 +178,63 @@ export default function AdminBlogPage() {
     );
 }
 
-// Sub-component for the blog post form dialog
+// --- Tiptap Editor Components ---
+const TiptapToolbar = ({ editor }: { editor: Editor | null }) => {
+  if (!editor) {
+    return null;
+  }
+
+  const ToggleButton = ({ onClick, children, isActive }: { onClick: () => void, children: React.ReactNode, isActive: boolean }) => (
+    <Button
+      type="button"
+      size="icon"
+      variant={isActive ? "secondary" : "ghost"}
+      onClick={onClick}
+      className="h-8 w-8"
+    >
+      {children}
+    </Button>
+  );
+
+  return (
+    <div className="p-2 border-b flex items-center flex-wrap gap-1">
+      <ToggleButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')}><Bold className="h-4 w-4" /></ToggleButton>
+      <ToggleButton onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')}><Italic className="h-4 w-4" /></ToggleButton>
+      <ToggleButton onClick={() => editor.chain().focus().toggleStrike().run()} isActive={editor.isActive('strike')}><Strikethrough className="h-4 w-4" /></ToggleButton>
+      <ToggleButton onClick={() => editor.chain().focus().toggleBulletList().run()} isActive={editor.isActive('bulletList')}><List className="h-4 w-4" /></ToggleButton>
+      <ToggleButton onClick={() => editor.chain().focus().toggleOrderedList().run()} isActive={editor.isActive('orderedList')}><ListOrdered className="h-4 w-4" /></ToggleButton>
+      <ToggleButton onClick={() => editor.chain().focus().toggleBlockquote().run()} isActive={editor.isActive('blockquote')}><Quote className="h-4 w-4" /></ToggleButton>
+    </div>
+  );
+};
+
+const TiptapEditor = ({ value, onChange }: { value: string; onChange: (value: string) => void }) => {
+    const editor = useEditor({
+        extensions: [StarterKit],
+        content: value,
+        onUpdate: ({ editor }) => {
+            onChange(editor.getHTML());
+        },
+        editorProps: {
+            attributes: {
+                class: 'prose dark:prose-invert max-w-none focus:outline-none px-4 py-2',
+            },
+        },
+    });
+
+    return (
+        <div className="border rounded-md bg-background">
+            <TiptapToolbar editor={editor} />
+            <EditorContent editor={editor} className="min-h-[256px]"/>
+        </div>
+    );
+};
+
+// --- Blog Post Form Dialog ---
 function PostFormDialog({ isOpen, onOpenChange, onSave, post }: { isOpen: boolean; onOpenChange: (open: boolean) => void; onSave: (data: EditablePost) => void; post: EditablePost | null; }) {
     const [formData, setFormData] = useState<EditablePost | null>(post ? JSON.parse(JSON.stringify(post)) : null);
     const [uploadingImage, setUploadingImage] = useState(false);
     const { toast } = useToast();
-
-    // Editor configuration
-    const quillModules = {
-        toolbar: [
-            [{ 'header': [1, 2, 3, false] }],
-            ['bold', 'italic', 'underline', 'strike'],
-            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-            ['link', 'blockquote'],
-            ['clean']
-        ],
-    };
 
     const handleFieldChange = (lang: 'en' | 'bn', field: keyof Post, value: string | string[]) => {
         if (!formData) return;
@@ -230,7 +261,6 @@ function PostFormDialog({ isOpen, onOpenChange, onSave, post }: { isOpen: boolea
             const response = await fetch('/api/upload', { method: 'POST', body: uploadFormData });
             const result = await response.json();
             if (response.ok && result.success) {
-                // Update image for both languages to keep them consistent
                 handleFieldChange('en', 'image', result.url);
                 handleFieldChange('bn', 'image', result.url);
                 toast({ title: "Image Uploaded", description: "Image URL has been updated." });
@@ -243,7 +273,6 @@ function PostFormDialog({ isOpen, onOpenChange, onSave, post }: { isOpen: boolea
             setUploadingImage(false);
         }
       };
-
 
     const handleSubmit = () => {
         if(formData) onSave(formData);
@@ -264,18 +293,13 @@ function PostFormDialog({ isOpen, onOpenChange, onSave, post }: { isOpen: boolea
                 
                 <div className="space-y-1">
                     <Label>Content</Label>
-                    <div className="bg-background rounded-md border">
-                       <ReactQuill 
-                            theme="snow"
-                            value={data.content}
-                            onChange={(content) => handleFieldChange(lang, 'content', content)}
-                            modules={quillModules}
-                            className="h-64"
-                       />
-                    </div>
+                    <TiptapEditor
+                        value={data.content}
+                        onChange={(content) => handleFieldChange(lang, 'content', content)}
+                    />
                 </div>
 
-                <div className="space-y-1 pt-12"><Label>Tags (comma separated)</Label><Input value={data.tags.join(', ')} onChange={e => handleFieldChange(lang, 'tags', e.target.value.split(',').map(t => t.trim()))} /></div>
+                <div className="space-y-1"><Label>Tags (comma separated)</Label><Input value={data.tags.join(', ')} onChange={e => handleFieldChange(lang, 'tags', e.target.value.split(',').map(t => t.trim()))} /></div>
                 <div className="space-y-1"><Label>Meta Title (for SEO)</Label><Input value={data.metaTitle} onChange={e => handleFieldChange(lang, 'metaTitle', e.target.value)} /></div>
                 <div className="space-y-1"><Label>Meta Description (for SEO)</Label><Textarea value={data.metaDescription} onChange={e => handleFieldChange(lang, 'metaDescription', e.target.value)} className="h-24" /></div>
             </div>
