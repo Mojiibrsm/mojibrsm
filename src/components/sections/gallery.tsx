@@ -4,6 +4,7 @@ import { useLanguage } from '@/contexts/language-context';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 import { Card } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 
 export default function Gallery() {
   const { t } = useLanguage();
@@ -41,23 +42,37 @@ export default function Gallery() {
           animate={isInView ? 'visible' : 'hidden'}
         >
           {t.gallery.images.map((image, index) => (
-            <motion.div key={index} variants={itemVariants} className="group relative">
-                <Card className="overflow-hidden rounded-lg shadow-lg">
-                    <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.3 }}>
-                         <Image
-                            src={image.src}
-                            alt={image.alt}
-                            width={400}
-                            height={400}
-                            className="w-full h-auto object-cover aspect-square"
-                            data-ai-hint={image.imageHint}
-                        />
-                    </motion.div>
-                </Card>
-                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-4 rounded-lg">
-                    <p className="text-white text-center text-sm font-semibold">{image.alt}</p>
-                </div>
-            </motion.div>
+            <Dialog key={index}>
+              <DialogTrigger asChild>
+                <motion.div variants={itemVariants} className="group relative cursor-pointer">
+                    <Card className="overflow-hidden rounded-lg shadow-lg">
+                        <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.3 }}>
+                             <Image
+                                src={image.src}
+                                alt={image.alt}
+                                width={400}
+                                height={400}
+                                className="w-full h-auto object-cover aspect-square"
+                                data-ai-hint={image.imageHint}
+                            />
+                        </motion.div>
+                    </Card>
+                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-4 rounded-lg">
+                        <p className="text-white text-center text-sm font-semibold">{image.alt}</p>
+                    </div>
+                </motion.div>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-3xl p-2">
+                 <Image
+                    src={image.src}
+                    alt={image.alt}
+                    width={1200}
+                    height={800}
+                    className="w-full h-auto object-contain rounded-md"
+                    data-ai-hint={image.imageHint}
+                />
+              </DialogContent>
+            </Dialog>
           ))}
         </motion.div>
       </div>
