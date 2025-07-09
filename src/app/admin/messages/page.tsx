@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { sendSms } from '@/services/sms';
 import { sendEmail } from '@/services/email';
 import { translations } from '@/lib/translations';
+import { useRouter } from 'next/navigation';
 
 
 const generateDirectEmailHtml = (subject: string, message: string, attachment?: { name: string; url: string }): string => {
@@ -57,6 +58,7 @@ const generateDirectEmailHtml = (subject: string, message: string, attachment?: 
 
 
 export default function AdminMessagesPage() {
+  const router = useRouter();
   const [threads, setThreads] = useState<IMessageThread[]>([]);
   const [selectedThread, setSelectedThread] = useState<IMessageThread | null>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
@@ -172,6 +174,8 @@ export default function AdminMessagesPage() {
             title: result.success ? "Email Sent" : "Email Failed",
             description: result.message,
             variant: result.success ? "default" : "destructive",
+            onClick: () => router.push('/admin/history'),
+            className: 'cursor-pointer hover:bg-muted'
         });
 
         if (result.success) {
@@ -216,7 +220,9 @@ export default function AdminMessagesPage() {
           const successCount = results.filter(r => r.success).length;
           toast({
               title: "SMS Sending Complete",
-              description: `${successCount} of ${phones.length} messages sent successfully. Check history for details.`
+              description: `${successCount} of ${phones.length} messages sent successfully. Check history for details.`,
+              onClick: () => router.push('/admin/history'),
+              className: 'cursor-pointer hover:bg-muted'
           });
 
           setIsComposeOpen(false);
