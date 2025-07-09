@@ -48,33 +48,46 @@ export default function AdminSettingsPage() {
                         <HardDrive className="h-5 w-5" />
                         File Storage Configuration
                     </CardTitle>
-                    <CardDescription>Choose where to store uploaded files like images from the Content editor. Currently, only local storage is active.</CardDescription>
+                    <CardDescription>File uploads are now configured to use Amazon S3 for scalable and reliable storage.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <RadioGroup defaultValue="local" className="space-y-4">
-                        <Label htmlFor="local-storage" className="flex items-start gap-4 rounded-lg border p-4 cursor-pointer has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
-                            <RadioGroupItem value="local" id="local-storage" className="mt-1" />
+                    <RadioGroup defaultValue="aws-s3" className="space-y-4">
+                        <Label htmlFor="aws-s3" className="flex items-start gap-4 rounded-lg border p-4 cursor-pointer has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
+                            <RadioGroupItem value="aws-s3" id="aws-s3" />
                             <div className="grid gap-1.5">
                                 <div className="font-semibold flex items-center gap-2">
-                                    Local Storage (Active)
+                                    Amazon S3 (Active)
                                 </div>
                                 <p className="text-sm text-muted-foreground">
-                                    Files are stored directly on the server in the `public/uploads` folder. This is simple, free, and ideal for development or small sites.
+                                    Files are stored in a scalable AWS S3 bucket. This is a robust solution for production applications.
                                 </p>
                             </div>
                         </Label>
-                        <Label htmlFor="aws-s3" className="flex items-start gap-4 rounded-lg border p-4 cursor-pointer has-[:checked]:bg-primary/10 has-[:checked]:border-primary opacity-50">
-                            <RadioGroupItem value="aws-s3" id="aws-s3" disabled />
+                        <Label htmlFor="local-storage" className="flex items-start gap-4 rounded-lg border p-4 cursor-pointer has-[:checked]:bg-primary/10 has-[:checked]:border-primary opacity-50">
+                            <RadioGroupItem value="local" id="local-storage" disabled />
                             <div className="grid gap-1.5">
                                 <div className="font-semibold flex items-center gap-2">
-                                    Amazon S3 (Coming Soon)
+                                    Local Storage (Disabled)
                                 </div>
                                 <p className="text-sm text-muted-foreground">
-                                    Store files in a scalable AWS S3 bucket. This is a robust solution for production applications. This feature is under development.
+                                    Local storage is disabled in favor of the more robust AWS S3 solution.
                                 </p>
                             </div>
                         </Label>
                     </RadioGroup>
+                    <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-800 dark:bg-blue-900/20 dark:text-blue-200 dark:border-blue-500/30">
+                        <h4 className="font-semibold mb-2">Configuration Required</h4>
+                        <p className="text-sm mb-4">To enable S3 uploads, you must create a <strong>.env.local</strong> file in your project's root folder and add the following variables:</p>
+                        <pre className="text-xs bg-black/10 dark:bg-white/10 p-3 rounded-md overflow-x-auto">
+                            <code>
+                                AWS_ACCESS_KEY_ID=YOUR_AWS_ACCESS_KEY_ID<br/>
+                                AWS_SECRET_ACCESS_KEY=YOUR_AWS_SECRET_ACCESS_KEY<br/>
+                                AWS_S3_BUCKET_NAME=your-s3-bucket-name<br/>
+                                AWS_S3_REGION=your-s3-bucket-region
+                            </code>
+                        </pre>
+                        <p className="text-sm mt-4">You also need to update <strong>next.config.ts</strong> to allow images from your S3 bucket. A generic pattern has been added, but you may need to adjust it based on your bucket's specific URL.</p>
+                    </div>
                 </CardContent>
             </Card>
             
