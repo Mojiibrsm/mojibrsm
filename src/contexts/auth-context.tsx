@@ -30,28 +30,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
-        // User is signed in, now get Firestore data
+        // User is authenticated, listen for Firestore document
         const userRef = doc(db, 'users', firebaseUser.uid);
         const unsubFirestore = onSnapshot(userRef, (doc) => {
           if (doc.exists()) {
             const firestoreData = doc.data() as FirestoreUser;
             setUser({ ...firebaseUser, ...firestoreData });
-          } else {
-            // This case might happen briefly if the user doc hasn't been created yet
-            setUser(null);
+            setLoading(false);
           }
-           setLoading(false);
+          // If doc doesn't exist yet (e.g., right after signup),
+          // we wait. `loading` remains true, preventing premature redirects.
+          // The listener will fire again once the document is created.
         });
         
         return () => unsubFirestore();
 
       } else {
-        // User is signed out
+        // User is not authenticated, clear user state and stop loading
         setUser(null);
         setLoading(false);
       }
     });
 
+    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
 
