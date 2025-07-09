@@ -1,8 +1,7 @@
-
 export const translations = {
   "en": {
     "site": {
-      "title": "Mojib",
+      "title": "Mojib Rsm",
       "url": "https://www.mojib.oftern.com",
       "logo": "/uploads/1752060795135-aulbtu.jpg",
       "publicLogo": "/uploads/1752063003787-Mojib.gif",
@@ -405,7 +404,7 @@ export const translations = {
   },
   "bn": {
     "site": {
-      "title": "Mojib",
+      "title": "Mojib Rsm",
       "url": "https://www.mojib.oftern.com",
       "logo": "/uploads/1752060795135-aulbtu.jpg",
       "publicLogo": "/uploads/1752063003787-Mojib.gif",
@@ -809,5 +808,3 @@ export const translations = {
 };
 
 export type Translations = typeof translations;
-
-    

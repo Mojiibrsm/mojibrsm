@@ -1,4 +1,3 @@
-
 'use client';
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
@@ -42,10 +41,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     logout();
   };
 
-  if (loading || !isLoggedIn || !user) {
+  if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <p>Loading access control...</p>
+      </div>
+    );
+  }
+
+  if (!isLoggedIn || !user) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p>Redirecting to login...</p>
       </div>
     );
   }
