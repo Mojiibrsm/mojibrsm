@@ -115,10 +115,10 @@ const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, hand
 
     if (typeof value === 'string') {
       const isTextarea = value.length > 80 || ['description', 'bio', 'mission', 'excerpt', 'details'].some(k => key.toLowerCase().includes(k));
-      const isFileField = key.toLowerCase().includes('image') || key.toLowerCase() === 'src' || key.toLowerCase() === 'cv_url';
+      const isFileField = key.toLowerCase().includes('image') || key.toLowerCase().includes('logo') || key.toLowerCase().includes('avatar') || key.toLowerCase() === 'src' || key.toLowerCase() === 'cv_url';
       
       if (isFileField) {
-        const isImage = key.toLowerCase().includes('image') || key.toLowerCase() === 'src';
+        const isImage = !key.toLowerCase().includes('cv_url');
         const isUploading = uploadingStates[elementId];
         const acceptType = isImage ? 'image/*' : 'application/pdf';
 
@@ -234,6 +234,7 @@ export default function AdminContentPage() {
 
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('destination', 's3');
 
     try {
         const response = await fetch('/api/upload', {

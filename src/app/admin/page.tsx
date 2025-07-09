@@ -76,8 +76,8 @@ export default function AdminDashboardPage() {
                 ))}
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                <Card className="lg:col-span-4">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <Card className="lg:col-span-2">
                     <CardHeader>
                         <CardTitle>Overview</CardTitle>
                          <CardDescription>Monthly revenue overview.</CardDescription>
@@ -104,7 +104,7 @@ export default function AdminDashboardPage() {
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
-                 <Card className="lg:col-span-3">
+                 <Card className="lg:col-span-1">
                     <CardHeader>
                         <CardTitle>Quick Actions</CardTitle>
                         <CardDescription>Quickly manage your site.</CardDescription>

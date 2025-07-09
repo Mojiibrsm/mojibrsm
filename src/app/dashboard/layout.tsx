@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/contexts/auth-context';
@@ -9,6 +10,9 @@ import { LayoutDashboard, User, Folder, MessageCircle, Settings, LogOut, Clipboa
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/contexts/language-context';
+import { ThemeSwitcher } from '@/components/theme-switcher';
+import { LanguageSwitcher } from '@/components/language-switcher';
 
 const dashboardNavItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -23,6 +27,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { user, isLoggedIn, loading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (!loading && !isLoggedIn) {
@@ -58,11 +63,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <SidebarHeader>
                     <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
                         <Avatar className="h-8 w-8">
-                            <AvatarImage src={user.photoURL || ''} alt={user.displayName || 'User'}/>
-                            <AvatarFallback>{user.displayName?.charAt(0) || 'U'}</AvatarFallback>
+                            <AvatarImage src={t.site.adminAvatar} alt={t.site.title}/>
+                            <AvatarFallback>{t.site.title.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-                            <span className="text-sm font-semibold">{user.displayName}</span>
+                            <span className="text-sm font-semibold">{t.site.title}</span>
                             <span className="text-xs text-muted-foreground">Client</span>
                         </div>
                     </div>
@@ -97,9 +102,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className="flex-1">
                      <h1 className="text-lg font-semibold">{dashboardNavItems.find(i => i.href === pathname)?.label || 'Dashboard'}</h1>
                 </div>
-                <Button variant="ghost" size="icon" className="rounded-full" asChild>
-                    <Link href="/"><Avatar><AvatarFallback>H</AvatarFallback></Avatar></Link>
-                </Button>
+                <div className="flex items-center gap-2">
+                    <ThemeSwitcher />
+                    <LanguageSwitcher />
+                    <Button variant="ghost" size="icon" className="rounded-full" asChild>
+                       <Link href="/">
+                            <Avatar>
+                                <AvatarImage src={t.site.logo} alt={t.site.title} />
+                                <AvatarFallback>{t.site.title.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                        </Link>
+                    </Button>
+                </div>
             </header>
             <main className="flex-1 p-4 sm:px-6 sm:py-6">{children}</main>
         </div>
