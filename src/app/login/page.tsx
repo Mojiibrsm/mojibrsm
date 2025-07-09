@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,7 +11,8 @@ import { Loader2, KeyRound } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 
-export default function LoginPage() {
+
+function LoginForm() {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -41,9 +43,8 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
-
-  return (
-    <div className="flex h-screen w-full items-center justify-center bg-muted/40 p-4">
+  
+    return (
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle>স্বাগতম!</CardTitle>
@@ -73,6 +74,16 @@ export default function LoginPage() {
           </form>
         </CardContent>
       </Card>
+  );
+}
+
+
+export default function LoginPage() {
+  return (
+    <div className="flex h-screen w-full items-center justify-center bg-muted/40 p-4">
+       <Suspense fallback={<div className="flex items-center justify-center h-full w-full max-w-md"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+        <LoginForm />
+      </Suspense>
     </div>
   );
 }
