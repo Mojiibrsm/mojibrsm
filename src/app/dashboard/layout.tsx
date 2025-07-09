@@ -1,9 +1,8 @@
-
 'use client';
 
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarTrigger, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { LayoutDashboard, User, Folder, MessageCircle, Settings, LogOut, GitPullRequest } from 'lucide-react';
@@ -24,18 +23,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { user, isLoggedIn, loading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    if (!loading && !isLoggedIn) {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (isClient && !loading && !isLoggedIn) {
       router.push('/login?redirectTo=/dashboard');
     }
-  }, [isLoggedIn, loading, router]);
+  }, [isClient, isLoggedIn, loading, router]);
   
   const handleLogout = () => {
     logout();
   };
 
-  if (loading) {
+  if (!isClient || loading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <p>Loading...</p>

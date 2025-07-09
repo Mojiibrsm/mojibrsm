@@ -19,7 +19,6 @@ export const translations = {
       "tagline": "Transforming ideas into impactful digital experiences.",
       "image": "/uploads/1752046266295-3_Jan_16_18_LMC_8.8_Beta_Fix_Config_For_Redmi_Note_12.jpg",
       "imageHint": "man portrait",
-      "cv_url": "/mojib-rsm-cv.pdf",
       "buttons": {
         "cv": "Download CV",
         "work": "View My Work",
@@ -202,42 +201,42 @@ export const translations = {
       "description": "A collection of moments and creations that inspire me.",
       "images": [
         {
-          "src": "https://placehold.co/400x400.png",
+          "src": "/uploads/1752046515076-1725103684395.jpg",
           "alt": "A beautiful landscape",
           "imageHint": "landscape scenery"
         },
         {
-          "src": "https://placehold.co/400x400.png",
+          "src": "/uploads/1752046533263-IMG-20240920-WA0045-EDIT.jpg",
           "alt": "Modern architecture design",
           "imageHint": "modern architecture"
         },
         {
-          "src": "https://placehold.co/400x400.png",
+          "src": "/uploads/1752046710975-FB_IMG_1728372217283.jpg",
           "alt": "Abstract art piece",
           "imageHint": "abstract art"
         },
         {
-          "src": "https://placehold.co/400x400.png",
+          "src": "/uploads/1752046723676-IMG20250619130703f.jpg",
           "alt": "A person working on a laptop",
           "imageHint": "person working"
         },
         {
-          "src": "https://placehold.co/400x400.png",
+          "src": "/uploads/1752046728225-IMG20250619130703.jpg",
           "alt": "Close-up of a camera lens",
-          "imageHint": "camera lens"
+          "imageHint": "/uploads/1752046737701-IMG20250619130703.jpg"
         },
         {
-          "src": "https://placehold.co/400x400.png",
+          "src": "/uploads/1752046739672-IMG20250619130510.jpg",
           "alt": "City skyline at night",
           "imageHint": "city skyline"
         },
         {
-          "src": "https://placehold.co/400x400.png",
+          "src": "/uploads/1752046740793-aulbtu.jpg",
           "alt": "A classic car",
           "imageHint": "classic car"
         },
         {
-          "src": "https://placehold.co/400x400.png",
+          "src": "/uploads/1752046744345-Mojibur_Rahman_sm.png",
           "alt": "Delicious food plating",
           "imageHint": "food plate"
         }
@@ -375,7 +374,6 @@ export const translations = {
       "tagline": "ধারণাকে প্রভাবশালী ডিজিটাল অভিজ্ঞতায় রূপান্তরিত করা।",
       "image": "https://bartanow.com/wp-content/uploads/2025/07/Mojibur-Rahman-sm.png",
       "imageHint": "man portrait",
-      "cv_url": "/mojib-rsm-cv.pdf",
       "buttons": {
         "cv": "সিভি ডাউনলোড করুন",
         "work": "আমার কাজ দেখুন",
@@ -558,12 +556,12 @@ export const translations = {
       "description": "কিছু মুহূর্ত এবং সৃষ্টির সংগ্রহ যা আমাকে অনুপ্রাণিত করে।",
       "images": [
         {
-          "src": "https://placehold.co/400x400.png",
+          "src": "/uploads/1752046524075-FB_IMG_1728372217283.jpg",
           "alt": "একটি সুন্দর প্রাকৃতিক দৃশ্য",
           "imageHint": "landscape scenery"
         },
         {
-          "src": "https://placehold.co/400x400.png",
+          "src": "/uploads/1752046538781-IMG20250619130703f.jpg",
           "alt": "আধুনিক স্থাপত্য ডিজাইন",
           "imageHint": "modern architecture"
         },

@@ -1,8 +1,7 @@
-
 'use client';
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarTrigger, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { LayoutDashboard, Users, FolderKanban, GitPullRequest, MessageSquare, BarChart2, Settings, LogOut, FileText } from 'lucide-react';
@@ -25,18 +24,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { user, isLoggedIn, loading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    if (!loading && !isLoggedIn) {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    // Only attempt to redirect on the client and after initial loading is complete.
+    if (isClient && !loading && !isLoggedIn) {
       router.push('/login?redirectTo=/admin');
     }
-  }, [isLoggedIn, loading, router]);
+  }, [isClient, isLoggedIn, loading, router]);
   
   const handleLogout = () => {
     logout();
   };
 
-  if (loading) {
+  // On the server, and on the initial client render, `isClient` will be false,
+  // showing a consistent loading state and avoiding a hydration mismatch.
+  if (!isClient || loading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <p>Loading access control...</p>
@@ -44,8 +51,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
+  // After mounting, if the user is not logged in, we show a loading state
+  // while the redirect is in progress.
   if (!isLoggedIn || !user) {
-    return (
+     return (
       <div className="flex h-screen items-center justify-center">
         <p>Loading access control...</p>
       </div>
