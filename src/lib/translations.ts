@@ -19,7 +19,7 @@ export const translations = {
       "tagline": "Transforming ideas into impactful digital experiences.",
       "image": "/uploads/1752046266295-3_Jan_16_18_LMC_8.8_Beta_Fix_Config_For_Redmi_Note_12.jpg",
       "imageHint": "man portrait",
-      "cv_url": "/placeholder-cv.pdf",
+      "cv_url": "/uploads/1752046968745-Mojib_Rsm_CV.pdf",
       "buttons": {
         "cv": "Download CV",
         "work": "View My Work",
@@ -375,7 +375,7 @@ export const translations = {
       "tagline": "ধারণাকে প্রভাবশালী ডিজিটাল অভিজ্ঞতায় রূপান্তরিত করা।",
       "image": "https://bartanow.com/wp-content/uploads/2025/07/Mojibur-Rahman-sm.png",
       "imageHint": "man portrait",
-      "cv_url": "/placeholder-cv.pdf",
+      "cv_url": "/uploads/1752046974539-Mojib_Rsm_CV.pdf",
       "buttons": {
         "cv": "সিভি ডাউনলোড করুন",
         "work": "আমার কাজ দেখুন",

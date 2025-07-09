@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -9,9 +8,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, KeyRound } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Header from '@/components/sections/header';
-import Footer from '@/components/sections/footer';
-import { ClientOnly } from '@/components/client-only';
 import { useAuth } from '@/contexts/auth-context';
 
 export default function LoginPage() {
@@ -47,44 +43,36 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <ClientOnly>
-        <Header />
-      </ClientOnly>
-      <main className="flex-grow flex items-center justify-center bg-muted/40 py-12">
-        <Card className="w-full max-w-md mx-4">
-          <CardHeader className="text-center">
-            <CardTitle>স্বাগতম!</CardTitle>
-            <CardDescription>আপনার পাসওয়ার্ড দিয়ে লগইন করুন।</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleLogin} className="space-y-6">
-              <div className="grid w-full items-center gap-1.5">
-                <Label htmlFor="password">পাসওয়ার্ড</Label>
-                <div className="relative">
-                  <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="পাসওয়ার্ড লিখুন"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="pl-10"
-                  />
-                </div>
+    <div className="flex h-screen w-full items-center justify-center bg-muted/40 p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle>স্বাগতম!</CardTitle>
+          <CardDescription>আপনার পাসওয়ার্ড দিয়ে লগইন করুন।</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div className="grid w-full items-center gap-1.5">
+              <Label htmlFor="password">পাসওয়ার্ড</Label>
+              <div className="relative">
+                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="পাসওয়ার্ড লিখুন"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="pl-10"
+                />
               </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                লগইন করুন
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </main>
-      <ClientOnly>
-        <Footer />
-      </ClientOnly>
+            </div>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              লগইন করুন
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
