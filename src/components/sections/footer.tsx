@@ -18,11 +18,14 @@ export default function Footer() {
               <Button variant="link" asChild>
                   <Link href="#about" className="text-muted-foreground hover:text-primary">{t.footer.nav.about}</Link>
               </Button>
-               <Button variant="link" asChild>
-                  <Link href="/blog" className="text-muted-foreground hover:text-primary">{t.footer.nav.blog}</Link>
-              </Button>
               <Button variant="link" asChild>
                   <Link href="#portfolio" className="text-muted-foreground hover:text-primary">{t.footer.nav.portfolio}</Link>
+              </Button>
+               <Button variant="link" asChild>
+                  <Link href="#gallery" className="text-muted-foreground hover:text-primary">{t.footer.nav.gallery}</Link>
+              </Button>
+               <Button variant="link" asChild>
+                  <Link href="/blog" className="text-muted-foreground hover:text-primary">{t.footer.nav.blog}</Link>
               </Button>
               <Button variant="link" asChild>
                   <Link href="#contact" className="text-muted-foreground hover:text-primary">{t.footer.nav.contact}</Link>

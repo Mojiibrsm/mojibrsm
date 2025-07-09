@@ -7,6 +7,7 @@ export const translations = {
       "experience": "Experience",
       "skills": "Skills",
       "portfolio": "Portfolio",
+      "gallery": "Gallery",
       "pricing": "Pricing",
       "blog": "Blog",
       "contact": "Contact"
@@ -30,8 +31,8 @@ export const translations = {
       "mission": "My mission is to leverage technology to solve real-world problems and deliver exceptional value to clients and users.",
       "educationTitle": "Education",
       "education": "HSC Candidate, 2025 – Business Management & Technology",
-      "image": "https://bartanow.com/wp-content/uploads/2025/07/Mojibur-Rahman-sm.png",
-      "imageHint": "man portrait"
+      "image": "https://www.oftern.com/uploads/gallery/202507/image_500x_686de93ae4c44.jpg",
+      "imageHint": "man working"
     },
     "experience": {
       "title": "My Experience",
@@ -166,7 +167,7 @@ export const translations = {
           ],
           "description": "A comprehensive news portal with a custom theme and plugins.",
           "link": "#",
-          "image": "https://placehold.co/600x400.png",
+          "image": "https://s3.eu-north-1.amazonaws.com/mojibrsm/uploads/gallery/202507/image_500x_686de8c8312fd.jpg",
           "imageHint": "news website"
         },
         {
@@ -193,6 +194,20 @@ export const translations = {
           "image": "https://placehold.co/600x400.png",
           "imageHint": "sms messaging"
         }
+      ]
+    },
+     "gallery": {
+      "title": "My Gallery",
+      "description": "A collection of moments and creations that inspire me.",
+      "images": [
+        { "src": "https://placehold.co/400x400.png", "alt": "A beautiful landscape", "imageHint": "landscape scenery" },
+        { "src": "https://placehold.co/400x400.png", "alt": "Modern architecture design", "imageHint": "modern architecture" },
+        { "src": "https://placehold.co/400x400.png", "alt": "Abstract art piece", "imageHint": "abstract art" },
+        { "src": "https://placehold.co/400x400.png", "alt": "A person working on a laptop", "imageHint": "person working" },
+        { "src": "https://placehold.co/400x400.png", "alt": "Close-up of a camera lens", "imageHint": "camera lens" },
+        { "src": "https://placehold.co/400x400.png", "alt": "City skyline at night", "imageHint": "city skyline" },
+        { "src": "https://placehold.co/400x400.png", "alt": "A classic car", "imageHint": "classic car" },
+        { "src": "https://placehold.co/400x400.png", "alt": "Delicious food plating", "imageHint": "food plate" }
       ]
     },
     "blog": {
@@ -300,6 +315,7 @@ export const translations = {
         "home": "Home",
         "about": "About",
         "portfolio": "Portfolio",
+        "gallery": "Gallery",
         "blog": "Blog",
         "contact": "Contact"
       },
@@ -314,6 +330,7 @@ export const translations = {
       "experience": "অভিজ্ঞতা",
       "skills": "দক্ষতা",
       "portfolio": "পোর্টফোলিও",
+      "gallery": "গ্যালারি",
       "pricing": "প্যাকেজ",
       "blog": "ব্লগ",
       "contact": "যোগাযোগ"
@@ -337,8 +354,8 @@ export const translations = {
       "mission": "আমার লক্ষ্য হলো প্রযুক্তি ব্যবহার করে বাস্তব-বিশ্বের সমস্যার সমাধান করা এবং ক্লায়েন্ট ও ব্যবহারকারীদের জন্য ব্যতিক্রমী মান সরবরাহ করা।",
       "educationTitle": "শিক্ষা",
       "education": "এইচএসসি প্রার্থী, ২০২৫ – ব্যবসায় ব্যবস্থাপনা ও প্রযুক্তি",
-      "image": "https://bartanow.com/wp-content/uploads/2025/07/Mojibur-Rahman-sm.png",
-      "imageHint": "man portrait"
+      "image": "https://www.oftern.com/uploads/gallery/202507/image_500x_686de93ae4c44.jpg",
+      "imageHint": "man working"
     },
     "experience": {
       "title": "আমার অভিজ্ঞতা",
@@ -382,12 +399,6 @@ export const translations = {
             "গুগল প্লে স্টোরে অ্যাপ প্রকাশ করেছি।",
             "বিভিন্ন এপিআই এবং তৃতীয় পক্ষের পরিষেবা সংহত করেছি।"
           ]
-        },
-        {
-          "role": "New role",
-          "company": "New company",
-          "period": "New period",
-          "responsibilities": []
         }
       ]
     },
@@ -479,7 +490,7 @@ export const translations = {
           ],
           "description": "একটি কাস্টম থিম এবং প্লাগইন সহ একটি ব্যাপক নিউজ পোর্টাল।",
           "link": "#",
-          "image": "https://placehold.co/600x400.png",
+          "image": "https://s3.eu-north-1.amazonaws.com/mojibrsm/uploads/gallery/202507/image_500x_686de8c8312fd.jpg",
           "imageHint": "news website"
         },
         {
@@ -506,6 +517,20 @@ export const translations = {
           "image": "https://placehold.co/600x400.png",
           "imageHint": "sms messaging"
         }
+      ]
+    },
+    "gallery": {
+      "title": "আমার গ্যালারি",
+      "description": "কিছু মুহূর্ত এবং সৃষ্টির সংগ্রহ যা আমাকে অনুপ্রাণিত করে।",
+      "images": [
+        { "src": "https://placehold.co/400x400.png", "alt": "একটি সুন্দর প্রাকৃতিক দৃশ্য", "imageHint": "landscape scenery" },
+        { "src": "https://placehold.co/400x400.png", "alt": "আধুনিক স্থাপত্য ডিজাইন", "imageHint": "modern architecture" },
+        { "src": "https://placehold.co/400x400.png", "alt": "বিমূর্ত শিল্পকর্ম", "imageHint": "abstract art" },
+        { "src": "https://placehold.co/400x400.png", "alt": "ল্যাপটপে কাজ করা একজন ব্যক্তি", "imageHint": "person working" },
+        { "src": "https://placehold.co/400x400.png", "alt": "ক্যামেরার লেন্সের ক্লোজ-আপ", "imageHint": "camera lens" },
+        { "src": "https://placehold.co/400x400.png", "alt": "রাতের শহরের স্কাইলাইন", "imageHint": "city skyline" },
+        { "src": "https://placehold.co/400x400.png", "alt": "একটি ক্লাসিক গাড়ি", "imageHint": "classic car" },
+        { "src": "https://placehold.co/400x400.png", "alt": "সুস্বাদু খাবারের প্লেটিং", "imageHint": "food plate" }
       ]
     },
     "blog": {
@@ -613,6 +638,7 @@ export const translations = {
         "home": "হোম",
         "about": "সম্পর্কে",
         "portfolio": "পোর্টফোলিও",
+        "gallery": "গ্যালারি",
         "blog": "ব্লগ",
         "contact": "যোগাযোগ"
       },

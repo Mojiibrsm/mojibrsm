@@ -6,6 +6,7 @@ import Services from '@/components/sections/services';
 import Experience from '@/components/sections/experience';
 import Skills from '@/components/sections/skills';
 import Portfolio from '@/components/sections/portfolio';
+import Gallery from '@/components/sections/gallery';
 import Blog from '@/components/sections/blog';
 import Contact from '@/components/sections/contact';
 import Footer from '@/components/sections/footer';
@@ -28,6 +29,7 @@ function PortfolioPage() {
         <Experience />
         <Skills />
         <Portfolio />
+        <Gallery />
         <Pricing />
         <Blog />
         <Contact />
