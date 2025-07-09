@@ -347,7 +347,6 @@ function ProjectFormDialog({ isOpen, onOpenChange, project, onSave, isSaving }: 
     setIsUploading(true);
     const uploadFormData = new FormData();
     uploadFormData.append('file', file);
-    // Specify that this upload should go to S3
     uploadFormData.append('destination', 's3');
     try {
         const response = await fetch('/api/upload', {
@@ -384,7 +383,7 @@ function ProjectFormDialog({ isOpen, onOpenChange, project, onSave, isSaving }: 
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">Project Name</Label>
               <Input id="name" name="name" value={formData.name} onChange={handleChange} className="col-span-3" required />
