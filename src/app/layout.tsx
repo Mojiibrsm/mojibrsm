@@ -5,6 +5,7 @@ import { Poppins } from 'next/font/google';
 import { LanguageProvider } from '@/contexts/language-context';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/contexts/auth-context';
+import { ClientOnly } from '@/components/client-only';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -35,7 +36,9 @@ export default function RootLayout({
             <AuthProvider>
               {children}
             </AuthProvider>
-            <Toaster />
+            <ClientOnly>
+              <Toaster />
+            </ClientOnly>
           </LanguageProvider>
         </ThemeProvider>
       </body>
