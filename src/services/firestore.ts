@@ -13,6 +13,8 @@ export interface Project {
     name: string;
     client: string;
     clientEmail: string;
+    clientPhone: string;
+    notes: string;
     status: ProjectStatus;
     deadline: string;
     createdAt: Timestamp;

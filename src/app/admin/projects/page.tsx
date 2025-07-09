@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
@@ -28,7 +29,6 @@ const getStatusVariant = (status: string) => {
     }
 }
 
-// Define a type for the form data to ensure type safety
 type ProjectFormData = Omit<Project, 'id' | 'userId' | 'createdAt'>;
 
 export default function AdminProjectsPage() {
@@ -147,7 +147,11 @@ export default function AdminProjectsPage() {
                 projects.map((project) => (
                   <TableRow key={project.id}>
                     <TableCell className="font-medium">{project.name}</TableCell>
-                    <TableCell>{project.client} <br/> <span className="text-xs text-muted-foreground">{project.clientEmail}</span></TableCell>
+                    <TableCell>
+                      {project.client} <br/> 
+                      <span className="text-xs text-muted-foreground">{project.clientEmail}</span>
+                      {project.clientPhone && <><br/><span className="text-xs text-muted-foreground">{project.clientPhone}</span></>}
+                    </TableCell>
                     <TableCell>
                       <Badge variant={getStatusVariant(project.status) as any}>{project.status}</Badge>
                     </TableCell>
@@ -212,28 +216,27 @@ export default function AdminProjectsPage() {
 
 // Sub-component for the Project Form Dialog
 function ProjectFormDialog({ isOpen, onOpenChange, project, onSave, isSaving }: { isOpen: boolean; onOpenChange: (open: boolean) => void; project: Project | null; onSave: (data: ProjectFormData) => Promise<void>; isSaving: boolean; }) {
-  // We only manage the core form fields here. `userId` is handled by the parent component.
-  const [formData, setFormData] = useState<ProjectFormData>({ name: '', client: '', clientEmail: '', status: 'Pending' as ProjectStatus, deadline: '' });
+  const [formData, setFormData] = useState<ProjectFormData>({ name: '', client: '', clientEmail: '', clientPhone: '', status: 'Pending' as ProjectStatus, deadline: '', notes: '' });
   
   React.useEffect(() => {
     if (isOpen) {
         if (project) {
-          // If editing, populate the form with the project's data
           setFormData({
               name: project.name,
               client: project.client,
               clientEmail: project.clientEmail,
+              clientPhone: project.clientPhone || '',
               status: project.status,
               deadline: project.deadline,
+              notes: project.notes || '',
           });
         } else {
-          // If adding new, reset to default empty values
-          setFormData({ name: '', client: '', clientEmail: '', status: 'Pending', deadline: '' });
+          setFormData({ name: '', client: '', clientEmail: '', clientPhone: '', status: 'Pending', deadline: '', notes: '' });
         }
     }
   }, [project, isOpen]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -249,7 +252,7 @@ function ProjectFormDialog({ isOpen, onOpenChange, project, onSave, isSaving }: 
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
           <DialogTitle>{project ? 'Edit Project' : 'Add New Project'}</DialogTitle>
           <DialogDescription>
@@ -271,6 +274,10 @@ function ProjectFormDialog({ isOpen, onOpenChange, project, onSave, isSaving }: 
               <Input id="clientEmail" name="clientEmail" type="email" value={formData.clientEmail} onChange={handleChange} className="col-span-3" required />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="clientPhone" className="text-right">Client Phone</Label>
+              <Input id="clientPhone" name="clientPhone" type="tel" value={formData.clientPhone} onChange={handleChange} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="status" className="text-right">Status</Label>
               <Select onValueChange={handleStatusChange} value={formData.status}>
                 <SelectTrigger className="col-span-3">
@@ -286,6 +293,10 @@ function ProjectFormDialog({ isOpen, onOpenChange, project, onSave, isSaving }: 
              <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="deadline" className="text-right">Deadline</Label>
               <Input id="deadline" name="deadline" type="date" value={formData.deadline} onChange={handleChange} className="col-span-3" required />
+            </div>
+            <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="notes" className="text-right pt-2">Notes</Label>
+                <Textarea id="notes" name="notes" value={formData.notes} onChange={handleChange} className="col-span-3" placeholder="Add any notes about the project..."/>
             </div>
           </div>
           <DialogFooter>
