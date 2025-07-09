@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarTrigger, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LayoutDashboard, Users, FolderKanban, GitPullRequest, MessageSquare, BarChart2, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, FolderKanban, GitPullRequest, MessageSquare, BarChart2, Settings, LogOut, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ const adminNavItems = [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
     { href: "/admin/users", label: "Users", icon: Users },
     { href: "/admin/projects", label: "Projects", icon: FolderKanban },
+    { href: "/admin/content", label: "Content", icon: FileText },
     { href: "/admin/requests", label: "Requests", icon: GitPullRequest },
     { href: "/admin/messages", label: "Messages", icon: MessageSquare },
     { href: "/admin/analytics", label: "Analytics", icon: BarChart2 },
