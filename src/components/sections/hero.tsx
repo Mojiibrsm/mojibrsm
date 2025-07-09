@@ -82,9 +82,9 @@ export default function Hero() {
              animate="visible"
             className="relative flex justify-center items-center"
           >
-            <div className="absolute w-full h-full max-w-xs bg-gradient-to-br from-primary via-accent to-secondary/30 rounded-full blur-3xl animate-pulse"></div>
+            <div className="absolute w-full h-full max-w-sm bg-gradient-to-br from-primary via-accent to-secondary rounded-full blur-2xl animate-spin-slow opacity-75"></div>
             <motion.div 
-              className="relative mx-auto w-full max-w-sm rounded-full overflow-hidden shadow-2xl"
+              className="relative mx-auto w-full max-w-sm rounded-full overflow-hidden shadow-2xl border-4 border-background/20"
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
