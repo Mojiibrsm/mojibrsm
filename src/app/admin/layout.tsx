@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarTrigger, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { FileText, FolderKanban, ClipboardList, LayoutDashboard, LogOut, MessageSquare, History, Settings, LineChart, Newspaper, FileImage, MessageCircle } from 'lucide-react';
+import { FileText, FolderKanban, ClipboardList, LayoutDashboard, LogOut, MessageSquare, History, Settings, LineChart, Newspaper, FileImage } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,6 @@ const adminNavItems = [
     { href: "/admin/media", label: "Media", icon: FileImage },
     { href: "/admin/requests", label: "Requests", icon: ClipboardList },
     { href: "/admin/messages", label: "Messages", icon: MessageSquare },
-    { href: "/admin/live-chat", label: "Live Chat", icon: MessageCircle },
     { href: "/admin/history", label: "History", icon: History },
     { href: "/admin/settings", label: "Settings", icon: Settings },
 ]

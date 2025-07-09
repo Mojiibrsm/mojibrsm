@@ -390,16 +390,8 @@ export const translations = {
         "location": "Cox's Bazar, Bangladesh"
       }
     },
-    "chat": {
-      "title": "Live Chat",
-      "greeting": "Hello! This is {adminName}. How can I help you today?",
-      "placeholder": "Type your message...",
-      "send": "Send",
-      "formTitle": "Start a Conversation",
-      "formDescription": "Please provide your name and phone number to begin.",
-      "namePlaceholder": "Your Name",
-      "phonePlaceholder": "Your Phone Number",
-      "startButton": "Start Chat"
+    "whatsapp": {
+      "defaultMessage": "Hello! I'm interested in your services and would like to get in touch."
     },
     "footer": {
       "nav": {
@@ -804,16 +796,8 @@ export const translations = {
         "location": "কক্সবাজার, বাংলাদেশ"
       }
     },
-    "chat": {
-      "title": "লাইভ চ্যাট",
-      "greeting": "হ্যালো! আমি {adminName}। আপনাকে কিভাবে সাহায্য করতে পারি?",
-      "placeholder": "আপনার বার্তা লিখুন...",
-      "send": "পাঠান",
-      "formTitle": "কথোপকথন শুরু করুন",
-      "formDescription": "শুরু করতে আপনার নাম এবং ফোন নম্বর দিন।",
-      "namePlaceholder": "আপনার নাম",
-      "phonePlaceholder": "আপনার ফোন নম্বর",
-      "startButton": "চ্যাট শুরু করুন"
+    "whatsapp": {
+      "defaultMessage": "হ্যালো! আমি আপনার পরিষেবাগুলিতে আগ্রহী এবং যোগাযোগ করতে চাই।"
     },
     "footer": {
       "nav": {

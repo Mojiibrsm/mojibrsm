@@ -1,4 +1,3 @@
-
 'use client';
 
 // --- STORAGE SERVICE ---
@@ -150,13 +149,14 @@ export interface IMessageThread {
     lastMessageTimestamp: string; // ISO String
     unreadByAdmin: boolean;
     unreadByUser: boolean;
-    type: 'contact' | 'live';
+    type: 'contact';
 }
 
-export const createMessageThread = (threadData: Omit<IMessageThread, 'id' | 'messages' | 'lastMessage' | 'lastMessageTimestamp'>, initialMessage: IMessage): IMessageThread => {
+export const createMessageThread = (threadData: Omit<IMessageThread, 'id' | 'messages' | 'lastMessage' | 'lastMessageTimestamp' | 'type'>, initialMessage: IMessage): IMessageThread => {
     const threads = getCollection<IMessageThread>('messageThreads');
     const newThread: IMessageThread = {
         ...threadData,
+        type: 'contact',
         id: crypto.randomUUID(),
         messages: [initialMessage],
         lastMessage: initialMessage.text,

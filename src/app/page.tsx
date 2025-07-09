@@ -12,7 +12,7 @@ import Contact from '@/components/sections/contact';
 import Footer from '@/components/sections/footer';
 import Pricing from '@/components/sections/pricing';
 import { ClientOnly } from '@/components/client-only';
-import LiveChatWidget from '@/components/live-chat-widget';
+import WhatsAppWidget from '@/components/whatsapp-widget';
 
 export default function Home() {
   return (
@@ -39,7 +39,7 @@ function PortfolioPage() {
         </ClientOnly>
       </main>
       <ClientOnly>
-        <LiveChatWidget />
+        <WhatsAppWidget />
       </ClientOnly>
       <Footer />
     </div>

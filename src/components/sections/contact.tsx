@@ -1,4 +1,3 @@
-
 'use client';
 import { useLanguage } from '@/contexts/language-context';
 import { Button } from '@/components/ui/button';
@@ -71,7 +70,6 @@ export default function Contact() {
           subject: subject,
           unreadByAdmin: true,
           unreadByUser: false,
-          type: 'contact',
         }, newMessage);
       }
 
