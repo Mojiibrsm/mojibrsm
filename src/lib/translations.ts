@@ -241,26 +241,6 @@ export const translations = {
           }
       ]
     },
-    login: {
-      title: "Login",
-      description: "Enter your email below to login to your account.",
-      emailLabel: "Email",
-      passwordLabel: "Password",
-      forgotPassword: "Forgot your password?",
-      buttonText: "Login",
-      signupText: "Don't have an account?",
-      signupLink: "Sign up"
-    },
-    signup: {
-        title: "Sign Up",
-        description: "Enter your information to create an account.",
-        nameLabel: "Full Name",
-        emailLabel: "Email",
-        passwordLabel: "Password",
-        buttonText: "Sign Up",
-        loginText: "Already have an account?",
-        loginLink: "Login"
-    },
     contact: {
       title: "Get In Touch",
       description: "Have a project in mind? I'd love to hear from you. Fill out the form or contact me directly.",
@@ -529,26 +509,6 @@ export const translations = {
                 ]
             }
         ]
-    },
-    login: {
-        title: "লগইন",
-        description: "আপনার অ্যাকাউন্টে লগইন করতে আপনার ইমেল লিখুন।",
-        emailLabel: "ইমেইল",
-        passwordLabel: "পাসওয়ার্ড",
-        forgotPassword: "পাসওয়ার্ড ভুলে গেছেন?",
-        buttonText: "লগইন করুন",
-        signupText: "অ্যাকাউন্ট নেই?",
-        signupLink: "সাইন আপ করুন"
-    },
-    signup: {
-        title: "সাইন আপ",
-        description: "একটি অ্যাকাউন্ট তৈরি করতে আপনার তথ্য লিখুন।",
-        nameLabel: "পুরো নাম",
-        emailLabel: "ইমেইল",
-        passwordLabel: "পাসওয়ার্ড",
-        buttonText: "সাইন আপ করুন",
-        loginText: "ইতিমধ্যে একটি অ্যাকাউন্ট আছে?",
-        loginLink: "লগইন করুন"
     },
     contact: {
       title: "যোগাযোগ করুন",
