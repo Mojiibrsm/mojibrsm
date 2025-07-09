@@ -21,7 +21,7 @@ export default function Home() {
 
 function PortfolioPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground">
+    <div className="flex flex-col min-h-screen bg-background text-foreground" suppressHydrationWarning>
       <Header />
       <main className="flex-grow overflow-hidden">
         <Hero />
