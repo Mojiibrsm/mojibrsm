@@ -1,74 +1,121 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { translations } from '@/lib/translations';
+import { useState, useEffect, useMemo } from 'react';
+import { translations, Translations } from '@/lib/translations';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Copy } from 'lucide-react';
+import { Copy, Save, Loader2 } from 'lucide-react';
 import Header from '@/components/sections/header';
 import Footer from '@/components/sections/footer';
+import { auth, db } from '@/lib/firebase';
+import { signInAnonymously } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
-// IMPORTANT: Change this to your own secret key for security.
-const SECRET_KEY = 'change-me-to-something-secret';
+const SECRET_KEY = process.env.NEXT_PUBLIC_EDIT_SECRET_KEY || 'change-me-to-something-secret';
+const CONTENT_DOC_ID = 'live-content';
 
 export default function EditPage({ params }: { params: { secret_key: string } }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [liveContent, setLiveContent] = useState(translations);
+  const [liveContent, setLiveContent] = useState<Translations | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (params.secret_key === SECRET_KEY) {
-      setIsAuthenticated(true);
-    }
-  }, [params.secret_key]);
+    const authenticateAndFetch = async () => {
+      if (params.secret_key !== SECRET_KEY) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        await signInAnonymously(auth);
+        setIsAuthenticated(true);
+        
+        const docRef = doc(db, "content", CONTENT_DOC_ID);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          setLiveContent(docSnap.data() as Translations);
+        } else {
+          // Seed the database with initial content from translations.ts
+          await setDoc(docRef, translations);
+          setLiveContent(translations);
+          toast({ title: 'Database Seeded', description: 'Initial content has been saved to the database.' });
+        }
+      } catch (error) {
+        console.error("Authentication or fetch error:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not authenticate or fetch content.' });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    authenticateAndFetch();
+  }, [params.secret_key, toast]);
 
   const handleSectionChange = (lang: 'en' | 'bn', section: string, value: string) => {
     try {
       const parsedValue = JSON.parse(value);
-      setLiveContent(prev => ({
-        ...prev,
-        [lang]: {
-          ...prev[lang],
-          [section]: parsedValue
-        }
-      }));
-       toast({
-        title: 'Section Updated',
-        description: `Content for ${capitalizeFirstLetter(section)} (${lang.toUpperCase()}) is updated in the editor.`,
+      setLiveContent(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          [lang]: {
+            ...prev[lang],
+            [section]: parsedValue
+          }
+        };
       });
     } catch (e) {
       toast({
         variant: 'destructive',
         title: 'Invalid JSON',
-        description: `Error in ${lang.toUpperCase()} - ${section} section. Please check your syntax. Changes were not saved.`,
+        description: `Error in ${capitalizeFirstLetter(section)} (${lang.toUpperCase()}). Please check syntax.`,
       });
     }
   };
 
-  const handleCopy = () => {
+  const handleSave = async () => {
+    if (!liveContent || !isAuthenticated) return;
+    setIsSaving(true);
     try {
-      const fullContentString = JSON.stringify(liveContent, null, 2);
-      const fileContent = `export const translations = ${fullContentString};\n\nexport type Translations = typeof translations;`;
-      navigator.clipboard.writeText(fileContent);
+      const docRef = doc(db, "content", CONTENT_DOC_ID);
+      await setDoc(docRef, liveContent, { merge: true });
       toast({
-        title: 'Copied to Clipboard!',
-        description: 'You can now paste this into your src/lib/translations.ts file.',
+        title: 'Content Saved!',
+        description: 'Your changes have been saved to the database and are now live.',
       });
     } catch (error) {
+      console.error("Error saving content:", error);
       toast({
         variant: 'destructive',
-        title: 'Error Generating Code',
-        description: 'Could not generate the final code. Please check for errors.',
+        title: 'Save Failed',
+        description: 'Could not save changes to the database.',
       });
+    } finally {
+      setIsSaving(false);
     }
   };
   
   const capitalizeFirstLetter = (string: string) => {
     if (!string) return '';
     return string.charAt(0).toUpperCase() + string.slice(1);
+  }
+
+  if (isLoading) {
+    return (
+       <div className="flex flex-col min-h-screen">
+            <Header />
+            <main className="flex-grow flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </main>
+            <Footer />
+        </div>
+    )
   }
 
   if (!isAuthenticated) {
@@ -85,6 +132,10 @@ export default function EditPage({ params }: { params: { secret_key: string } })
         </div>
     );
   }
+  
+  if (!liveContent) {
+    return <div>Error loading content.</div>
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-muted/20">
@@ -92,11 +143,18 @@ export default function EditPage({ params }: { params: { secret_key: string } })
       <main className="flex-grow container py-12">
         <Card>
           <CardHeader>
-            <CardTitle>Website Content Editor</CardTitle>
-            <CardDescription>
-              Edit your website content using the tabs below. Select a language, then a section to edit.
-              When you're done, click "Copy Full Code" and replace the entire content of <code>src/lib/translations.ts</code>.
-            </CardDescription>
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle>Website Content Editor</CardTitle>
+                <CardDescription>
+                  Edit your website content using the tabs below. When you're done, click "Save Changes" to make your updates live.
+                </CardDescription>
+              </div>
+               <Button onClick={handleSave} size="lg" disabled={isSaving}>
+                  {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                  {isSaving ? 'Saving...' : 'Save Changes'}
+               </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <Tabs defaultValue="en" className="w-full">
@@ -121,10 +179,6 @@ export default function EditPage({ params }: { params: { secret_key: string } })
                 />
               </TabsContent>
             </Tabs>
-            <Button onClick={handleCopy} size="lg" className="w-full !mt-8">
-              <Copy className="mr-2 h-4 w-4" />
-              Copy Full Code
-            </Button>
           </CardContent>
         </Card>
       </main>
@@ -153,6 +207,7 @@ function SectionEditor({ lang, content, onSectionChange, capitalize }: { lang: '
               </CardHeader>
             <CardContent>
                <Textarea
+                key={`${lang}-${key}`} // Add key to force re-render on content change
                 defaultValue={JSON.stringify(content[key], null, 2)}
                 onBlur={(e) => onSectionChange(lang, key, e.target.value)}
                 className="min-h-[50vh] font-mono text-sm bg-background"

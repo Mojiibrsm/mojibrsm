@@ -1,3 +1,7 @@
+// This file now acts as the default/fallback content for the website.
+// The live content is fetched from Firebase Firestore.
+// To edit the site content, please visit /edit/[your_secret_key]
+
 export const translations = {
   en: {
     nav: {
