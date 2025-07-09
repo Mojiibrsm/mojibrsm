@@ -23,7 +23,7 @@ export default function Portfolio() {
   };
 
   return (
-    <section id="portfolio" className="w-full py-16 md:py-24 bg-card">
+    <section id="portfolio" className="w-full py-16 md:py-24 bg-card" suppressHydrationWarning>
       <div className="container">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}

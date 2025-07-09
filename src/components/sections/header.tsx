@@ -57,6 +57,7 @@ export default function Header() {
       className={`sticky top-0 z-50 w-full transition-all duration-300 ${
         isScrolled ? 'border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60' : 'bg-transparent'
       }`}
+      suppressHydrationWarning
     >
       <div className="container flex h-20 items-center">
         <Link href="/#home" className="mr-6 flex items-center space-x-2">

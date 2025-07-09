@@ -7,7 +7,7 @@ export default function Footer() {
   const { t } = useLanguage();
 
   return (
-    <footer className="w-full bg-card border-t">
+    <footer className="w-full bg-card border-t" suppressHydrationWarning>
       <div className="container py-6">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <span className="font-bold text-lg">Mojib Rsm</span>

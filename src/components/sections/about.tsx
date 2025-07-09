@@ -26,7 +26,7 @@ export default function About() {
   };
 
   return (
-    <section id="about" className="w-full py-16 md:py-24 bg-card">
+    <section id="about" className="w-full py-16 md:py-24 bg-card" suppressHydrationWarning>
       <motion.div
         ref={ref}
         className="container"

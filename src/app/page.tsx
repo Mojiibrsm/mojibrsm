@@ -23,7 +23,7 @@ function PortfolioPage() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground" suppressHydrationWarning>
       <Header />
-      <main className="flex-grow overflow-hidden">
+      <main className="flex-grow overflow-hidden" suppressHydrationWarning>
         <Hero />
         <About />
         <Services />
