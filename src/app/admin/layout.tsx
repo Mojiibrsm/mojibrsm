@@ -106,9 +106,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <ThemeSwitcher />
                     <LanguageSwitcher />
                     <Button variant="ghost" size="icon" className="rounded-full" asChild>
-                        <Link href="/">
+                        <Link href="/admin/content">
                             <Avatar>
-                                <AvatarImage src={t.site.logo} alt={t.site.title} />
+                                <AvatarImage src={t.site.adminAvatar} alt={t.site.title} />
                                 <AvatarFallback>{t.site.title.charAt(0)}</AvatarFallback>
                             </Avatar>
                         </Link>

@@ -8,10 +8,12 @@ import { FolderKanban, ClipboardList, MessageSquare, Users, PlusCircle } from 'l
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import { useEffect, useState } from 'react';
 import { getProjects, getMessageThreads, getAllRequests } from '@/services/data';
+import { useLanguage } from '@/contexts/language-context';
 
 export default function AdminDashboardPage() {
     const { user } = useAuth();
     const router = useRouter();
+    const { t } = useLanguage();
     const [chartData, setChartData] = useState<any[]>([]);
     const [stats, setStats] = useState([
         { title: "Total Projects", value: "0", icon: FolderKanban, description: "0 active projects" },
@@ -58,7 +60,7 @@ export default function AdminDashboardPage() {
         <div className="space-y-8">
              <div>
                 <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-                <p className="text-muted-foreground">Welcome back, {user?.displayName || 'Admin'}!</p>
+                <p className="text-muted-foreground">Welcome back, {t.site.title || 'Admin'}!</p>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
