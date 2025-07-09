@@ -42,6 +42,7 @@ export interface Project {
     clientEmail: string;
     clientPhone: string;
     notes: string;
+    notesImage?: string;
     status: ProjectStatus;
     deadline: string;
     createdAt: string; // ISO String

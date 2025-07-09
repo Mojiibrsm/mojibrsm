@@ -20,6 +20,7 @@ import { addProject, getProjects, updateProject, deleteProject, Project, Project
 import { FormattedTimestamp } from '@/components/formatted-timestamp';
 import { sendEmail } from '@/services/email';
 import { translations } from '@/lib/translations';
+import Image from 'next/image';
 
 
 const getStatusVariant = (status: string) => {
@@ -34,10 +35,14 @@ const getStatusVariant = (status: string) => {
 type ProjectFormData = Omit<Project, 'id' | 'userId' | 'createdAt'>;
 
 const generateProjectEmailHtml = (projectData: ProjectFormData, isNew: boolean): string => {
-    const { name, client, clientEmail, clientPhone, deadline, notes } = projectData;
+    const { name, client, clientEmail, clientPhone, deadline, notes, notesImage } = projectData;
     const { name: devName } = translations.en.hero;
     const { phone: devPhone, email: devEmail } = translations.en.contact.details;
     
+    // Assuming the app is hosted on oftern.com to construct absolute URL for email images.
+    const baseUrl = 'https://www.oftern.com';
+    const absoluteImageUrl = notesImage ? `${baseUrl}${notesImage}` : '';
+
     const title = isNew ? "A New Project Has Been Created For You" : "Update on Your Project";
     const formattedDeadline = new Date(deadline).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
     const whatsappNumber = devPhone.replace(/[^0-9]/g, '');
@@ -76,6 +81,12 @@ const generateProjectEmailHtml = (projectData: ProjectFormData, isNew: boolean):
                         ${notes ? `<tr>
                             <td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 600; vertical-align: top;">Notes:</td>
                             <td style="padding: 12px; border: 1px solid #e5e7eb; white-space: pre-wrap;">${notes.replace(/\n/g, '<br>')}</td>
+                        </tr>` : ''}
+                         ${absoluteImageUrl ? `<tr>
+                            <td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 600; vertical-align: top;">Attached Image:</td>
+                            <td style="padding: 12px; border: 1px solid #e5e7eb;">
+                                <img src="${absoluteImageUrl}" alt="Project Notes Image" style="max-width: 100%; border-radius: 8px;"/>
+                            </td>
                         </tr>` : ''}
                     </table>
                     
@@ -141,13 +152,14 @@ export default function AdminProjectsPage() {
     setIsSaving(true);
 
     try {
-        if (editingProject) {
-            updateProject(editingProject.id!, formData);
-            toast({ title: "Project Updated", description: "The project has been successfully updated." });
-        } else {
+        const isNew = !editingProject;
+        if (isNew) {
             const newProject: Omit<Project, 'id' | 'createdAt'> = { ...formData, userId: user.uid };
             addProject(newProject);
             toast({ title: "Project Added", description: "A new project has been successfully added." });
+        } else {
+            updateProject(editingProject!.id!, formData);
+            toast({ title: "Project Updated", description: "The project has been successfully updated." });
         }
         
         // Close dialog and refresh data immediately
@@ -157,7 +169,6 @@ export default function AdminProjectsPage() {
 
         // Send email in the background
         if (formData.clientEmail) {
-            const isNew = !editingProject;
             const emailSubject = isNew
                 ? `New Project Created: ${formData.name}`
                 : `Update on your project: ${formData.name}`;
@@ -299,7 +310,9 @@ export default function AdminProjectsPage() {
 
 // Sub-component for the Project Form Dialog
 function ProjectFormDialog({ isOpen, onOpenChange, project, onSave, isSaving }: { isOpen: boolean; onOpenChange: (open: boolean) => void; project: Project | null; onSave: (data: ProjectFormData) => Promise<void>; isSaving: boolean; }) {
-  const [formData, setFormData] = useState<ProjectFormData>({ name: '', client: '', clientEmail: '', clientPhone: '', status: 'Pending' as ProjectStatus, deadline: '', notes: '' });
+  const [formData, setFormData] = useState<ProjectFormData>({ name: '', client: '', clientEmail: '', clientPhone: '', status: 'Pending' as ProjectStatus, deadline: '', notes: '', notesImage: '' });
+  const [isUploading, setIsUploading] = useState(false);
+  const { toast } = useToast();
   
   React.useEffect(() => {
     if (isOpen) {
@@ -312,9 +325,10 @@ function ProjectFormDialog({ isOpen, onOpenChange, project, onSave, isSaving }: 
               status: project.status,
               deadline: project.deadline,
               notes: project.notes || '',
+              notesImage: project.notesImage || '',
           });
         } else {
-          setFormData({ name: '', client: '', clientEmail: '', clientPhone: '', status: 'Pending', deadline: '', notes: '' });
+          setFormData({ name: '', client: '', clientEmail: '', clientPhone: '', status: 'Pending', deadline: '', notes: '', notesImage: '' });
         }
     }
   }, [project, isOpen]);
@@ -327,6 +341,30 @@ function ProjectFormDialog({ isOpen, onOpenChange, project, onSave, isSaving }: 
   const handleStatusChange = (value: string) => {
     setFormData(prev => ({ ...prev, status: value as ProjectStatus }));
   }
+
+  const handleImageUpload = async (file: File) => {
+    setIsUploading(true);
+    const uploadFormData = new FormData();
+    uploadFormData.append('file', file);
+    try {
+        const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: uploadFormData,
+        });
+        const result = await response.json();
+        if (response.ok && result.success) {
+            setFormData(prev => ({ ...prev, notesImage: result.url }));
+            toast({ title: "Image Uploaded", description: "Image is ready to be saved with the project." });
+        } else {
+            throw new Error(result.message || 'Upload failed');
+        }
+    } catch (error: any) {
+        toast({ title: "Upload Error", description: error.message, variant: "destructive" });
+        console.error("Upload error:", error);
+    } finally {
+        setIsUploading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -380,6 +418,33 @@ function ProjectFormDialog({ isOpen, onOpenChange, project, onSave, isSaving }: 
             <div className="grid grid-cols-4 items-start gap-4">
                 <Label htmlFor="notes" className="text-right pt-2">Notes</Label>
                 <Textarea id="notes" name="notes" value={formData.notes} onChange={handleChange} className="col-span-3" placeholder="Add any notes about the project..."/>
+            </div>
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label htmlFor="notesImage" className="text-right pt-2">Notes Image</Label>
+              <div className="col-span-3 space-y-2">
+                <Input 
+                  id="notesImage"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) {
+                      handleImageUpload(e.target.files[0]);
+                    }
+                  }}
+                  disabled={isUploading}
+                />
+                {isUploading && (
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Uploading...</span>
+                  </div>
+                )}
+                {formData.notesImage && !isUploading && (
+                  <div className="relative w-32 h-32 border rounded-md overflow-hidden mt-2">
+                    <Image src={formData.notesImage} alt="Notes preview" layout="fill" objectFit="cover" unoptimized />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           <DialogFooter>
