@@ -39,45 +39,55 @@ const generateProjectEmailHtml = (projectData: ProjectFormData, isNew: boolean):
     const { phone: devPhone, email: devEmail } = translations.en.contact.details;
     
     const title = isNew ? "A New Project Has Been Created For You" : "Update on Your Project";
+    const formattedDeadline = new Date(deadline).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+    const whatsappNumber = devPhone.replace(/[^0-9]/g, '');
 
     return `
-        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-            <div style="max-width: 600px; margin: 20px auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-                <h1 style="color: #4A90E2; text-align: center;">${title}</h1>
-                <p>Hello ${client},</p>
-                <p>${isNew ? 'A new project has been created with the following details:' : 'Your project has been updated. Here are the latest details:'}</p>
-                <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-                    <tr style="background-color: #f9f9f9;">
-                        <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">Project Name:</td>
-                        <td style="padding: 10px; border: 1px solid #ddd;">${name}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">Deadline:</td>
-                        <td style="padding: 10px; border: 1px solid #ddd;">${deadline}</td>
-                    </tr>
-                    <tr style="background-color: #f9f9f9;">
-                        <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">Client Name:</td>
-                        <td style="padding: 10px; border: 1px solid #ddd;">${client}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">Client Email:</td>
-                        <td style="padding: 10px; border: 1px solid #ddd;">${clientEmail}</td>
-                    </tr>
-                    ${clientPhone ? `<tr style="background-color: #f9f9f9;">
-                        <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">Client Phone:</td>
-                        <td style="padding: 10px; border: 1px solid #ddd;">${clientPhone}</td>
-                    </tr>` : ''}
-                    ${notes ? `<tr>
-                        <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold; vertical-align: top;">Notes:</td>
-                        <td style="padding: 10px; border: 1px solid #ddd;">${notes.replace(/\n/g, '<br>')}</td>
-                    </tr>` : ''}
-                </table>
-                <p>You can track its progress in your dashboard.</p>
-                <p>If you have any questions, feel free to contact me.</p>
-                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-                <div style="text-align: center; color: #777; font-size: 0.9em;">
-                    <p><strong>${devName}</strong></p>
-                    <p>Email: ${devEmail} | Phone: ${devPhone}</p>
+        <div style="background-color: #f4f4f7; padding: 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333;">
+            <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                <div style="background: linear-gradient(to right, #6366f1, #a855f7); color: #ffffff; padding: 24px; text-align: center;">
+                    <h1 style="margin: 0; font-size: 28px; font-weight: bold;">${title}</h1>
+                </div>
+                <div style="padding: 24px; line-height: 1.6;">
+                    <p style="font-size: 16px;">Hello ${client},</p>
+                    <p style="font-size: 16px;">${isNew ? 'A new project has been created for you. Below are the details:' : 'Your project has been updated. Here are the latest details:'}</p>
+                    
+                    <table style="width: 100%; border-collapse: collapse; margin: 25px 0; font-size: 15px;">
+                        <tr style="background-color: #f9f9f9;">
+                            <td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 600;">Project Name:</td>
+                            <td style="padding: 12px; border: 1px solid #e5e7eb;">${name}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 600;">Deadline:</td>
+                            <td style="padding: 12px; border: 1px solid #e5e7eb;">${formattedDeadline}</td>
+                        </tr>
+                        <tr style="background-color: #f9f9f9;">
+                            <td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 600;">Client Name:</td>
+                            <td style="padding: 12px; border: 1px solid #e5e7eb;">${client}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 600;">Client Email:</td>
+                            <td style="padding: 12px; border: 1px solid #e5e7eb;">${clientEmail}</td>
+                        </tr>
+                        ${clientPhone ? `<tr style="background-color: #f9f9f9;">
+                            <td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 600;">Client Phone:</td>
+                            <td style="padding: 12px; border: 1px solid #e5e7eb;">${clientPhone}</td>
+                        </tr>` : ''}
+                        ${notes ? `<tr>
+                            <td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 600; vertical-align: top;">Notes:</td>
+                            <td style="padding: 12px; border: 1px solid #e5e7eb; white-space: pre-wrap;">${notes.replace(/\n/g, '<br>')}</td>
+                        </tr>` : ''}
+                    </table>
+                    
+                    <p style="font-size: 16px;">If you have any questions or need to discuss the project further, feel free to contact me via WhatsApp, Facebook, or by replying to this email.</p>
+                </div>
+                <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+                    <h3 style="margin: 0 0 10px 0; font-size: 18px; font-weight: bold;">${devName}</h3>
+                    <p style="margin: 0 0 15px 0; color: #555555; font-size: 14px;">Email: ${devEmail} | Phone: ${devPhone}</p>
+                    <div style="margin-top: 15px;">
+                        <a href="https://wa.me/${whatsappNumber}" style="display: inline-block; background-color: #25D366; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px; font-size: 14px; font-weight: bold;">WhatsApp</a>
+                        <a href="https://facebook.com/mojibrsm" style="display: inline-block; background-color: #1877F2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px; font-size: 14px; font-weight: bold;">Facebook</a>
+                    </div>
                 </div>
             </div>
         </div>
