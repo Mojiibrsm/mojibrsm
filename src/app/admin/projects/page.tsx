@@ -149,9 +149,8 @@ export default function AdminProjectsPage() {
         // Send Email
         if (formData.clientEmail) {
             const t = translations[language];
-            const emailSubject = isNew
-                ? `${t.portfolio.title}: ${formData.name}`
-                : `${language === 'bn' ? 'আপনার প্রজেক্টের আপডেট' : 'Update on your project'}: ${formData.name}`;
+            const myName = t.hero.name;
+            const emailSubject = `${formData.name} | ${myName}`;
             
             const emailHtml = generateProjectEmailHtml(formData, isNew, language);
             
