@@ -347,6 +347,8 @@ function ProjectFormDialog({ isOpen, onOpenChange, project, onSave, isSaving }: 
     setIsUploading(true);
     const uploadFormData = new FormData();
     uploadFormData.append('file', file);
+    // Specify that this upload should go to S3
+    uploadFormData.append('destination', 's3');
     try {
         const response = await fetch('/api/upload', {
             method: 'POST',
@@ -461,5 +463,3 @@ function ProjectFormDialog({ isOpen, onOpenChange, project, onSave, isSaving }: 
     </Dialog>
   );
 }
-
-    

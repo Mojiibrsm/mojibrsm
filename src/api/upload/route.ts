@@ -1,33 +1,15 @@
 
 import { NextResponse } from 'next/server';
+import { writeFile, mkdir } from 'fs/promises';
+import path from 'path';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-
-// --- IMPORTANT ---
-// For this to work, you must create a .env.local file in the root of your project
-// and add your AWS credentials and S3 bucket details like this:
-//
-// AWS_ACCESS_KEY_ID=YOUR_AWS_ACCESS_KEY_ID
-// AWS_SECRET_ACCESS_KEY=YOUR_AWS_SECRET_ACCESS_KEY
-// AWS_S3_BUCKET_NAME=your-s3-bucket-name
-// AWS_S3_REGION=your-s3-bucket-region 
-// e.g., AWS_S3_REGION=eu-north-1
-
-const s3Client = new S3Client({
-  region: process.env.AWS_S3_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-  },
-});
+import { getAwsSettings } from '@/config/settings';
 
 export async function POST(request: Request) {
-  if (!process.env.AWS_S3_BUCKET_NAME || !process.env.AWS_S3_REGION || !process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
-    return NextResponse.json({ success: false, message: 'AWS S3 is not configured. Please set environment variables.' }, { status: 500 });
-  }
-
   try {
     const data = await request.formData();
     const file: File | null = data.get('file') as unknown as File;
+    const destination = data.get('destination') as string | null;
 
     if (!file) {
       return NextResponse.json({ success: false, message: 'No file found.' }, { status: 400 });
@@ -35,26 +17,53 @@ export async function POST(request: Request) {
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-
-    // Create a unique filename
     const filename = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
 
-    const command = new PutObjectCommand({
-      Bucket: process.env.AWS_S3_BUCKET_NAME,
-      Key: filename,
-      Body: buffer,
-      ContentType: file.type,
-      ACL: 'public-read', // Make the file publicly accessible
-    });
+    if (destination === 's3') {
+      // --- S3 Upload Logic ---
+      const awsSettings = await getAwsSettings();
+      if (!awsSettings.accessKeyId || !awsSettings.secretAccessKey || !awsSettings.bucketName || !awsSettings.region) {
+        return NextResponse.json({ success: false, message: 'AWS S3 is not configured in admin settings.' }, { status: 500 });
+      }
+      
+      const s3Client = new S3Client({
+        region: awsSettings.region,
+        credentials: {
+          accessKeyId: awsSettings.accessKeyId,
+          secretAccessKey: awsSettings.secretAccessKey,
+        },
+      });
 
-    await s3Client.send(command);
+      const command = new PutObjectCommand({
+        Bucket: awsSettings.bucketName,
+        Key: filename,
+        Body: buffer,
+        ContentType: file.type,
+        ACL: 'public-read',
+      });
 
-    // Construct the public URL (virtual-hosted-style)
-    const publicUrl = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_S3_REGION}.amazonaws.com/${filename}`;
+      await s3Client.send(command);
 
-    return NextResponse.json({ success: true, url: publicUrl });
+      const publicUrl = `https://${awsSettings.bucketName}.s3.${awsSettings.region}.amazonaws.com/${filename}`;
+      return NextResponse.json({ success: true, url: publicUrl });
+    } else {
+      // --- Local Upload Logic ---
+      const uploadDir = path.join(process.cwd(), 'public/uploads');
+      const filePath = path.join(uploadDir, filename);
+
+      try {
+        await mkdir(uploadDir, { recursive: true });
+      } catch (e: any) {
+        if (e.code !== 'EEXIST') throw e;
+      }
+
+      await writeFile(filePath, buffer);
+      const publicUrl = `/uploads/${filename}`;
+      return NextResponse.json({ success: true, url: publicUrl });
+    }
   } catch (error) {
-    console.error('S3 Upload failed:', error);
-    return NextResponse.json({ success: false, message: 'File upload to S3 failed.' }, { status: 500 });
+    console.error('Upload failed:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred during upload.';
+    return NextResponse.json({ success: false, message: errorMessage }, { status: 500 });
   }
 }

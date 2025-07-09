@@ -2,12 +2,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { HardDrive, Bell } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { HardDrive, Bell, Loader2, Save } from 'lucide-react';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { getAwsSettingsForForm, updateAwsSettings } from './actions';
+import type { AwsSettings } from '@/config/settings';
+
+const initialSettings: AwsSettings = {
+    accessKeyId: '',
+    secretAccessKey: '',
+    bucketName: '',
+    region: '',
+};
 
 type NotificationSettings = {
     messages: boolean;
@@ -15,18 +25,46 @@ type NotificationSettings = {
 };
 
 export default function AdminSettingsPage() {
+    const [awsSettings, setAwsSettings] = useState<AwsSettings>(initialSettings);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const { toast } = useToast();
+
     const [notifications, setNotifications] = useState<NotificationSettings>({
         messages: true,
         requests: false,
     });
-    const { toast } = useToast();
 
     useEffect(() => {
-        const savedSettings = localStorage.getItem('notificationSettings');
-        if (savedSettings) {
-            setNotifications(JSON.parse(savedSettings));
+        const loadSettings = async () => {
+            setIsLoading(true);
+            const settings = await getAwsSettingsForForm();
+            setAwsSettings(settings);
+            setIsLoading(false);
+        };
+        loadSettings();
+
+        const savedNotificationSettings = localStorage.getItem('notificationSettings');
+        if (savedNotificationSettings) {
+            setNotifications(JSON.parse(savedNotificationSettings));
         }
     }, []);
+
+    const handleAwsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setAwsSettings(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSaveAws = async () => {
+        setIsSaving(true);
+        const result = await updateAwsSettings(awsSettings);
+        if (result.success) {
+            toast({ title: 'Success!', description: result.message });
+        } else {
+            toast({ title: 'Error!', description: result.message, variant: 'destructive' });
+        }
+        setIsSaving(false);
+    };
 
     const handleNotificationChange = (key: keyof NotificationSettings) => {
         const newSettings = { ...notifications, [key]: !notifications[key] };
@@ -48,49 +86,44 @@ export default function AdminSettingsPage() {
                         <HardDrive className="h-5 w-5" />
                         File Storage Configuration
                     </CardTitle>
-                    <CardDescription>File uploads are now configured to use Amazon S3 for scalable and reliable storage.</CardDescription>
+                    <CardDescription>
+                        Configure your AWS S3 bucket for project image uploads. Other uploads will use local server storage.
+                    </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <RadioGroup defaultValue="aws-s3" className="space-y-4">
-                        <Label htmlFor="aws-s3" className="flex items-start gap-4 rounded-lg border p-4 cursor-pointer has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
-                            <RadioGroupItem value="aws-s3" id="aws-s3" />
-                            <div className="grid gap-1.5">
-                                <div className="font-semibold flex items-center gap-2">
-                                    Amazon S3 (Active)
-                                </div>
-                                <p className="text-sm text-muted-foreground">
-                                    Files are stored in a scalable AWS S3 bucket. This is a robust solution for production applications.
-                                </p>
+                    {isLoading ? (
+                        <div className="flex justify-center items-center h-48">
+                            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="accessKeyId">AWS Access Key ID</Label>
+                                <Input id="accessKeyId" name="accessKeyId" value={awsSettings.accessKeyId} onChange={handleAwsChange} placeholder="AKIA..." />
                             </div>
-                        </Label>
-                        <Label htmlFor="local-storage" className="flex items-start gap-4 rounded-lg border p-4 cursor-pointer has-[:checked]:bg-primary/10 has-[:checked]:border-primary opacity-50">
-                            <RadioGroupItem value="local" id="local-storage" disabled />
-                            <div className="grid gap-1.5">
-                                <div className="font-semibold flex items-center gap-2">
-                                    Local Storage (Disabled)
-                                </div>
-                                <p className="text-sm text-muted-foreground">
-                                    Local storage is disabled in favor of the more robust AWS S3 solution.
-                                </p>
+                            <div className="grid gap-2">
+                                <Label htmlFor="secretAccessKey">AWS Secret Access Key</Label>
+                                <Input id="secretAccessKey" name="secretAccessKey" type="password" value={awsSettings.secretAccessKey} onChange={handleAwsChange} placeholder="••••••••••••••••" />
                             </div>
-                        </Label>
-                    </RadioGroup>
-                    <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-800 dark:bg-blue-900/20 dark:text-blue-200 dark:border-blue-500/30">
-                        <h4 className="font-semibold mb-2">Configuration Required</h4>
-                        <p className="text-sm mb-4">To enable S3 uploads, you must create a <strong>.env.local</strong> file in your project's root folder and add the following variables:</p>
-                        <pre className="text-xs bg-black/10 dark:bg-white/10 p-3 rounded-md overflow-x-auto">
-                            <code>
-                                AWS_ACCESS_KEY_ID=YOUR_AWS_ACCESS_KEY_ID<br/>
-                                AWS_SECRET_ACCESS_KEY=YOUR_AWS_SECRET_ACCESS_KEY<br/>
-                                AWS_S3_BUCKET_NAME=your-s3-bucket-name<br/>
-                                AWS_S3_REGION=your-s3-bucket-region
-                            </code>
-                        </pre>
-                        <p className="text-sm mt-4">You also need to update <strong>next.config.ts</strong> to allow images from your S3 bucket. A generic pattern has been added, but you may need to adjust it based on your bucket's specific URL.</p>
-                    </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="bucketName">S3 Bucket Name</Label>
+                                <Input id="bucketName" name="bucketName" value={awsSettings.bucketName} onChange={handleAwsChange} placeholder="your-s3-bucket-name" />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="region">AWS Region</Label>
+                                <Input id="region" name="region" value={awsSettings.region} onChange={handleAwsChange} placeholder="e.g., us-east-1" />
+                            </div>
+                        </div>
+                    )}
                 </CardContent>
+                <CardFooter className="border-t px-6 py-4">
+                    <Button onClick={handleSaveAws} disabled={isSaving || isLoading}>
+                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                        Save AWS Credentials
+                    </Button>
+                </CardFooter>
             </Card>
-            
+
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -125,5 +158,5 @@ export default function AdminSettingsPage() {
                 </CardContent>
             </Card>
         </div>
-    )
+    );
 }
