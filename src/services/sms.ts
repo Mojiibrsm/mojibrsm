@@ -2,51 +2,44 @@
 'use server';
 
 /**
- * Sends an SMS to a given phone number using a third-party API.
- * IMPORTANT: Replace placeholder values with your actual API credentials.
+ * Sends an SMS to a given phone number using the Teletalk Bulk SMS API.
  * Logging is handled on the client-side after this action completes.
  */
 export async function sendSms(phoneNumber: string, message: string): Promise<{ success: boolean; message: string }> {
-    // Replace with your actual API Key. For better security, use environment variables.
-    const apiKey = 'YOUR_SMS_API_KEY'; 
-    // Replace with your actual API endpoint.
-    const apiUrl = 'https://api.yourotpprovider.com/send'; 
+    const apiKey = 'C20092286552277d73ad70.36384241';
+    const apiUrl = 'http://bulksms.teletalk.com.bd/api/sendSms';
 
     let result: { success: boolean; message: string };
 
-    if (!apiKey || apiKey === 'YOUR_SMS_API_KEY' || !apiUrl || apiUrl.includes('yourotpprovider.com')) {
-        const warning = 'SMS API configuration is incomplete. SMS not sent.';
-        console.warn(warning);
-        // The message is informative, but the status should reflect that the action failed.
-        result = { success: false, message: `SMS sending failed: API is not configured.` };
-        return result;
-    }
-
     try {
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}` // Adjust authorization as per your provider
-            },
-            body: JSON.stringify({
-                to: phoneNumber,
-                message: message
-                // Add other parameters required by your API, like 'from' or 'sender_id'
-            })
+        // Construct the URL with query parameters
+        const urlWithParams = new URL(apiUrl);
+        urlWithParams.searchParams.append('apiKey', apiKey);
+        urlWithParams.searchParams.append('message', message);
+        urlWithParams.searchParams.append('mobileNumbers', phoneNumber);
+
+        const response = await fetch(urlWithParams.toString(), {
+            method: 'GET',
         });
 
+        // Try to parse the response as JSON, regardless of status code.
+        const responseData = await response.json();
+        const apiResponseMessage = responseData?.message || responseData?.response_msg || 'No message from API.';
+
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'API request failed');
+            // The request failed (e.g., 4xx, 5xx status)
+            throw new Error(apiResponseMessage);
         }
         
-        const responseData = await response.json();
-        result = { success: true, message: responseData.message || 'SMS sent successfully.' };
+        // The request was successful (2xx status).
+        // The response message from the API will be used in the toast notification.
+        result = { success: true, message: apiResponseMessage };
 
     } catch (error: any) {
         console.error('Failed to send SMS:', error);
-        result = { success: false, message: `Failed to send SMS: ${error.message}` };
+        // Ensure the message is a string for the error toast
+        const errorMessage = (error instanceof Error) ? error.message : String(error);
+        result = { success: false, message: `SMS sending failed: ${errorMessage}` };
     }
     
     return result;
