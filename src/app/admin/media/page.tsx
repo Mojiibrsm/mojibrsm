@@ -5,17 +5,22 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { getMediaItems, addMediaItem, deleteMediaItem, IMediaItem } from '@/services/data';
+import { getMediaItems, addMediaItem, deleteMediaItem, updateMediaItem, IMediaItem } from '@/services/data';
 import Image from 'next/image';
-import { Upload, Trash2, Copy, Loader2, ImageOff } from 'lucide-react';
+import { Upload, Trash2, Copy, Loader2, ImageOff, Pencil } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { FormattedTimestamp } from '@/components/formatted-timestamp';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export default function AdminMediaPage() {
     const [mediaItems, setMediaItems] = useState<IMediaItem[]>([]);
     const [isUploading, setIsUploading] = useState(false);
     const { toast } = useToast();
     const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const [editingItem, setEditingItem] = useState<IMediaItem | null>(null);
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
     const loadMedia = useCallback(() => {
         setMediaItems(getMediaItems());
@@ -66,6 +71,22 @@ export default function AdminMediaPage() {
         toast({ title: "URL Copied", description: "The image URL has been copied to your clipboard." });
     };
 
+    const handleEdit = (item: IMediaItem) => {
+        setEditingItem({ ...item }); // Create a copy to edit
+        setIsEditDialogOpen(true);
+    };
+
+    const handleSaveEdit = () => {
+        if (!editingItem) return;
+
+        updateMediaItem(editingItem.id, { name: editingItem.name });
+        toast({ title: "Media Updated", description: "The image name has been saved." });
+        loadMedia();
+        setIsEditDialogOpen(false);
+        setEditingItem(null); 
+    };
+
+
     return (
         <div className="space-y-6">
             <div className="flex items-start justify-between">
@@ -101,6 +122,9 @@ export default function AdminMediaPage() {
                                          <Button size="icon" variant="secondary" onClick={() => handleCopyUrl(item.url)}>
                                             <Copy className="h-4 w-4" />
                                         </Button>
+                                         <Button size="icon" variant="secondary" onClick={() => handleEdit(item)}>
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
                                          <AlertDialog>
                                             <AlertDialogTrigger asChild>
                                                 <Button size="icon" variant="destructive">
@@ -132,6 +156,35 @@ export default function AdminMediaPage() {
                     )}
                 </CardContent>
             </Card>
+
+             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Edit Media</DialogTitle>
+                        <DialogDescription>
+                           Change the details for this media item. A full image editor with crop/resize is coming soon!
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="media-name">Name (Alt Text)</Label>
+                            <Input 
+                                id="media-name" 
+                                value={editingItem?.name || ''} 
+                                onChange={(e) => setEditingItem(prev => prev ? { ...prev, name: e.target.value } : null)} 
+                            />
+                        </div>
+                         <div className="space-y-2">
+                           <Label>Preview</Label>
+                           <Image src={editingItem?.url || ''} alt="Preview" width={200} height={200} className="rounded-md border bg-muted object-contain" unoptimized />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+                        <Button onClick={handleSaveEdit}>Save Changes</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

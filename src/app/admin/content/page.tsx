@@ -139,15 +139,15 @@ const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, hand
         return (
           <div key={elementId} className="space-y-2 mb-4">
             <Label htmlFor={elementId}>{capitalizeFirstLetter(key)}</Label>
-            <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="flex items-start gap-4">
               <div className="relative w-20 h-20 shrink-0">
                 {previewContent}
               </div>
-              <div className="flex-grow space-y-2 w-full">
-                <Button type="button" variant="outline" className="w-full" onClick={() => handleBrowseMedia(newPath, lang)}>
-                    <FolderSearch className="mr-2 h-4 w-4" /> Browse Library
+              <div className="flex-grow space-y-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => handleBrowseMedia(newPath, lang)}>
+                    <FolderSearch className="mr-2 h-4 w-4" /> Browse
                 </Button>
-                <p className="text-xs text-muted-foreground mt-1 truncate">URL: {value}</p>
+                <p className="text-xs text-muted-foreground mt-1 break-all">URL: {value}</p>
               </div>
             </div>
           </div>

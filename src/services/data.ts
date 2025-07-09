@@ -290,3 +290,14 @@ export const deleteMediaItem = (id: string) => {
     media = media.filter(item => item.id !== id);
     saveCollection('mediaLibrary', media);
 };
+
+export const updateMediaItem = (id: string, data: Partial<Omit<IMediaItem, 'id' | 'createdAt' | 'url'>>): IMediaItem | undefined => {
+    const media = getCollection<IMediaItem>('mediaLibrary');
+    const itemIndex = media.findIndex(p => p.id === id);
+    if (itemIndex > -1) {
+        media[itemIndex] = { ...media[itemIndex], ...data };
+        saveCollection('mediaLibrary', media);
+        return media[itemIndex];
+    }
+    return undefined;
+};
