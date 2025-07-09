@@ -7,13 +7,15 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, Save, PlusCircle, Trash2, Loader2, FileText } from 'lucide-react';
+import { AlertCircle, Save, PlusCircle, Trash2, Loader2, FileText, FolderSearch } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import Image from 'next/image';
 import { updateTranslationsFile } from './actions';
+import { addMediaItem, IMediaItem } from '@/services/data';
+import { MediaLibraryDialog } from '@/components/media-library-dialog';
 
 // Helper function to capitalize first letter
 const capitalizeFirstLetter = (string: string) => {
@@ -23,7 +25,7 @@ const capitalizeFirstLetter = (string: string) => {
 };
 
 // Recursive component to render form fields
-const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, handleDeleteItem, handleFileUpload, uploadingStates }: { 
+const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, handleDeleteItem, handleFileUpload, uploadingStates, handleBrowseMedia }: { 
     data: any, 
     path: (string | number)[], 
     lang: 'en' | 'bn', 
@@ -31,7 +33,8 @@ const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, hand
     handleAddItem: (lang: 'en' | 'bn', path: (string | number)[]) => void,
     handleDeleteItem: (lang: 'en' | 'bn', path: (string | number)[]) => void,
     handleFileUpload: (file: File, path: (string | number)[], lang: 'en' | 'bn') => void,
-    uploadingStates: { [key: string]: boolean }
+    uploadingStates: { [key: string]: boolean },
+    handleBrowseMedia: (path: (string | number)[], lang: 'en' | 'bn') => void,
 }) => {
   // Case 1: Data is a string (used for items in a string array)
   if (typeof data === 'string') {
@@ -93,6 +96,7 @@ const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, hand
               handleDeleteItem={handleDeleteItem}
               handleFileUpload={handleFileUpload}
               uploadingStates={uploadingStates}
+              handleBrowseMedia={handleBrowseMedia}
             />
           </div>
         ))}
@@ -151,19 +155,24 @@ const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, hand
                   previewContent
                 )}
               </div>
-              <div className="flex-grow">
-                <Input
-                  id={elementId}
-                  type="file"
-                  accept={acceptType}
-                  onChange={(e) => {
-                    if (e.target.files?.[0]) {
-                      handleFileUpload(e.target.files[0], newPath, lang);
-                    }
-                  }}
-                  className="flex-grow"
-                  disabled={isUploading}
-                />
+              <div className="flex-grow space-y-2">
+                <div className="flex gap-2">
+                    <Input
+                      id={elementId}
+                      type="file"
+                      accept={acceptType}
+                      onChange={(e) => {
+                        if (e.target.files?.[0]) {
+                          handleFileUpload(e.target.files[0], newPath, lang);
+                        }
+                      }}
+                      className="flex-grow"
+                      disabled={isUploading}
+                    />
+                    <Button type="button" variant="outline" size="icon" onClick={() => handleBrowseMedia(newPath, lang)} disabled={isUploading}>
+                        <FolderSearch className="h-4 w-4" />
+                    </Button>
+                </div>
                  <p className="text-xs text-muted-foreground mt-1 truncate">URL: {value}</p>
               </div>
             </div>
@@ -196,7 +205,7 @@ const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, hand
       return (
         <div key={elementId} className="p-4 border rounded-lg mt-4 bg-muted/30">
           <h4 className="text-md font-semibold mb-3 tracking-tight">{capitalizeFirstLetter(key)}</h4>
-          <RenderFields data={value} path={newPath} lang={lang} handleFieldChange={handleFieldChange} handleAddItem={handleAddItem} handleDeleteItem={handleDeleteItem} handleFileUpload={handleFileUpload} uploadingStates={uploadingStates} />
+          <RenderFields data={value} path={newPath} lang={lang} handleFieldChange={handleFieldChange} handleAddItem={handleAddItem} handleDeleteItem={handleDeleteItem} handleFileUpload={handleFileUpload} uploadingStates={uploadingStates} handleBrowseMedia={handleBrowseMedia} />
         </div>
       );
     }
@@ -209,6 +218,8 @@ export default function AdminContentPage() {
   const [editableContent, setEditableContent] = useState<Translations>(JSON.parse(JSON.stringify(translations)));
   const [isSaving, setIsSaving] = useState(false);
   const [uploadingStates, setUploadingStates] = useState<{ [key: string]: boolean }>({});
+  const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
+  const [mediaTarget, setMediaTarget] = useState<{ path: (string | number)[], lang: 'en' | 'bn' } | null>(null);
   const { toast } = useToast();
 
   const handleFieldChange = useCallback((lang: 'en' | 'bn', path: (string | number)[], value: any) => {
@@ -246,6 +257,7 @@ export default function AdminContentPage() {
 
         if (response.ok && result.success) {
             handleFieldChange(lang, path, result.url);
+            addMediaItem({ name: file.name, url: result.url });
             toast({ title: 'Success', description: 'File uploaded successfully.' });
         } else {
             throw new Error(result.message || 'Upload failed');
@@ -255,6 +267,18 @@ export default function AdminContentPage() {
     } finally {
         setUploadingStates(prev => ({ ...prev, [elementId]: false }));
     }
+  };
+  
+  const handleBrowseMedia = (path: (string | number)[], lang: 'en' | 'bn') => {
+    setMediaTarget({ path, lang });
+    setIsMediaDialogOpen(true);
+  };
+
+  const handleSelectFromLibrary = (item: IMediaItem) => {
+      if (mediaTarget) {
+          handleFieldChange(mediaTarget.lang, mediaTarget.path, item.url);
+          toast({ title: 'Success', description: 'File selected from library.' });
+      }
   };
 
 
@@ -389,6 +413,7 @@ export default function AdminContentPage() {
                       handleDeleteItem={handleDeleteItem}
                       handleFileUpload={handleFileUpload}
                       uploadingStates={uploadingStates}
+                      handleBrowseMedia={handleBrowseMedia}
                   />
                 </div>
                 <div>
@@ -403,6 +428,7 @@ export default function AdminContentPage() {
                      handleDeleteItem={handleDeleteItem}
                      handleFileUpload={handleFileUpload}
                      uploadingStates={uploadingStates}
+                     handleBrowseMedia={handleBrowseMedia}
                   />
                 </div>
               </CardContent>
@@ -410,6 +436,11 @@ export default function AdminContentPage() {
           </TabsContent>
         ))}
       </Tabs>
+      <MediaLibraryDialog 
+        isOpen={isMediaDialogOpen}
+        onOpenChange={setIsMediaDialogOpen}
+        onSelect={handleSelectFromLibrary}
+      />
     </div>
   );
 }

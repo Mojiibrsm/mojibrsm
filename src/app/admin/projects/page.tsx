@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, PlusCircle, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Pencil, Trash2, Loader2, Upload, FolderSearch } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
@@ -16,13 +16,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
-import { addProject, getProjects, updateProject, deleteProject, Project, ProjectStatus, addEmailLog, addSmsLog } from '@/services/data';
+import { addProject, getProjects, updateProject, deleteProject, Project, ProjectStatus, addEmailLog, addSmsLog, addMediaItem, IMediaItem } from '@/services/data';
 import { FormattedTimestamp } from '@/components/formatted-timestamp';
 import { sendEmail } from '@/services/email';
 import { translations } from '@/lib/translations';
 import Image from 'next/image';
 import { useLanguage } from '@/contexts/language-context';
 import { sendSms } from '@/services/sms';
+import { MediaLibraryDialog } from '@/components/media-library-dialog';
 
 
 const getStatusVariant = (status: string) => {
@@ -319,6 +320,7 @@ export default function AdminProjectsPage() {
 function ProjectFormDialog({ isOpen, onOpenChange, project, onSave, isSaving }: { isOpen: boolean; onOpenChange: (open: boolean) => void; project: Project | null; onSave: (data: ProjectFormData) => Promise<void>; isSaving: boolean; }) {
   const [formData, setFormData] = useState<ProjectFormData>({ name: '', client: '', clientEmail: '', clientPhone: '', status: 'Pending' as ProjectStatus, deadline: '', notes: '', notesImage: '' });
   const [isUploading, setIsUploading] = useState(false);
+  const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
   const { toast } = useToast();
   
   React.useEffect(() => {
@@ -362,6 +364,7 @@ function ProjectFormDialog({ isOpen, onOpenChange, project, onSave, isSaving }: 
         const result = await response.json();
         if (response.ok && result.success) {
             setFormData(prev => ({ ...prev, notesImage: result.url }));
+            addMediaItem({ name: file.name, url: result.url });
             toast({ title: "Image Uploaded", description: "Image is ready to be saved with the project." });
         } else {
             throw new Error(result.message || 'Upload failed');
@@ -372,6 +375,11 @@ function ProjectFormDialog({ isOpen, onOpenChange, project, onSave, isSaving }: 
     } finally {
         setIsUploading(false);
     }
+  };
+
+  const handleSelectFromLibrary = (item: IMediaItem) => {
+    setFormData(prev => ({ ...prev, notesImage: item.url }));
+    toast({ title: "Image Selected", description: "Image has been updated from library." });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -430,17 +438,24 @@ function ProjectFormDialog({ isOpen, onOpenChange, project, onSave, isSaving }: 
             <div className="grid grid-cols-4 items-start gap-4">
               <Label htmlFor="notesImage" className="text-right pt-2">Notes Image</Label>
               <div className="col-span-3 space-y-2">
-                <Input 
-                  id="notesImage"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    if (e.target.files?.[0]) {
-                      handleImageUpload(e.target.files[0]);
-                    }
-                  }}
-                  disabled={isUploading}
-                />
+                 <div className="flex gap-2">
+                    <Input 
+                      id="notesImage"
+                      type="file"
+                      accept="image/*"
+                      className="flex-1"
+                      onChange={(e) => {
+                        if (e.target.files?.[0]) {
+                          handleImageUpload(e.target.files[0]);
+                        }
+                      }}
+                      disabled={isUploading}
+                    />
+                     <Button type="button" variant="outline" size="icon" onClick={() => setIsMediaDialogOpen(true)} disabled={isUploading}>
+                        <FolderSearch className="h-4 w-4" />
+                     </Button>
+                </div>
+
                 {isUploading && (
                   <div className="flex items-center gap-2 text-muted-foreground text-sm">
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -464,6 +479,11 @@ function ProjectFormDialog({ isOpen, onOpenChange, project, onSave, isSaving }: 
             </Button>
           </DialogFooter>
         </form>
+         <MediaLibraryDialog
+            isOpen={isMediaDialogOpen}
+            onOpenChange={setIsMediaDialogOpen}
+            onSelect={handleSelectFromLibrary}
+        />
       </DialogContent>
     </Dialog>
   );

@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { HardDrive, Bell, Loader2, Save, Info, Upload } from 'lucide-react';
+import { HardDrive, Bell, Loader2, Save, Info, Upload, FolderSearch } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -14,6 +14,8 @@ import { getSiteSettingsAction, updateSiteSettingsAction } from './actions';
 import type { AwsSettings } from '@/config/settings';
 import type { SiteSettings } from './actions';
 import Image from 'next/image';
+import { MediaLibraryDialog } from '@/components/media-library-dialog';
+import { IMediaItem, addMediaItem } from '@/services/data';
 
 
 const initialAwsSettings: AwsSettings = { accessKeyId: '', secretAccessKey: '', bucketName: '', region: '' };
@@ -30,6 +32,9 @@ export default function AdminSettingsPage() {
     const [isSiteLoading, setIsSiteLoading] = useState(true);
     const [isSiteSaving, setIsSiteSaving] = useState(false);
     const [uploadingStates, setUploadingStates] = useState<{ [key in keyof SiteSettings]?: boolean }>({});
+    
+    const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
+    const [mediaTargetField, setMediaTargetField] = useState<keyof SiteSettings | null>(null);
 
     const [notifications, setNotifications] = useState<NotificationSettings>({ messages: true, requests: false });
 
@@ -84,6 +89,7 @@ export default function AdminSettingsPage() {
             const result = await response.json();
             if (response.ok && result.success) {
                 setSiteSettings(prev => ({ ...prev, [fieldName]: result.url }));
+                addMediaItem({ name: file.name, url: result.url });
                 toast({ title: 'Success', description: 'File uploaded successfully.' });
             } else {
                 throw new Error(result.message || 'Upload failed');
@@ -95,6 +101,18 @@ export default function AdminSettingsPage() {
         }
     };
     
+    const openMediaDialogFor = (fieldName: keyof SiteSettings) => {
+        setMediaTargetField(fieldName);
+        setIsMediaDialogOpen(true);
+    };
+
+    const handleSelectFromLibrary = (item: IMediaItem) => {
+        if (mediaTargetField) {
+            setSiteSettings(prev => ({ ...prev, [mediaTargetField]: item.url }));
+            toast({ title: 'Success', description: 'File selected from library.' });
+        }
+    };
+
     const handleSaveSiteSettings = async () => {
         setIsSiteSaving(true);
         const result = await updateSiteSettingsAction(siteSettings);
@@ -146,7 +164,12 @@ export default function AdminSettingsPage() {
                                     <div className="relative w-32 h-16 shrink-0 border rounded-md p-1 bg-muted/30">
                                         {uploadingStates.publicLogo ? <Loader2 className="h-full w-full animate-spin text-muted-foreground" /> : <Image src={siteSettings.publicLogo || 'https://placehold.co/200x100.png'} alt="Public Site Logo" width={128} height={64} className="w-full h-full object-contain" unoptimized />}
                                     </div>
-                                    <Input id="publicLogo" type="file" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'publicLogo')} disabled={uploadingStates.publicLogo} />
+                                     <div className="flex-grow space-y-2">
+                                        <Input id="publicLogo" type="file" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'publicLogo')} disabled={uploadingStates.publicLogo} />
+                                        <Button variant="outline" className="w-full" onClick={() => openMediaDialogFor('publicLogo')} disabled={uploadingStates.publicLogo}>
+                                            <FolderSearch className="mr-2 h-4 w-4"/> Browse Library
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -157,7 +180,12 @@ export default function AdminSettingsPage() {
                                         <div className="relative w-16 h-16 shrink-0 border rounded-md p-1">
                                             {uploadingStates.logo ? <Loader2 className="h-full w-full animate-spin text-muted-foreground" /> : <Image src={siteSettings.logo || 'https://placehold.co/100x100.png'} alt="Admin Panel Logo" width={64} height={64} className="w-full h-full object-contain" unoptimized />}
                                         </div>
-                                        <Input id="logo" type="file" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'logo')} disabled={uploadingStates.logo} />
+                                         <div className="flex-grow space-y-2">
+                                            <Input id="logo" type="file" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'logo')} disabled={uploadingStates.logo} />
+                                            <Button variant="outline" className="w-full" onClick={() => openMediaDialogFor('logo')} disabled={uploadingStates.logo}>
+                                                <FolderSearch className="mr-2 h-4 w-4"/> Browse Library
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="space-y-2">
@@ -166,7 +194,12 @@ export default function AdminSettingsPage() {
                                         <div className="relative w-16 h-16 shrink-0 border rounded-full p-1">
                                             {uploadingStates.adminAvatar ? <Loader2 className="h-full w-full animate-spin text-muted-foreground" /> : <Image src={siteSettings.adminAvatar || 'https://placehold.co/100x100.png'} alt="Admin Avatar" width={64} height={64} className="w-full h-full object-cover rounded-full" unoptimized />}
                                         </div>
-                                        <Input id="adminAvatar" type="file" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'adminAvatar')} disabled={uploadingStates.adminAvatar} />
+                                        <div className="flex-grow space-y-2">
+                                            <Input id="adminAvatar" type="file" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'adminAvatar')} disabled={uploadingStates.adminAvatar} />
+                                            <Button variant="outline" className="w-full" onClick={() => openMediaDialogFor('adminAvatar')} disabled={uploadingStates.adminAvatar}>
+                                                <FolderSearch className="mr-2 h-4 w-4"/> Browse Library
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -248,6 +281,12 @@ export default function AdminSettingsPage() {
                     </div>
                 </CardContent>
             </Card>
+
+             <MediaLibraryDialog
+                isOpen={isMediaDialogOpen}
+                onOpenChange={setIsMediaDialogOpen}
+                onSelect={handleSelectFromLibrary}
+            />
         </div>
     );
 }

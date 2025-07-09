@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, PlusCircle, Pencil, Trash2, Loader2, Save, Image as ImageIcon, Bold, Italic, Strikethrough, List, ListOrdered, Quote, Underline, Palette, ImagePlus, Upload } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Pencil, Trash2, Loader2, Save, Image as ImageIcon, Bold, Italic, Strikethrough, List, ListOrdered, Quote, Underline, Palette, ImagePlus, Upload, FolderSearch } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
@@ -16,7 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { translations } from '@/lib/translations';
 import { updateBlogPosts } from './actions';
-import { addMediaItem } from '@/services/data';
+import { addMediaItem, IMediaItem } from '@/services/data';
 import Image from 'next/image';
 import { useEditor, EditorContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -24,6 +24,7 @@ import TiptapUnderline from '@tiptap/extension-underline';
 import { Color as TiptapColor } from '@tiptap/extension-color';
 import TiptapTextStyle from '@tiptap/extension-text-style';
 import TiptapImage from '@tiptap/extension-image';
+import { MediaLibraryDialog } from '@/components/media-library-dialog';
 
 type Post = (typeof translations.en.blog.posts)[0];
 type EditablePost = { post: Post; index: number };
@@ -302,6 +303,7 @@ const TiptapEditor = ({ value, onChange }: { value: string; onChange: (value: st
 function PostFormDialog({ isOpen, onOpenChange, onSave, post }: { isOpen: boolean; onOpenChange: (open: boolean) => void; onSave: (data: EditablePost) => void; post: EditablePost | null; }) {
     const [formData, setFormData] = useState<EditablePost | null>(post ? JSON.parse(JSON.stringify(post)) : null);
     const [uploadingImage, setUploadingImage] = useState(false);
+    const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -344,6 +346,11 @@ function PostFormDialog({ isOpen, onOpenChange, onSave, post }: { isOpen: boolea
         }
     };
 
+    const handleSelectFromLibrary = (item: IMediaItem) => {
+        handleFieldChange('image', item.url);
+        toast({ title: "Image Selected", description: "Featured image has been updated from the library." });
+    };
+
     const handleSubmit = () => {
         if(formData) onSave(formData);
     };
@@ -383,10 +390,16 @@ function PostFormDialog({ isOpen, onOpenChange, onSave, post }: { isOpen: boolea
                                 <div className="relative w-full aspect-video border rounded-md overflow-hidden bg-muted">
                                     {uploadingImage ? <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div> : <Image src={data.image} alt="Post image" layout="fill" objectFit="cover" unoptimized />}
                                 </div>
-                                <Button className="w-full" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage}>
-                                    <Upload className="mr-2 h-4 w-4" />
-                                    {uploadingImage ? 'Uploading...' : 'Change Image'}
-                                </Button>
+                                <div className="flex gap-2">
+                                    <Button className="w-full" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage}>
+                                        <Upload className="mr-2 h-4 w-4" />
+                                        {uploadingImage ? 'Uploading...' : 'Upload New'}
+                                    </Button>
+                                    <Button className="w-full" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>
+                                        <FolderSearch className="mr-2 h-4 w-4" />
+                                        Browse
+                                    </Button>
+                                </div>
                                 <input type="file" ref={fileInputRef} accept="image/*" onChange={handleFileSelect} className="hidden" />
                                 <div className="space-y-1 pt-2">
                                   <Label>Image AI Hint (for alt text generation)</Label>
@@ -401,6 +414,12 @@ function PostFormDialog({ isOpen, onOpenChange, onSave, post }: { isOpen: boolea
                     <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
                     <Button onClick={handleSubmit}>Save Post</Button>
                 </DialogFooter>
+                
+                <MediaLibraryDialog 
+                    isOpen={isMediaDialogOpen} 
+                    onOpenChange={setIsMediaDialogOpen} 
+                    onSelect={handleSelectFromLibrary} 
+                />
             </DialogContent>
         </Dialog>
     );
