@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarTrigger, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { FileText, FolderKanban, GitPullRequest, LayoutDashboard, LogOut, MessageSquare, History, Settings } from 'lucide-react';
+import { FileText, FolderKanban, ClipboardList, LayoutDashboard, LogOut, MessageSquare, History, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ const adminNavItems = [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
     { href: "/admin/content", label: "Content", icon: FileText },
     { href: "/admin/projects", label: "Projects", icon: FolderKanban },
-    { href: "/admin/requests", label: "Requests", icon: GitPullRequest },
+    { href: "/admin/requests", label: "Requests", icon: ClipboardList },
     { href: "/admin/messages", label: "Messages", icon: MessageSquare },
     { href: "/admin/history", label: "History", icon: History },
     { href: "/admin/settings", label: "Settings", icon: Settings },
@@ -104,7 +104,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                      <h1 className="text-lg font-semibold">{adminNavItems.find(i => i.href === pathname)?.label || 'Admin'}</h1>
                 </div>
                 <Button variant="ghost" size="icon" className="rounded-full" asChild>
-                    <Link href="/"><Avatar><AvatarFallback>P</AvatarFallback></Avatar></Link>
+                    <Link href="/"><Avatar><AvatarFallback>H</AvatarFallback></Avatar></Link>
                 </Button>
             </header>
             <main className="flex-1 p-4 sm:px-6 sm:py-6">{children}</main>

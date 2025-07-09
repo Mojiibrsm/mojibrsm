@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
-import { FolderKanban, GitPullRequest, MessageSquare, Users, PlusCircle } from 'lucide-react';
+import { FolderKanban, ClipboardList, MessageSquare, Users, PlusCircle } from 'lucide-react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import { useEffect, useState } from 'react';
 import { getProjects, getMessageThreads, getAllRequests } from '@/services/data';
@@ -15,7 +15,7 @@ export default function AdminDashboardPage() {
     const [chartData, setChartData] = useState<any[]>([]);
     const [stats, setStats] = useState([
         { title: "Total Projects", value: "0", icon: FolderKanban, description: "0 active projects" },
-        { title: "Pending Requests", value: "0", icon: GitPullRequest, description: "Awaiting approval" },
+        { title: "Pending Requests", value: "0", icon: ClipboardList, description: "Awaiting approval" },
         { title: "Total Users", value: "1", icon: Users, description: "1 admin user" },
         { title: "New Messages", value: "0", icon: MessageSquare, description: "No new messages" },
     ]);
@@ -115,7 +115,7 @@ export default function AdminDashboardPage() {
                          Add New Project
                        </Button>
                        <Button variant="secondary" onClick={() => router.push('/admin/requests')}>
-                         <GitPullRequest className="mr-2 h-4 w-4" />
+                         <ClipboardList className="mr-2 h-4 w-4" />
                          Review Requests
                        </Button>
                         <Button variant="secondary" onClick={() => router.push('/admin/messages')}>

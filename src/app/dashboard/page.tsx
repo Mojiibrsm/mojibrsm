@@ -1,10 +1,9 @@
-
 'use client';
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { FolderKanban, GitPullRequest, MessageSquare, PlusCircle } from 'lucide-react';
+import { FolderKanban, ClipboardList, MessageSquare, PlusCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
@@ -16,7 +15,7 @@ export default function DashboardPage() {
     const [showWelcome, setShowWelcome] = useState(false);
     const [stats, setStats] = useState([
         { title: "Active Projects", value: "0", icon: FolderKanban, description: "0 waiting for review" },
-        { title: "Pending Requests", value: "0", icon: GitPullRequest, description: "Awaiting approval" },
+        { title: "Pending Requests", value: "0", icon: ClipboardList, description: "Awaiting approval" },
         { title: "Unread Messages", value: "0", icon: MessageSquare, description: "No new messages" },
     ]);
 

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useAuth } from '@/contexts/auth-context';
@@ -6,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarTrigger, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LayoutDashboard, User, Folder, MessageCircle, Settings, LogOut, GitPullRequest } from 'lucide-react';
+import { LayoutDashboard, User, Folder, MessageCircle, Settings, LogOut, ClipboardList } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -15,7 +14,7 @@ const dashboardNavItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/dashboard/profile", label: "My Profile", icon: User },
     { href: "/dashboard/projects", label: "My Projects", icon: Folder },
-    { href: "/dashboard/requests", label: "My Requests", icon: GitPullRequest },
+    { href: "/dashboard/requests", label: "My Requests", icon: ClipboardList },
     { href: "/dashboard/messages", label: "Messages", icon: MessageCircle },
     { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ]

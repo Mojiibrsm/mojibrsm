@@ -25,7 +25,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${poppins.variable} !scroll-smooth`} suppressHydrationWarning>
-      <body className="font-body antialiased bg-background text-foreground" suppressHydrationWarning>
+      <body className="font-body antialiased bg-background text-foreground overflow-x-hidden" suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
