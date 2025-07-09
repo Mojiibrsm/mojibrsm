@@ -1,4 +1,3 @@
-
 export const contact = {
   "title": "যোগাযোগ করুন",
   "description": "আপনার কি কোনো প্রকল্প আছে? আমি আপনার কাছ থেকে শুনতে আগ্রহী। ফর্মটি পূরণ করুন বা সরাসরি আমার সাথে যোগাযোগ করুন।",
@@ -12,11 +11,11 @@ export const contact = {
   },
   "details": {
     "email": "mojibrsm@gmail.com",
-    "phone": "+৮৮০১৬০১৫১৯০২৭",
-    "location": "কক্সবাজার, বাংলাদেশ",
+    "phone": "+8801601519007",
+    "location": "Cox's Bazar, Bangladesh",
     "socials": {
-      "github": "https://github.com/mojibrsm",
-      "facebook": "https://facebook.com/mojibrsm",
+      "github": "https://github.com/mojib-rsm",
+      "facebook": "https://facebook.com/mojiibrsm",
       "linkedin": "https://linkedin.com/in/mojibrsm"
     }
   }

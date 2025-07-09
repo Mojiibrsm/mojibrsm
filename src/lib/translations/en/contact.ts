@@ -1,4 +1,3 @@
-
 export const contact = {
   "title": "Get In Touch",
   "description": "Have a project in mind? I'd love to hear from you. Fill out the form or contact me directly.",
@@ -15,8 +14,8 @@ export const contact = {
     "phone": "+8801601519007",
     "location": "Cox's Bazar, Bangladesh",
     "socials": {
-      "github": "https://github.com/mojibrsm",
-      "facebook": "https://facebook.com/mojibrsm",
+      "github": "https://github.com/mojib-rsm",
+      "facebook": "https://facebook.com/mojiibrsm",
       "linkedin": "https://linkedin.com/in/mojibrsm"
     }
   }
