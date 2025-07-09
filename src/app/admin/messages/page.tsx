@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
@@ -144,46 +143,57 @@ export default function AdminMessagesPage() {
         return;
     }
 
-    const clientEmail = selectedThread.clientEmail;
-    if (!clientEmail || clientEmail === 'N/A') {
-        toast({ variant: "destructive", title: "Error", description: "This user does not have an email address to reply to." });
-        return;
-    }
-
     setIsSending(true);
 
-    const emailHtml = generateReplyEmailHtml(selectedThread.subject, selectedThread.clientName, replyText);
-    const emailSubject = `Re: ${selectedThread.subject}`;
-
     try {
-      const result = await sendEmail({
-        to: clientEmail,
-        subject: emailSubject,
-        html: emailHtml,
-      });
+        // Handle Live Chat reply differently
+        if (selectedThread.type === 'live') {
+            const newMessage: IMessage = { from: 'admin', text: replyText, timestamp: new Date().toISOString() };
+            addMessageToThread(selectedThread.id, newMessage, 'admin');
+            setReplyText("");
+            loadThreads();
+            toast({ title: "Reply Sent", description: "Your reply has been added to the live chat." });
+            return;
+        }
 
-      addEmailLog({
-        to: clientEmail,
-        subject: emailSubject,
-        html: emailHtml,
-        success: result.success,
-        message: result.message
-      });
+        // Handle Contact Form (email) reply
+        const clientEmail = selectedThread.clientEmail;
+        if (!clientEmail || clientEmail === 'N/A') {
+            toast({ variant: "destructive", title: "Error", description: "This user does not have an email address to reply to." });
+            return;
+        }
 
-      if (result.success) {
-        const newMessage: IMessage = { from: 'admin', text: replyText, timestamp: new Date().toISOString() };
-        addMessageToThread(selectedThread.id, newMessage, 'admin');
-        setReplyText("");
-        loadThreads();
-        toast({ title: "Reply Sent", description: "Your email reply has been sent successfully." });
-      } else {
-        throw new Error(result.message);
-      }
+        const emailHtml = generateReplyEmailHtml(selectedThread.subject, selectedThread.clientName, replyText);
+        const emailSubject = `Re: ${selectedThread.subject}`;
+
+        const result = await sendEmail({
+            to: clientEmail,
+            subject: emailSubject,
+            html: emailHtml,
+        });
+
+        addEmailLog({
+            to: clientEmail,
+            subject: emailSubject,
+            html: emailHtml,
+            success: result.success,
+            message: result.message
+        });
+
+        if (result.success) {
+            const newMessage: IMessage = { from: 'admin', text: replyText, timestamp: new Date().toISOString() };
+            addMessageToThread(selectedThread.id, newMessage, 'admin');
+            setReplyText("");
+            loadThreads();
+            toast({ title: "Reply Sent", description: "Your email reply has been sent successfully." });
+        } else {
+            throw new Error(result.message);
+        }
 
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Reply Failed", description: error.message || "Could not send the email reply." });
+        toast({ variant: "destructive", title: "Reply Failed", description: error.message || "Could not send the reply." });
     } finally {
-      setIsSending(false);
+        setIsSending(false);
     }
   };
   
@@ -351,7 +361,7 @@ export default function AdminMessagesPage() {
             </div>
             <DialogFooter className="mt-auto pt-4 border-t">
                 <div className="relative w-full flex items-center gap-2">
-                    <Textarea placeholder="Type your email reply..." className="pr-12" rows={1} value={replyText} onChange={(e) => setReplyText(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey && !isSending) { e.preventDefault(); handleSendReply(); } }} />
+                    <Textarea placeholder={selectedThread?.type === 'live' ? "Type your chat reply..." : "Type your email reply..."} className="pr-12" rows={1} value={replyText} onChange={(e) => setReplyText(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey && !isSending) { e.preventDefault(); handleSendReply(); } }} />
                     <Button size="icon" className="h-9 w-9" onClick={handleSendReply} disabled={!replyText || isSending}>
                         {isSending ? <Loader2 className="h-4 w-4 animate-spin"/> : <Send className="h-4 w-4"/>}
                     </Button>

@@ -22,6 +22,7 @@ export default function LiveChatWidget() {
     const adminAvatar = t.site.adminAvatar;
     const scrollAreaRef = useRef<HTMLDivElement>(null);
 
+    // Effect for initial load from localStorage
     useEffect(() => {
         const storedThreadId = localStorage.getItem('live_chat_thread_id');
         if (storedThreadId) {
@@ -33,12 +34,31 @@ export default function LiveChatWidget() {
             }
         }
     }, []);
-
+    
+    // Effect for polling for new messages from admin
     useEffect(() => {
-        if (scrollAreaRef.current) {
-            scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
+        if (threadId) {
+            const intervalId = setInterval(() => {
+                const threads = getMessageThreads();
+                const currentThread = threads.find(t => t.id === threadId);
+                // Check if there are new messages before updating state to prevent re-renders
+                if (currentThread && JSON.stringify(currentThread.messages) !== JSON.stringify(messages)) {
+                    setMessages(currentThread.messages);
+                }
+            }, 3000); // Poll every 3 seconds
+            
+            return () => clearInterval(intervalId);
         }
-    }, [messages]);
+    }, [threadId, messages]);
+
+    // Effect for scrolling to the bottom of the chat
+    useEffect(() => {
+        if (isOpen && scrollAreaRef.current) {
+            setTimeout(() => {
+                 scrollAreaRef.current?.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
+            }, 100);
+        }
+    }, [messages, isOpen]);
 
     const handleSendMessage = () => {
         if (!inputText.trim()) return;
