@@ -1,5 +1,3 @@
-'use client';
-
 import { translations } from '@/lib/translations';
 import { notFound } from 'next/navigation';
 import Header from '@/components/sections/header';
