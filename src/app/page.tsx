@@ -11,6 +11,7 @@ import Blog from '@/components/sections/blog';
 import Contact from '@/components/sections/contact';
 import Footer from '@/components/sections/footer';
 import Pricing from '@/components/sections/pricing';
+import { ClientOnly } from '@/components/client-only';
 
 export default function Home() {
   return (
@@ -32,7 +33,9 @@ function PortfolioPage() {
         <Gallery />
         <Pricing />
         <Blog />
-        <Contact />
+        <ClientOnly>
+          <Contact />
+        </ClientOnly>
       </main>
       <Footer />
     </div>
