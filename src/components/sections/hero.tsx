@@ -60,7 +60,7 @@ export default function Hero() {
             </div>
             <motion.div variants={itemVariants} className="flex flex-col gap-3 min-[400px]:flex-row">
               <Button size="lg" asChild>
-                <a href="/mojib-rsm-cv.pdf" target="_blank" rel="noopener noreferrer">
+                <a href={t.hero.cv_url} target="_blank" rel="noopener noreferrer">
                   {t.hero.buttons.cv}
                 </a>
               </Button>

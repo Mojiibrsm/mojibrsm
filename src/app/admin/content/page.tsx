@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, Save, PlusCircle, Trash2, Loader2 } from 'lucide-react';
+import { AlertCircle, Save, PlusCircle, Trash2, Loader2, FileText } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -115,10 +115,29 @@ const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, hand
 
     if (typeof value === 'string') {
       const isTextarea = value.length > 80 || ['description', 'bio', 'mission', 'excerpt', 'details'].some(k => key.toLowerCase().includes(k));
-      const isImageUrlField = key.toLowerCase().includes('image') || key.toLowerCase() === 'src';
-
-      if (isImageUrlField) {
+      const isFileField = key.toLowerCase().includes('image') || key.toLowerCase() === 'src' || key.toLowerCase() === 'cv_url';
+      
+      if (isFileField) {
+        const isImage = key.toLowerCase().includes('image') || key.toLowerCase() === 'src';
         const isUploading = uploadingStates[elementId];
+        const acceptType = isImage ? 'image/*' : 'application/pdf';
+
+        const previewContent = isImage ? (
+            <Image
+                src={(value && (value.startsWith('http') || value.startsWith('/'))) ? value : 'https://placehold.co/100x100.png'}
+                alt="Preview"
+                width={80}
+                height={80}
+                className="h-full w-full object-cover rounded-md border"
+                unoptimized
+            />
+        ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center bg-muted rounded-md border text-muted-foreground p-2 text-center">
+                <FileText className="h-8 w-8 mb-1 shrink-0" />
+                <span className="text-xs break-all line-clamp-2">{value.split('/').pop()}</span>
+            </div>
+        );
+
         return (
           <div key={elementId} className="space-y-2 mb-4">
             <Label htmlFor={elementId}>{capitalizeFirstLetter(key)}</Label>
@@ -129,21 +148,14 @@ const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, hand
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                   </div>
                 ) : (
-                  <Image
-                    src={(value && (value.startsWith('http') || value.startsWith('/'))) ? value : 'https://placehold.co/100x100.png'}
-                    alt="Preview"
-                    width={80}
-                    height={80}
-                    className="h-full w-full object-cover rounded-md border"
-                    unoptimized
-                  />
+                  previewContent
                 )}
               </div>
               <div className="flex-grow">
                 <Input
                   id={elementId}
                   type="file"
-                  accept="image/*"
+                  accept={acceptType}
                   onChange={(e) => {
                     if (e.target.files?.[0]) {
                       handleFileUpload(e.target.files[0], newPath, lang);
@@ -233,7 +245,7 @@ export default function AdminContentPage() {
 
         if (response.ok && result.success) {
             handleFieldChange(lang, path, result.url);
-            toast({ title: 'Success', description: 'Image uploaded successfully.' });
+            toast({ title: 'Success', description: 'File uploaded successfully.' });
         } else {
             throw new Error(result.message || 'Upload failed');
         }
