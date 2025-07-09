@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
@@ -8,7 +7,7 @@ import { doc, onSnapshot, DocumentData } from 'firebase/firestore';
 import type { FirestoreUser } from '@/services/firestore';
 
 interface AuthContextType {
-  user: (User & FirestoreUser) | null;
+  user: (User & Partial<FirestoreUser>) | null;
   loading: boolean;
   reloadUser: () => Promise<void>;
 }
@@ -16,7 +15,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<(User & FirestoreUser) | null>(null);
+  const [user, setUser] = useState<(User & Partial<FirestoreUser>) | null>(null);
   const [loading, setLoading] = useState(true);
 
   const reloadUser = async () => {
@@ -30,17 +29,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
-        // User is authenticated, listen for Firestore document
         const userRef = doc(db, 'users', firebaseUser.uid);
-        const unsubFirestore = onSnapshot(userRef, (doc) => {
-          if (doc.exists()) {
-            const firestoreData = doc.data() as FirestoreUser;
+        const unsubFirestore = onSnapshot(userRef, (snapshot) => {
+          if (snapshot.exists()) {
+            const firestoreData = snapshot.data() as FirestoreUser;
             setUser({ ...firebaseUser, ...firestoreData });
-            setLoading(false);
+          } else {
+            // User exists in Auth, but not yet in Firestore DB.
+            // This can happen if doc creation fails or is delayed.
+            setUser(firebaseUser);
           }
-          // If doc doesn't exist yet (e.g., right after signup),
-          // we wait. `loading` remains true, preventing premature redirects.
-          // The listener will fire again once the document is created.
+          setLoading(false);
+        }, (error) => {
+            console.error("Auth context Firestore error:", error);
+            setUser(null);
+            setLoading(false);
         });
         
         return () => unsubFirestore();
