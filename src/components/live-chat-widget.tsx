@@ -110,7 +110,7 @@ export default function LiveChatWidget() {
             setMessages([newMessage]);
         }
         
-        localStorage.setItem('new_live_chat_message_timestamp', new Date().toISOString());
+        localStorage.setItem('new_live_chat_message_timestamp', newMessage.timestamp);
         setInputText('');
     };
 
