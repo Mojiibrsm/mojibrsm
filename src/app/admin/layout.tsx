@@ -43,7 +43,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-screen items-center justify-center" suppressHydrationWarning>
         <p>Loading access control...</p>
       </div>
     );
@@ -51,7 +51,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (!isLoggedIn || !user) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-screen items-center justify-center" suppressHydrationWarning>
         <p>Redirecting to login...</p>
       </div>
     );
