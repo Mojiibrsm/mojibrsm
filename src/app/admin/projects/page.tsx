@@ -42,6 +42,7 @@ const generateProjectEmailHtml = (projectData: ProjectFormData, isNew: boolean, 
     
     const { name: devName } = t.hero;
     const { phone: devPhone, email: devEmail } = t.contact.details;
+    const siteUrl = t.site.url;
     
     const absoluteImageUrl = notesImage || '';
 
@@ -77,7 +78,7 @@ const generateProjectEmailHtml = (projectData: ProjectFormData, isNew: boolean, 
                     <div style="margin-top: 15px;">
                         <a href="https://wa.me/${whatsappNumber}" style="display: inline-block; background-color: #25D366; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px; font-size: 14px; font-weight: bold;">WhatsApp</a>
                         <a href="https://facebook.com/MoJiiB.RsM" style="display: inline-block; background-color: #1877F2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px; font-size: 14px; font-weight: bold;">Facebook</a>
-                        <a href="https://www.mojib.oftern.com" style="display: inline-block; background-color: #6366f1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px; font-size: 14px; font-weight: bold;">Visit Website</a>
+                        <a href="${siteUrl}" style="display: inline-block; background-color: #6366f1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px; font-size: 14px; font-weight: bold;">Visit Website</a>
                     </div>
                 </div>
             </div>

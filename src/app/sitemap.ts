@@ -1,7 +1,8 @@
 import { MetadataRoute } from 'next'
+import { translations } from '@/lib/translations'
  
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://www.mojib.oftern.com'
+  const baseUrl = translations.en.site.url
  
   // In a real app with a CMS, you would fetch dynamic routes (like blog posts)
   // from your data source and add them to the sitemap.

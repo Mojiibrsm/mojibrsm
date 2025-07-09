@@ -17,8 +17,8 @@ const poppins = Poppins({
 const siteConfig = {
   name: translations.en.site.title,
   description: translations.en.hero.tagline,
-  url: "https://www.mojib.oftern.com",
-  ogImage: "https://www.oftern.com/uploads/gallery/202507/image_500x_686e52ba15db8.jpg",
+  url: translations.en.site.url,
+  ogImage: translations.en.site.adminAvatar,
 }
 
 export const metadata: Metadata = {

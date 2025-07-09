@@ -1,7 +1,8 @@
 import { MetadataRoute } from 'next'
+import { translations } from '@/lib/translations'
  
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = 'https://www.mojib.oftern.com';
+  const baseUrl = translations.en.site.url;
   
   return {
     rules: [
