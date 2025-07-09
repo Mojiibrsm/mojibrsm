@@ -181,15 +181,9 @@ const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, hand
 
 
 export default function EditPage({ params }: { params: { secret_key: string } }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const isAuthenticated = params.secret_key === SECRET_KEY;
   const [editableContent, setEditableContent] = useState<Translations>(translations);
   const { toast } = useToast();
-
-  useEffect(() => {
-    if (params.secret_key === SECRET_KEY) {
-      setIsAuthenticated(true);
-    }
-  }, [params.secret_key]);
 
   const handleFieldChange = useCallback((lang: 'en' | 'bn', path: (string | number)[], value: any) => {
     setEditableContent(prev => {
@@ -386,4 +380,3 @@ export default function EditPage({ params }: { params: { secret_key: string } })
     </div>
   );
 }
-
