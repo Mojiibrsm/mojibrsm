@@ -37,20 +37,20 @@ export async function updateSiteSettingsAction(newSettings: SiteSettings): Promi
         // Create a deep copy to avoid modifying the cached version in memory
         const updatedTranslations = JSON.parse(JSON.stringify(translations));
         
-        // Update both English and Bengali site settings to keep them in sync
+        // Update English site settings
         updatedTranslations.en.site = newSettings;
-        // Also update the bn site object, ensuring fields like URL are consistent
+        
+        // Update Bengali site settings to keep them in sync for consistency
+        updatedTranslations.bn.site.title = newSettings.title;
         updatedTranslations.bn.site.url = newSettings.url;
         updatedTranslations.bn.site.logo = newSettings.logo;
+        updatedTranslations.bn.site.publicLogo = newSettings.publicLogo;
         updatedTranslations.bn.site.adminAvatar = newSettings.adminAvatar;
-        // Keep language-specific title if it exists, otherwise use the new one
-        updatedTranslations.bn.site.title = newSettings.title || updatedTranslations.bn.site.title;
-
 
         const newFileContent = `export const translations = ${JSON.stringify(updatedTranslations, null, 2)};\n\nexport type Translations = typeof translations;`;
 
         await fs.writeFile(filePath, newFileContent, 'utf-8');
-        return { success: true, message: 'Site settings updated successfully! Refresh to see changes in the admin panel.' };
+        return { success: true, message: 'Site settings updated successfully! Refresh to see changes.' };
     } catch (error) {
         console.error('Failed to write to translations.ts:', error);
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';

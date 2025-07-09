@@ -61,13 +61,13 @@ export default function Header() {
     >
       <div className="container flex h-20 items-center">
         <Link href="/#home" className="mr-6 flex items-center space-x-2">
-          {t.site.logo ? (
+          {t.site.publicLogo ? (
             <Image
-              src={t.site.logo}
+              src={t.site.publicLogo}
               alt={t.site.title}
               width={140}
               height={35}
-              className="h-8 w-auto"
+              className="h-8 w-auto object-contain"
               priority
             />
           ) : (

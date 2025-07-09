@@ -63,12 +63,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <SidebarHeader>
                     <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
                         <Avatar className="h-8 w-8">
-                            <AvatarImage src={"https://www.oftern.com/uploads/gallery/202507/image_500x_686e52ba15db8.jpg"} alt={t.site.title}/>
+                            <AvatarImage src={t.site.logo} alt={t.site.title}/>
                             <AvatarFallback>{t.site.title.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col group-data-[collapsible=icon]:hidden">
                             <span className="text-sm font-semibold">{t.site.title}</span>
-                            <span className="text-xs text-muted-foreground">Admin</span>
                         </div>
                     </div>
                 </SidebarHeader>

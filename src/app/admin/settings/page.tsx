@@ -17,7 +17,7 @@ import Image from 'next/image';
 
 
 const initialAwsSettings: AwsSettings = { accessKeyId: '', secretAccessKey: '', bucketName: '', region: '' };
-const initialSiteSettings: SiteSettings = { title: '', url: '', logo: '', adminAvatar: '' };
+const initialSiteSettings: SiteSettings = { title: '', url: '', logo: '', publicLogo: '', adminAvatar: '' };
 
 type NotificationSettings = { messages: boolean; requests: boolean };
 
@@ -140,18 +140,28 @@ export default function AdminSettingsPage() {
                                 <Input id="url" name="url" value={siteSettings.url} onChange={handleSiteSettingsChange} placeholder="https://example.com" />
                             </div>
                             
+                             <div className="space-y-2">
+                                <Label htmlFor="publicLogo">Public Site Logo (Landscape)</Label>
+                                <div className="flex items-center gap-4">
+                                    <div className="relative w-32 h-16 shrink-0 border rounded-md p-1 bg-muted/30">
+                                        {uploadingStates.publicLogo ? <Loader2 className="h-full w-full animate-spin text-muted-foreground" /> : <Image src={siteSettings.publicLogo || 'https://placehold.co/200x100.png'} alt="Public Site Logo" width={128} height={64} className="w-full h-full object-contain" unoptimized />}
+                                    </div>
+                                    <Input id="publicLogo" type="file" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'publicLogo')} disabled={uploadingStates.publicLogo} />
+                                </div>
+                            </div>
+                            
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <Label htmlFor="logo">Site Logo</Label>
+                                    <Label htmlFor="logo">Admin Panel Logo (Square)</Label>
                                     <div className="flex items-center gap-4">
                                         <div className="relative w-16 h-16 shrink-0 border rounded-md p-1">
-                                            {uploadingStates.logo ? <Loader2 className="h-full w-full animate-spin text-muted-foreground" /> : <Image src={siteSettings.logo || 'https://placehold.co/100x100.png'} alt="Site Logo" width={64} height={64} className="w-full h-full object-contain" unoptimized />}
+                                            {uploadingStates.logo ? <Loader2 className="h-full w-full animate-spin text-muted-foreground" /> : <Image src={siteSettings.logo || 'https://placehold.co/100x100.png'} alt="Admin Panel Logo" width={64} height={64} className="w-full h-full object-contain" unoptimized />}
                                         </div>
                                         <Input id="logo" type="file" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'logo')} disabled={uploadingStates.logo} />
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="adminAvatar">Admin Avatar</Label>
+                                    <Label htmlFor="adminAvatar">Admin Avatar (Square)</Label>
                                     <div className="flex items-center gap-4">
                                         <div className="relative w-16 h-16 shrink-0 border rounded-full p-1">
                                             {uploadingStates.adminAvatar ? <Loader2 className="h-full w-full animate-spin text-muted-foreground" /> : <Image src={siteSettings.adminAvatar || 'https://placehold.co/100x100.png'} alt="Admin Avatar" width={64} height={64} className="w-full h-full object-cover rounded-full" unoptimized />}
