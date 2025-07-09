@@ -2,22 +2,33 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { getMessageThreads, addMessageToThread, markThreadAsRead, IMessage, IMessageThread } from '@/services/firestore';
+import { getMessageThreads, addMessageToThread, markThreadAsRead, createMessageThread, IMessage, IMessageThread } from '@/services/firestore';
 import { Timestamp } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Send, PlusCircle, Mail, MessageSquareText } from 'lucide-react';
+import { Send, PlusCircle, Mail, MessageSquareText, FileKey, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/auth-context';
 import { FormattedTimestamp } from '@/components/formatted-timestamp';
+import { Label } from '@/components/ui/label';
 
 export default function AdminMessagesPage() {
   const [threads, setThreads] = useState<IMessageThread[]>([]);
   const [selectedThread, setSelectedThread] = useState<IMessageThread | null>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
+  const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [replyText, setReplyText] = useState("");
+  const [newThreadData, setNewThreadData] = useState({
+      clientName: '',
+      clientEmail: '',
+      clientPhone: '',
+      subject: '',
+      message: ''
+  });
+  const [isSending, setIsSending] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -25,12 +36,9 @@ export default function AdminMessagesPage() {
       if (!user) return;
       const unsubscribe = getMessageThreads((fetchedThreads) => {
           setThreads(fetchedThreads);
-          // If a thread is being viewed, update its content in real-time
           if (selectedThread) {
             const updatedThread = fetchedThreads.find(t => t.id === selectedThread.id);
-            if (updatedThread) {
-                setSelectedThread(updatedThread);
-            }
+            if (updatedThread) setSelectedThread(updatedThread);
           }
       });
       return () => unsubscribe();
@@ -46,24 +54,63 @@ export default function AdminMessagesPage() {
   
   const handleReply = async () => {
     if (!selectedThread?.id || !replyText || !user) return;
-
-    const newMessage: IMessage = {
-        from: 'admin',
-        text: replyText,
-        timestamp: Timestamp.now()
-    };
-    
+    const newMessage: IMessage = { from: 'admin', text: replyText, timestamp: Timestamp.now() };
     try {
         await addMessageToThread(selectedThread.id, newMessage, 'admin');
         setReplyText("");
     } catch (error) {
         toast({ variant: "destructive", title: "Error", description: "Failed to send reply." });
     }
-  }
+  };
 
-  // Note: 'New Message' from Admin is a more complex feature (requires user selection)
-  // and is scoped out for this update to focus on fixing replies.
-  // A placeholder dialog is kept for future implementation.
+  const handleComposeChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const { name, value } = e.target;
+      setNewThreadData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleCreateThread = async () => {
+      if (!user || !newThreadData.clientEmail || !newThreadData.subject || !newThreadData.message) {
+          toast({ variant: "destructive", title: "Missing Information", description: "Client email, subject, and message are required." });
+          return;
+      }
+      setIsSending(true);
+
+      const threadData = {
+          userId: user.uid, // This is a limitation of the single-user auth system.
+          clientName: newThreadData.clientName || 'N/A',
+          clientEmail: newThreadData.clientEmail,
+          clientAvatar: `https://placehold.co/100x100.png`,
+          clientPhone: newThreadData.clientPhone || 'N/A',
+          subject: newThreadData.subject,
+          unreadByAdmin: false,
+          unreadByUser: true,
+      };
+
+      const initialMessage: IMessage = {
+          from: 'admin',
+          text: newThreadData.message,
+          timestamp: Timestamp.now(),
+      };
+
+      try {
+          await createMessageThread(threadData, initialMessage);
+          toast({ title: "Message Sent", description: `A new conversation has been started with ${newThreadData.clientName || newThreadData.clientEmail}.` });
+          setIsComposeOpen(false);
+          setNewThreadData({ clientName: '', clientEmail: '', clientPhone: '', subject: '', message: '' });
+      } catch (error) {
+          toast({ variant: "destructive", title: "Error", description: "Failed to create new conversation." });
+      } finally {
+          setIsSending(false);
+      }
+  };
+  
+  const handleSendOtp = () => {
+      if (!newThreadData.clientPhone) {
+           toast({ variant: "destructive", title: "Missing Phone Number", description: "Please enter a client phone number to send an OTP." });
+           return;
+      }
+      toast({ title: "OTP Sent (Simulation)", description: `An OTP has been sent to ${newThreadData.clientPhone}.` });
+  }
 
   return (
     <div className="space-y-6">
@@ -72,9 +119,9 @@ export default function AdminMessagesPage() {
                 <h1 className="text-2xl font-bold">Manage Messages</h1>
                 <p className="text-muted-foreground">View and respond to all client conversations.</p>
             </div>
-            <Dialog>
+            <Dialog open={isComposeOpen} onOpenChange={setIsComposeOpen}>
                 <DialogTrigger asChild>
-                    <Button disabled>
+                    <Button>
                         <PlusCircle className="mr-2 h-4 w-4" />
                         New Message
                     </Button>
@@ -82,8 +129,40 @@ export default function AdminMessagesPage() {
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Compose New Message</DialogTitle>
-                        <DialogDescription>This feature is under development. You can reply to existing conversations.</DialogDescription>
+                        <DialogDescription>Manually start a new conversation with a client.</DialogDescription>
                     </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="clientName" className="text-right">Client Name</Label>
+                            <Input id="clientName" name="clientName" value={newThreadData.clientName} onChange={handleComposeChange} className="col-span-3" placeholder="John Doe"/>
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="clientEmail" className="text-right">Client Email</Label>
+                            <Input id="clientEmail" name="clientEmail" type="email" value={newThreadData.clientEmail} onChange={handleComposeChange} className="col-span-3" placeholder="client@example.com" required/>
+                        </div>
+                         <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="clientPhone" className="text-right">Client Phone</Label>
+                            <Input id="clientPhone" name="clientPhone" value={newThreadData.clientPhone} onChange={handleComposeChange} className="col-span-3" placeholder="+1234567890"/>
+                        </div>
+                         <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="subject" className="text-right">Subject</Label>
+                            <Input id="subject" name="subject" value={newThreadData.subject} onChange={handleComposeChange} className="col-span-3" placeholder="Regarding your project..." required/>
+                        </div>
+                        <div className="grid grid-cols-4 items-start gap-4">
+                            <Label htmlFor="message" className="text-right pt-2">Message</Label>
+                            <Textarea id="message" name="message" value={newThreadData.message} onChange={handleComposeChange} className="col-span-3" placeholder="Type your message here." required/>
+                        </div>
+                    </div>
+                    <DialogFooter className="sm:justify-between">
+                        <Button variant="outline" onClick={handleSendOtp}><FileKey className="mr-2 h-4 w-4"/> Send OTP (Simulated)</Button>
+                        <div className="flex gap-2">
+                          <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
+                          <Button onClick={handleCreateThread} disabled={isSending}>
+                              {isSending && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                              Send Message
+                          </Button>
+                        </div>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
       </div>
@@ -164,3 +243,5 @@ export default function AdminMessagesPage() {
     </div>
   )
 }
+
+    

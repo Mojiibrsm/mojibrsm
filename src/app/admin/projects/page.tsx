@@ -27,6 +27,9 @@ const getStatusVariant = (status: string) => {
     }
 }
 
+// Define a type for the form data to ensure type safety
+type ProjectFormData = Omit<Project, 'id' | 'userId' | 'createdAt'>;
+
 export default function AdminProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -61,30 +64,33 @@ export default function AdminProjectsPage() {
     }
   };
   
-  const handleSave = async (formData: Omit<Project, 'id' | 'userId' | 'createdAt'>) => {
+  const handleSave = async (formData: ProjectFormData) => {
     if (!user) {
         toast({ title: "Authentication Error", description: "You must be logged in.", variant: "destructive" });
         return;
     }
     try {
       if (editingProject) {
-        await updateProject(editingProject.id!, { ...formData });
+        // When updating, we pass the existing project data, updated with new form data
+        await updateProject(editingProject.id!, formData);
         toast({ title: "Project Updated", description: "The project has been successfully updated." });
         if(formData.clientEmail){
-             toast({ title: "Notification Sent", description: `An email notification has been sent to ${formData.clientEmail}.` });
+             toast({ title: "Notification Sent (Simulated)", description: `An email notification would be sent to ${formData.clientEmail}.` });
         }
       } else {
+        // When adding, we combine form data with the user's ID
         const newProject: Omit<Project, 'id' | 'createdAt'> = { ...formData, userId: user.uid };
         await addProject(newProject);
         toast({ title: "Project Added", description: "A new project has been successfully added." });
         if(formData.clientEmail){
-             toast({ title: "Notification Sent", description: `An email notification has been sent to ${formData.clientEmail}.` });
+             toast({ title: "Notification Sent (Simulated)", description: `An email notification would be sent to ${formData.clientEmail}.` });
         }
       }
       setIsDialogOpen(false);
       setEditingProject(null);
     } catch (error) {
-      toast({ title: "Save Error", description: "Could not save the project.", variant: "destructive" });
+      console.error("Save Error:", error);
+      toast({ title: "Save Error", description: "Could not save the project. Check console for details.", variant: "destructive" });
     }
   };
 
@@ -191,13 +197,14 @@ export default function AdminProjectsPage() {
 }
 
 // Sub-component for the Project Form Dialog
-function ProjectFormDialog({ isOpen, onOpenChange, project, onSave }: { isOpen: boolean; onOpenChange: (open: boolean) => void; project: Project | null; onSave: (data: any) => Promise<void>; }) {
+function ProjectFormDialog({ isOpen, onOpenChange, project, onSave }: { isOpen: boolean; onOpenChange: (open: boolean) => void; project: Project | null; onSave: (data: ProjectFormData) => Promise<void>; }) {
+  // We only manage the core form fields here. `userId` is handled by the parent component.
   const [formData, setFormData] = useState({ name: '', client: '', clientEmail: '', status: 'Pending' as ProjectStatus, deadline: '' });
-  const { user } = useAuth();
   
   React.useEffect(() => {
     if (isOpen) {
         if (project) {
+          // If editing, populate the form with the project's data
           setFormData({
               name: project.name,
               client: project.client,
@@ -206,6 +213,7 @@ function ProjectFormDialog({ isOpen, onOpenChange, project, onSave }: { isOpen: 
               deadline: project.deadline,
           });
         } else {
+          // If adding new, reset to default empty values
           setFormData({ name: '', client: '', clientEmail: '', status: 'Pending', deadline: '' });
         }
     }
@@ -222,15 +230,11 @@ function ProjectFormDialog({ isOpen, onOpenChange, project, onSave }: { isOpen: 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
-    
-    const projectData = { ...formData, userId: project?.userId || user.uid };
-    
-    await onSave(projectData);
+    await onSave(formData); // Pass only the form data to the parent handler
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { onOpenChange(open); if (!open) setFormData({ name: '', client: '', clientEmail: '', status: 'Pending', deadline: '' }); }}>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{project ? 'Edit Project' : 'Add New Project'}</DialogTitle>
@@ -281,3 +285,5 @@ function ProjectFormDialog({ isOpen, onOpenChange, project, onSave }: { isOpen: 
     </Dialog>
   );
 }
+
+    

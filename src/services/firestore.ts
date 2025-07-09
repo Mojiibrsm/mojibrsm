@@ -41,7 +41,7 @@ export const getProjectsByUserId = (userId: string, callback: (projects: Project
     });
 };
 
-export const updateProject = (id: string, data: Partial<Omit<Project, 'id' | 'createdAt'>>) => {
+export const updateProject = (id: string, data: Partial<Omit<Project, 'id' | 'createdAt' | 'userId'>>) => {
     return updateDoc(doc(db, 'projects', id), data);
 };
 
@@ -173,3 +173,5 @@ export const markThreadAsRead = (threadId: string, readerType: 'admin' | 'user')
         return updateDoc(threadRef, { unreadByUser: false });
     }
 };
+
+    
