@@ -15,9 +15,9 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
-// Type guard to differentiate logs
+// Type guard to differentiate logs. `subject` is unique to email logs.
 function isEmailLog(log: any): log is EmailLog {
-  return log && typeof log.subject !== 'undefined' && typeof log.html !== 'undefined';
+  return log && typeof log.subject !== 'undefined';
 }
 
 export default function AdminHistoryPage() {
@@ -62,23 +62,48 @@ export default function AdminHistoryPage() {
     if (!selectedLog) return;
     setIsResending(true);
 
-    let result;
-    if (isEmailLog(selectedLog)) {
-        result = await sendEmail({ to: selectedLog.to, subject: selectedLog.subject, html: selectedLog.html });
-        addEmailLog({ to: selectedLog.to, subject: selectedLog.subject, html: selectedLog.html, success: result.success, message: result.message });
-    } else {
-        result = await sendSms(selectedLog.to, selectedLog.message);
-        addSmsLog({ to: selectedLog.to, message: selectedLog.message, success: result.success, response: result.message });
-    }
+    let result: { success: boolean; message: string };
 
-    toast({
-        title: result.success ? 'Message Resent' : 'Resend Failed',
-        description: result.message,
-        variant: result.success ? 'default' : 'destructive',
-    });
-    
-    setIsResending(false);
-    loadLogs(); // Reload to show the new log entry
+    try {
+        if (isEmailLog(selectedLog)) {
+            result = await sendEmail({ to: selectedLog.to, subject: selectedLog.subject, html: selectedLog.html });
+            addEmailLog({ 
+                to: selectedLog.to, 
+                subject: selectedLog.subject, 
+                html: selectedLog.html, 
+                success: result.success, 
+                message: result.message 
+            });
+        } else {
+            // It's an SMS log
+            const smsLog = selectedLog as SmsLog;
+            result = await sendSms(smsLog.to, smsLog.message);
+            addSmsLog({ 
+                to: smsLog.to, 
+                message: smsLog.message, 
+                success: result.success, 
+                response: result.message 
+            });
+        }
+
+        toast({
+            title: result.success ? 'Message Resent' : 'Resend Failed',
+            description: result.message,
+            variant: result.success ? 'default' : 'destructive',
+        });
+    } catch (error: any) {
+        toast({
+            title: 'An Error Occurred',
+            description: 'Could not complete the resend action.',
+            variant: 'destructive',
+        });
+        console.error("Resend error:", error);
+    } finally {
+        setIsResending(false);
+        setIsDialogOpen(false);
+        setSelectedLog(null);
+        loadLogs();
+    }
   };
   
   const renderLogDetails = () => {

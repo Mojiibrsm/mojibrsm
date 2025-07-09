@@ -86,11 +86,7 @@ export default function AdminProjectsPage() {
             toast({ title: "Project Added", description: "A new project has been successfully added." });
         }
 
-        setIsDialogOpen(false);
-        setEditingProject(null);
-        loadProjects();
-
-        // Send email in the background without awaiting it
+        // Awaited to prevent race conditions with localStorage logging.
         if (formData.clientEmail) {
             const isNew = !editingProject;
             const emailSubject = isNew
@@ -100,22 +96,25 @@ export default function AdminProjectsPage() {
                 ? `<h1>New Project Started</h1><p>A new project, <strong>${formData.name}</strong>, has been created for you.</p><p>The current status is: <strong>${formData.status}</strong>.</p><p>You can track its progress in your dashboard.</p>`
                 : `<h1>Project Updated</h1><p>The status of your project, <strong>${formData.name}</strong>, has been updated to: <strong>${formData.status}</strong>.</p><p>You can view details in your dashboard.</p>`;
             
-            sendEmail({ to: formData.clientEmail, subject: emailSubject, html: emailHtml })
-                .then(emailResult => {
-                    addEmailLog({
-                        to: formData.clientEmail,
-                        subject: emailSubject,
-                        html: emailHtml,
-                        success: emailResult.success,
-                        message: emailResult.message,
-                    });
-                    toast({
-                        title: "Email Notification Status",
-                        description: emailResult.message,
-                        variant: emailResult.success ? 'default' : 'destructive'
-                    });
-                });
+            const emailResult = await sendEmail({ to: formData.clientEmail, subject: emailSubject, html: emailHtml });
+            addEmailLog({
+                to: formData.clientEmail,
+                subject: emailSubject,
+                html: emailHtml,
+                success: emailResult.success,
+                message: emailResult.message,
+            });
+            toast({
+                title: "Email Notification Status",
+                description: emailResult.message,
+                variant: emailResult.success ? 'default' : 'destructive'
+            });
         }
+        
+        setIsDialogOpen(false);
+        setEditingProject(null);
+        loadProjects();
+
     } catch (error: any) {
         console.error("Save Error:", error);
         toast({ title: "Save Error", description: error.message || "Could not save the project.", variant: "destructive" });

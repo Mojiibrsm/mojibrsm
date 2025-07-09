@@ -17,8 +17,8 @@ export async function sendSms(phoneNumber: string, message: string): Promise<{ s
     if (!apiKey || apiKey === 'YOUR_SMS_API_KEY' || !apiUrl || apiUrl.includes('yourotpprovider.com')) {
         const warning = 'SMS API configuration is incomplete. SMS not sent.';
         console.warn(warning);
-        // Simulate success for UI testing, but provide a clear message.
-        result = { success: true, message: `SMS to ${phoneNumber} was not sent. API is not configured.` };
+        // The message is informative, but the status should reflect that the action failed.
+        result = { success: false, message: `SMS sending failed: API is not configured.` };
         return result;
     }
 
