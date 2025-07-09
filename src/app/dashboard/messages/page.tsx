@@ -1,6 +1,6 @@
 
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { createMessageThread, getMessageThreadsForUser, addMessageToThread, markThreadAsRead, IMessage, IMessageThread } from '@/services/data';
@@ -25,21 +25,32 @@ export default function MessagesPage() {
   const [newMessageSubject, setNewMessageSubject] = useState("");
   const [newMessageBody, setNewMessageBody] = useState("");
 
-  const loadThreads = () => {
-    if(!user) return;
+  const loadThreads = useCallback(() => {
+    if (!user) return;
     const fetchedThreads = getMessageThreadsForUser(user.uid);
     setThreads(fetchedThreads);
-    if (selectedThread) {
-        const updatedThread = fetchedThreads.find(t => t.id === selectedThread.id);
-        if (updatedThread) {
-            setSelectedThread(updatedThread);
-        }
-    }
-  }
+  }, [user]);
 
   useEffect(() => {
     loadThreads();
-  }, [user]);
+  }, [loadThreads]);
+
+  // This new effect will keep the selected thread in sync
+  useEffect(() => {
+    if (!selectedThread) return;
+
+    const updatedThread = threads.find(t => t.id === selectedThread.id);
+    if (updatedThread) {
+      if (JSON.stringify(updatedThread) !== JSON.stringify(selectedThread)) {
+        setSelectedThread(updatedThread);
+      }
+    } else {
+      setSelectedThread(null);
+      setIsViewOpen(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [threads]);
+
 
   const handleViewMessage = (thread: IMessageThread) => {
     setSelectedThread(thread);

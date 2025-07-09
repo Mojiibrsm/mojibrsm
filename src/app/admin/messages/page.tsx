@@ -1,6 +1,6 @@
 
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getMessageThreads, addMessageToThread, markThreadAsRead, IMessage, IMessageThread, addSmsLog, addEmailLog } from '@/services/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -79,19 +79,34 @@ export default function AdminMessagesPage() {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const loadThreads = () => {
+  const loadThreads = useCallback(() => {
     const fetchedThreads = getMessageThreads();
     setThreads(fetchedThreads);
-    if (selectedThread) {
-        const updatedThread = fetchedThreads.find(t => t.id === selectedThread.id);
-        if (updatedThread) setSelectedThread(updatedThread);
-    }
-  }
+  }, []);
 
   useEffect(() => {
-      if (!user) return;
+    if (user) {
       loadThreads();
-  }, [user, selectedThread]);
+    }
+  }, [user, loadThreads]);
+
+  // This effect ensures the selected thread's data is fresh if the list changes
+  useEffect(() => {
+    if (!selectedThread) return;
+
+    const updatedThread = threads.find(t => t.id === selectedThread.id);
+    if (updatedThread) {
+      // Prevent re-render if data is identical
+      if (JSON.stringify(updatedThread) !== JSON.stringify(selectedThread)) {
+        setSelectedThread(updatedThread);
+      }
+    } else {
+      // Thread was deleted, close dialog
+      setSelectedThread(null);
+      setIsViewOpen(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [threads]);
 
   const handleViewThread = (thread: IMessageThread) => {
     setSelectedThread(thread);
