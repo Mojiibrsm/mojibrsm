@@ -25,15 +25,13 @@ const capitalizeFirstLetter = (string: string) => {
 };
 
 // Recursive component to render form fields
-const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, handleDeleteItem, handleFileUpload, uploadingStates, handleBrowseMedia }: { 
+const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, handleDeleteItem, handleBrowseMedia }: { 
     data: any, 
     path: (string | number)[], 
     lang: 'en' | 'bn', 
     handleFieldChange: (lang: 'en' | 'bn', path: (string | number)[], value: any) => void,
     handleAddItem: (lang: 'en' | 'bn', path: (string | number)[]) => void,
     handleDeleteItem: (lang: 'en' | 'bn', path: (string | number)[]) => void,
-    handleFileUpload: (file: File, path: (string | number)[], lang: 'en' | 'bn') => void,
-    uploadingStates: { [key: string]: boolean },
     handleBrowseMedia: (path: (string | number)[], lang: 'en' | 'bn') => void,
 }) => {
   // Case 1: Data is a string (used for items in a string array)
@@ -94,8 +92,6 @@ const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, hand
               handleFieldChange={handleFieldChange}
               handleAddItem={handleAddItem}
               handleDeleteItem={handleDeleteItem}
-              handleFileUpload={handleFileUpload}
-              uploadingStates={uploadingStates}
               handleBrowseMedia={handleBrowseMedia}
             />
           </div>
@@ -123,9 +119,7 @@ const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, hand
       
       if (isFileField) {
         const isImage = !key.toLowerCase().includes('cv_url');
-        const isUploading = uploadingStates[elementId];
-        const acceptType = isImage ? 'image/*' : 'application/pdf';
-
+        
         const previewContent = isImage ? (
             <Image
                 src={(value && (value.startsWith('http') || value.startsWith('/'))) ? value : 'https://placehold.co/100x100.png'}
@@ -147,28 +141,10 @@ const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, hand
             <Label htmlFor={elementId}>{capitalizeFirstLetter(key)}</Label>
             <div className="flex flex-col sm:flex-row items-center gap-4">
               <div className="relative w-20 h-20 shrink-0">
-                {isUploading ? (
-                  <div className="w-full h-full flex items-center justify-center bg-muted rounded-md border">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : (
-                  previewContent
-                )}
+                {previewContent}
               </div>
               <div className="flex-grow space-y-2 w-full">
-                <Input
-                  id={elementId}
-                  type="file"
-                  accept={acceptType}
-                  onChange={(e) => {
-                    if (e.target.files?.[0]) {
-                      handleFileUpload(e.target.files[0], newPath, lang);
-                    }
-                  }}
-                  className="w-full"
-                  disabled={isUploading}
-                />
-                <Button type="button" variant="outline" className="w-full" onClick={() => handleBrowseMedia(newPath, lang)} disabled={isUploading}>
+                <Button type="button" variant="outline" className="w-full" onClick={() => handleBrowseMedia(newPath, lang)}>
                     <FolderSearch className="mr-2 h-4 w-4" /> Browse Library
                 </Button>
                 <p className="text-xs text-muted-foreground mt-1 truncate">URL: {value}</p>
@@ -203,7 +179,7 @@ const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, hand
       return (
         <div key={elementId} className="p-4 border rounded-lg mt-4 bg-muted/30">
           <h4 className="text-md font-semibold mb-3 tracking-tight">{capitalizeFirstLetter(key)}</h4>
-          <RenderFields data={value} path={newPath} lang={lang} handleFieldChange={handleFieldChange} handleAddItem={handleAddItem} handleDeleteItem={handleDeleteItem} handleFileUpload={handleFileUpload} uploadingStates={uploadingStates} handleBrowseMedia={handleBrowseMedia} />
+          <RenderFields data={value} path={newPath} lang={lang} handleFieldChange={handleFieldChange} handleAddItem={handleAddItem} handleDeleteItem={handleDeleteItem} handleBrowseMedia={handleBrowseMedia} />
         </div>
       );
     }
@@ -215,7 +191,6 @@ const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, hand
 export default function AdminContentPage() {
   const [editableContent, setEditableContent] = useState<Translations>(JSON.parse(JSON.stringify(translations)));
   const [isSaving, setIsSaving] = useState(false);
-  const [uploadingStates, setUploadingStates] = useState<{ [key: string]: boolean }>({});
   const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
   const [mediaTarget, setMediaTarget] = useState<{ path: (string | number)[], lang: 'en' | 'bn' } | null>(null);
   const { toast } = useToast();
@@ -236,36 +211,6 @@ export default function AdminContentPage() {
       return newContent;
     });
   }, []);
-
-  const handleFileUpload = async (file: File, path: (string | number)[], lang: 'en' | 'bn') => {
-    const elementId = `${lang}-${path.join('-')}`;
-    setUploadingStates(prev => ({ ...prev, [elementId]: true }));
-
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('destination', 's3');
-
-    try {
-        const response = await fetch('/api/upload', {
-            method: 'POST',
-            body: formData,
-        });
-
-        const result = await response.json();
-
-        if (response.ok && result.success) {
-            handleFieldChange(lang, path, result.url);
-            addMediaItem({ name: file.name, url: result.url });
-            toast({ title: 'Success', description: 'File uploaded successfully.' });
-        } else {
-            throw new Error(result.message || 'Upload failed');
-        }
-    } catch (error: any) {
-        toast({ title: 'Upload Error', description: error.message, variant: 'destructive' });
-    } finally {
-        setUploadingStates(prev => ({ ...prev, [elementId]: false }));
-    }
-  };
   
   const handleBrowseMedia = (path: (string | number)[], lang: 'en' | 'bn') => {
     setMediaTarget({ path, lang });
@@ -409,8 +354,6 @@ export default function AdminContentPage() {
                       handleFieldChange={handleFieldChange}
                       handleAddItem={handleAddItem}
                       handleDeleteItem={handleDeleteItem}
-                      handleFileUpload={handleFileUpload}
-                      uploadingStates={uploadingStates}
                       handleBrowseMedia={handleBrowseMedia}
                   />
                 </div>
@@ -424,8 +367,6 @@ export default function AdminContentPage() {
                      handleFieldChange={handleFieldChange}
                      handleAddItem={handleAddItem}
                      handleDeleteItem={handleDeleteItem}
-                     handleFileUpload={handleFileUpload}
-                     uploadingStates={uploadingStates}
                      handleBrowseMedia={handleBrowseMedia}
                   />
                 </div>

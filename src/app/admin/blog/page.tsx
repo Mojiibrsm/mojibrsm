@@ -99,8 +99,8 @@ export default function AdminBlogPage() {
 
         if (index === -1) { // New post
             nextPosts = {
-                en: [post, ...posts.en],
-                bn: [post, ...posts.bn],
+                en: [{ ...post, date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) }, ...posts.en],
+                bn: [{ ...post, date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) }, ...posts.bn],
             };
         } else { // Editing existing post
             const newEn = [...posts.en];
@@ -206,48 +206,40 @@ export default function AdminBlogPage() {
 const TiptapToolbar = ({ editor }: { editor: Editor | null }) => {
   const { toast } = useToast();
   const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const uploadImage = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!editor) return;
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'image/*';
-    fileInput.style.display = 'none';
+    const uploadFormData = new FormData();
+    uploadFormData.append('file', file);
+    uploadFormData.append('destination', 's3');
 
-    fileInput.onchange = async (e) => {
-        const file = (e.target as HTMLInputElement).files?.[0];
-        if (!file) {
-            document.body.removeChild(fileInput);
-            return;
-        }
-
-        const uploadFormData = new FormData();
-        uploadFormData.append('file', file);
-        uploadFormData.append('destination', 's3');
-
-        toast({ title: "Uploading image..." });
-        
-        try {
-            const response = await fetch('/api/upload', { method: 'POST', body: uploadFormData });
-            const result = await response.json();
-            if (response.ok && result.success) {
-                editor.chain().focus().setImage({ src: result.url, alt: file.name }).run();
-                addMediaItem({ url: result.url, name: file.name });
-                toast({ title: "Image Uploaded", description: "Image inserted into content." });
-            } else {
-                throw new Error(result.message || 'Upload failed');
-            }
-        } catch (error: any) {
-            toast({ title: "Upload Error", description: error.message, variant: "destructive" });
-        } finally {
-            document.body.removeChild(fileInput);
-        }
-    };
+    toast({ title: "Uploading image..." });
     
-    document.body.appendChild(fileInput);
-    fileInput.click();
-  }, [editor, toast]);
+    try {
+        const response = await fetch('/api/upload', { method: 'POST', body: uploadFormData });
+        const result = await response.json();
+        if (response.ok && result.success) {
+            editor.chain().focus().setImage({ src: result.url, alt: file.name }).run();
+            addMediaItem({ url: result.url, name: file.name });
+            toast({ title: "Image Uploaded", description: "Image inserted into content." });
+        } else {
+            throw new Error(result.message || 'Upload failed');
+        }
+    } catch (error: any) {
+        toast({ title: "Upload Error", description: error.message, variant: "destructive" });
+    } finally {
+        // Reset file input
+        if(fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
   
   const handleSelectFromLibrary = useCallback((item: IMediaItem) => {
     if (editor) {
@@ -291,6 +283,7 @@ const TiptapToolbar = ({ editor }: { editor: Editor | null }) => {
   return (
     <>
       <div className="p-2 border-b flex items-center flex-wrap gap-1">
+        <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
         <ToggleButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')} title="Bold"><Bold className="h-4 w-4" /></ToggleButton>
         <ToggleButton onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')} title="Italic"><Italic className="h-4 w-4" /></ToggleButton>
         <ToggleButton onClick={() => editor.chain().focus().toggleUnderline().run()} isActive={editor.isActive('underline')} title="Underline"><Underline className="h-4 w-4" /></ToggleButton>
@@ -360,10 +353,8 @@ const TiptapEditor = ({ value, onChange }: { value: string; onChange: (value: st
 // --- Blog Post Form Dialog ---
 function PostFormDialog({ isOpen, onOpenChange, onSave, post, isSaving }: { isOpen: boolean; onOpenChange: (open: boolean) => void; onSave: (data: EditablePost) => void; post: EditablePost | null; isSaving: boolean }) {
     const [formData, setFormData] = useState<EditablePost | null>(post ? JSON.parse(JSON.stringify(post)) : null);
-    const [uploadingImage, setUploadingImage] = useState(false);
     const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
     const { toast } = useToast();
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFieldChange = (field: keyof Post, value: string | string[]) => {
         if (!formData) return;
@@ -374,36 +365,6 @@ function PostFormDialog({ isOpen, onOpenChange, onSave, post, isSaving }: { isOp
         });
     };
     
-    const handleImageUpload = async (file: File) => {
-        if (!formData) return;
-        setUploadingImage(true);
-        const uploadFormData = new FormData();
-        uploadFormData.append('file', file);
-        uploadFormData.append('destination', 's3');
-        try {
-            const response = await fetch('/api/upload', { method: 'POST', body: uploadFormData });
-            const result = await response.json();
-            if (response.ok && result.success) {
-                handleFieldChange('image', result.url);
-                addMediaItem({ name: file.name, url: result.url });
-                toast({ title: "Image Uploaded", description: "Featured image has been updated." });
-            } else {
-                throw new Error(result.message || 'Upload failed');
-            }
-        } catch (error: any) {
-            toast({ title: "Upload Error", description: error.message, variant: "destructive" });
-        } finally {
-            setUploadingImage(false);
-        }
-    };
-    
-    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            handleImageUpload(file);
-        }
-    };
-
     const handleSelectFromLibrary = (item: IMediaItem) => {
         handleFieldChange('image', item.url);
         toast({ title: "Image Selected", description: "Featured image has been updated from the library." });
@@ -445,25 +406,11 @@ function PostFormDialog({ isOpen, onOpenChange, onSave, post, isSaving }: { isOp
                             <CardHeader><CardTitle className="text-lg flex items-center gap-2"><ImageIcon className="h-5 w-5"/>Featured Image</CardTitle></CardHeader>
                             <CardContent className="space-y-2">
                                 <div className="relative w-full aspect-video border rounded-md overflow-hidden bg-muted">
-                                    {uploadingImage ? <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div> : <Image src={data.image} alt="Post image" layout="fill" objectFit="cover" unoptimized />}
+                                    <Image src={data.image} alt="Post image" layout="fill" objectFit="cover" unoptimized />
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <Button size="icon" variant="outline" type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage} title="Upload New">
-                                        <Upload className="h-4 w-4" />
-                                        <span className="sr-only">Upload New</span>
-                                    </Button>
-                                    <Button size="icon" variant="outline" type="button" onClick={() => setIsMediaDialogOpen(true)} title="Browse Library" disabled={uploadingImage}>
-                                        <FolderSearch className="h-4 w-4" />
-                                        <span className="sr-only">Browse Library</span>
-                                    </Button>
-                                    {uploadingImage && (
-                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                            <Loader2 className="h-4 w-4 animate-spin" />
-                                            <span>Uploading...</span>
-                                        </div>
-                                    )}
-                                </div>
-                                <input type="file" ref={fileInputRef} accept="image/*" onChange={handleFileSelect} className="hidden" />
+                                <Button className="w-full" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>
+                                    <FolderSearch className="mr-2 h-4 w-4" /> Browse Library
+                                </Button>
                                 <div className="space-y-1 pt-2">
                                   <Label>Image AI Hint (for alt text generation)</Label>
                                   <Input value={data.imageHint} onChange={e => handleFieldChange('imageHint', e.target.value)} />

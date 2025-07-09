@@ -319,7 +319,6 @@ export default function AdminProjectsPage() {
 // Sub-component for the Project Form Dialog
 function ProjectFormDialog({ isOpen, onOpenChange, project, onSave, isSaving }: { isOpen: boolean; onOpenChange: (open: boolean) => void; project: Project | null; onSave: (data: ProjectFormData) => Promise<void>; isSaving: boolean; }) {
   const [formData, setFormData] = useState<ProjectFormData>({ name: '', client: '', clientEmail: '', clientPhone: '', status: 'Pending' as ProjectStatus, deadline: '', notes: '', notesImage: '' });
-  const [isUploading, setIsUploading] = useState(false);
   const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
   const { toast } = useToast();
   
@@ -350,32 +349,6 @@ function ProjectFormDialog({ isOpen, onOpenChange, project, onSave, isSaving }: 
   const handleStatusChange = (value: string) => {
     setFormData(prev => ({ ...prev, status: value as ProjectStatus }));
   }
-
-  const handleImageUpload = async (file: File) => {
-    setIsUploading(true);
-    const uploadFormData = new FormData();
-    uploadFormData.append('file', file);
-    uploadFormData.append('destination', 's3');
-    try {
-        const response = await fetch('/api/upload', {
-            method: 'POST',
-            body: uploadFormData,
-        });
-        const result = await response.json();
-        if (response.ok && result.success) {
-            setFormData(prev => ({ ...prev, notesImage: result.url }));
-            addMediaItem({ name: file.name, url: result.url });
-            toast({ title: "Image Uploaded", description: "Image is ready to be saved with the project." });
-        } else {
-            throw new Error(result.message || 'Upload failed');
-        }
-    } catch (error: any) {
-        toast({ title: "Upload Error", description: error.message, variant: "destructive" });
-        console.error("Upload error:", error);
-    } finally {
-        setIsUploading(false);
-    }
-  };
 
   const handleSelectFromLibrary = (item: IMediaItem) => {
     setFormData(prev => ({ ...prev, notesImage: item.url }));
@@ -438,31 +411,10 @@ function ProjectFormDialog({ isOpen, onOpenChange, project, onSave, isSaving }: 
             <div className="grid grid-cols-4 items-start gap-4">
               <Label htmlFor="notesImage" className="text-right pt-2">Notes Image</Label>
               <div className="col-span-3 space-y-2">
-                 <div className="flex gap-2">
-                    <Input 
-                      id="notesImage"
-                      type="file"
-                      accept="image/*"
-                      className="flex-1"
-                      onChange={(e) => {
-                        if (e.target.files?.[0]) {
-                          handleImageUpload(e.target.files[0]);
-                        }
-                      }}
-                      disabled={isUploading}
-                    />
-                     <Button type="button" variant="outline" size="icon" onClick={() => setIsMediaDialogOpen(true)} disabled={isUploading}>
-                        <FolderSearch className="h-4 w-4" />
-                     </Button>
-                </div>
-
-                {isUploading && (
-                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Uploading...</span>
-                  </div>
-                )}
-                {formData.notesImage && !isUploading && (
+                 <Button type="button" variant="outline" className="w-full" onClick={() => setIsMediaDialogOpen(true)}>
+                    <FolderSearch className="mr-2 h-4 w-4" /> Browse Library
+                 </Button>
+                {formData.notesImage && (
                   <div className="relative w-32 h-32 border rounded-md overflow-hidden mt-2">
                     <Image src={formData.notesImage} alt="Notes preview" layout="fill" objectFit="cover" unoptimized />
                   </div>

@@ -230,29 +230,8 @@ export default function AdminMessagesPage() {
     let attachmentPayload;
 
     try {
-        if (attachment) {
-            setIsUploading(true);
-            let fileUrl = attachment.url;
-            
-            // If it's a local file, upload it first
-            if (attachment.file) {
-                const formData = new FormData();
-                formData.append('file', attachment.file);
-                formData.append('destination', 's3');
-                
-                const response = await fetch('/api/upload', { method: 'POST', body: formData });
-                const result = await response.json();
-                
-                if (!response.ok || !result.success) throw new Error(result.message || 'File upload failed');
-                
-                addMediaItem({ url: result.url, name: attachment.name });
-                fileUrl = result.url;
-            }
-
-            if (!fileUrl) throw new Error("Could not get attachment URL.");
-            
-            attachmentPayload = { filename: attachment.name, path: fileUrl };
-            setIsUploading(false);
+        if (attachment && attachment.url) {
+            attachmentPayload = { filename: attachment.name, path: attachment.url };
         }
 
         const recipients = composeData.recipients.split(/[,;\s]+/).map(e => e.trim()).filter(e => e);
@@ -295,7 +274,6 @@ export default function AdminMessagesPage() {
         toast({ variant: 'destructive', title: 'An Error Occurred', description: error.message });
     } finally {
         setIsSendingEmail(false);
-        setIsUploading(false);
     }
   };
   
@@ -403,12 +381,10 @@ export default function AdminMessagesPage() {
                         </div>
                         <div className="grid gap-2">
                            <Label htmlFor="attachment">Attachment (for Email)</Label>
-                           <div className="flex gap-2">
-                                <Input id="attachment" type="file" className="flex-1" onChange={(e) => setAttachment(e.target.files?.[0] ? { name: e.target.files[0].name, file: e.target.files[0] } : null)} />
-                                <Button type="button" variant="outline" size="icon" onClick={() => setIsMediaDialogOpen(true)}>
-                                    <FolderSearch className="h-4 w-4" />
-                                </Button>
-                           </div>
+                           <Button variant="outline" className="w-full justify-start" onClick={() => setIsMediaDialogOpen(true)}>
+                                <FolderSearch className="mr-2 h-4 w-4" />
+                                Browse Library
+                            </Button>
                            {attachment && (
                              <div className="text-sm text-muted-foreground flex items-center justify-between p-2 bg-muted rounded-md">
                                <span className="truncate">{attachment.name}</span>

@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { HardDrive, Bell, Loader2, Save, Info, Upload, FolderSearch } from 'lucide-react';
+import { HardDrive, Bell, Loader2, Save, Info, FolderSearch } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -15,7 +15,7 @@ import type { AwsSettings } from '@/config/settings';
 import type { SiteSettings } from './actions';
 import Image from 'next/image';
 import { MediaLibraryDialog } from '@/components/media-library-dialog';
-import { IMediaItem, addMediaItem } from '@/services/data';
+import { IMediaItem } from '@/services/data';
 
 
 const initialAwsSettings: AwsSettings = { accessKeyId: '', secretAccessKey: '', bucketName: '', region: '' };
@@ -31,7 +31,6 @@ export default function AdminSettingsPage() {
     const [siteSettings, setSiteSettings] = useState<SiteSettings>(initialSiteSettings);
     const [isSiteLoading, setIsSiteLoading] = useState(true);
     const [isSiteSaving, setIsSiteSaving] = useState(false);
-    const [uploadingStates, setUploadingStates] = useState<{ [key in keyof SiteSettings]?: boolean }>({});
     
     const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
     const [mediaTargetField, setMediaTargetField] = useState<keyof SiteSettings | null>(null);
@@ -77,29 +76,6 @@ export default function AdminSettingsPage() {
         const { name, value } = e.target;
         setSiteSettings(prev => ({ ...prev, [name]: value }));
     };
-
-    const handleFileUpload = async (file: File, fieldName: keyof SiteSettings) => {
-        setUploadingStates(prev => ({ ...prev, [fieldName]: true }));
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('destination', 's3');
-
-        try {
-            const response = await fetch('/api/upload', { method: 'POST', body: formData });
-            const result = await response.json();
-            if (response.ok && result.success) {
-                setSiteSettings(prev => ({ ...prev, [fieldName]: result.url }));
-                addMediaItem({ name: file.name, url: result.url });
-                toast({ title: 'Success', description: 'File uploaded successfully.' });
-            } else {
-                throw new Error(result.message || 'Upload failed');
-            }
-        } catch (error: any) {
-            toast({ title: 'Upload Error', description: error.message, variant: 'destructive' });
-        } finally {
-            setUploadingStates(prev => ({ ...prev, [fieldName]: false }));
-        }
-    };
     
     const openMediaDialogFor = (fieldName: keyof SiteSettings) => {
         setMediaTargetField(fieldName);
@@ -126,6 +102,28 @@ export default function AdminSettingsPage() {
         localStorage.setItem('notificationSettings', JSON.stringify(newSettings));
         toast({ title: 'Settings Saved', description: 'Your notification preferences have been updated.' });
     };
+
+    const ImageField = ({ fieldName, label, dimensions, isSquare }: { fieldName: keyof SiteSettings, label: string, dimensions: string, isSquare?: boolean }) => (
+        <div className="space-y-2">
+            <Label htmlFor={fieldName}>{label} ({dimensions})</Label>
+            <div className="flex items-center gap-4">
+                <div className={`relative ${isSquare ? 'w-16 h-16' : 'w-32 h-16'} shrink-0 border rounded-md p-1 bg-muted/30`}>
+                    <Image 
+                        src={siteSettings[fieldName] || `https://placehold.co/${isSquare ? '100x100' : '200x100'}.png`} 
+                        alt={label} 
+                        layout="fill" 
+                        className={`object-contain ${isSquare ? 'rounded-full' : ''}`}
+                        unoptimized 
+                    />
+                </div>
+                 <div className="flex-grow">
+                    <Button variant="outline" className="w-full" onClick={() => openMediaDialogFor(fieldName)}>
+                        <FolderSearch className="mr-2 h-4 w-4"/> Browse Library
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
 
     return (
         <div className="space-y-8">
@@ -158,50 +156,11 @@ export default function AdminSettingsPage() {
                                 <Input id="url" name="url" value={siteSettings.url} onChange={handleSiteSettingsChange} placeholder="https://example.com" />
                             </div>
                             
-                             <div className="space-y-2">
-                                <Label htmlFor="publicLogo">Public Site Logo (Landscape)</Label>
-                                <div className="flex items-center gap-4">
-                                    <div className="relative w-32 h-16 shrink-0 border rounded-md p-1 bg-muted/30">
-                                        {uploadingStates.publicLogo ? <Loader2 className="h-full w-full animate-spin text-muted-foreground" /> : <Image src={siteSettings.publicLogo || 'https://placehold.co/200x100.png'} alt="Public Site Logo" width={128} height={64} className="w-full h-full object-contain" unoptimized />}
-                                    </div>
-                                     <div className="flex-grow space-y-2">
-                                        <Input id="publicLogo" type="file" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'publicLogo')} disabled={uploadingStates.publicLogo} />
-                                        <Button variant="outline" className="w-full" onClick={() => openMediaDialogFor('publicLogo')} disabled={uploadingStates.publicLogo}>
-                                            <FolderSearch className="mr-2 h-4 w-4"/> Browse Library
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
+                            <ImageField fieldName="publicLogo" label="Public Site Logo" dimensions="Landscape" />
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <Label htmlFor="logo">Admin Panel Logo (Square)</Label>
-                                    <div className="flex items-center gap-4">
-                                        <div className="relative w-16 h-16 shrink-0 border rounded-md p-1">
-                                            {uploadingStates.logo ? <Loader2 className="h-full w-full animate-spin text-muted-foreground" /> : <Image src={siteSettings.logo || 'https://placehold.co/100x100.png'} alt="Admin Panel Logo" width={64} height={64} className="w-full h-full object-contain" unoptimized />}
-                                        </div>
-                                         <div className="flex-grow space-y-2">
-                                            <Input id="logo" type="file" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'logo')} disabled={uploadingStates.logo} />
-                                            <Button variant="outline" className="w-full" onClick={() => openMediaDialogFor('logo')} disabled={uploadingStates.logo}>
-                                                <FolderSearch className="mr-2 h-4 w-4"/> Browse Library
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="adminAvatar">Admin Avatar (Square)</Label>
-                                    <div className="flex items-center gap-4">
-                                        <div className="relative w-16 h-16 shrink-0 border rounded-full p-1">
-                                            {uploadingStates.adminAvatar ? <Loader2 className="h-full w-full animate-spin text-muted-foreground" /> : <Image src={siteSettings.adminAvatar || 'https://placehold.co/100x100.png'} alt="Admin Avatar" width={64} height={64} className="w-full h-full object-cover rounded-full" unoptimized />}
-                                        </div>
-                                        <div className="flex-grow space-y-2">
-                                            <Input id="adminAvatar" type="file" onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'adminAvatar')} disabled={uploadingStates.adminAvatar} />
-                                            <Button variant="outline" className="w-full" onClick={() => openMediaDialogFor('adminAvatar')} disabled={uploadingStates.adminAvatar}>
-                                                <FolderSearch className="mr-2 h-4 w-4"/> Browse Library
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </div>
+                                <ImageField fieldName="logo" label="Admin Panel Logo" dimensions="Square" isSquare />
+                                <ImageField fieldName="adminAvatar" label="Admin Avatar" dimensions="Square" isSquare />
                             </div>
                         </div>
                     )}
