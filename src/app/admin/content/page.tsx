@@ -340,14 +340,14 @@ export default function AdminContentPage() {
     setIsSaving(false);
   };
   
-  const sections = Object.keys(editableContent.en).filter(key => key !== 'site');
+  const sections = Object.keys(editableContent.en).filter(key => key !== 'site' && key !== 'blog');
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-2xl font-bold">Site Content</h1>
-          <p className="text-muted-foreground">Edit all textual and image content across your site.</p>
+          <p className="text-muted-foreground">Edit all textual and image content across your site (excluding blog posts).</p>
         </div>
         <Button onClick={handleSave} size="lg" disabled={isSaving}>
           {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
