@@ -31,10 +31,26 @@ const ensureFileExists = async () => {
 };
 
 export async function getAwsSettings(): Promise<AwsSettings> {
+    // Prioritize environment variables for production/hosting environments
+    if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY && process.env.AWS_BUCKET_NAME && process.env.AWS_REGION) {
+        return {
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+            bucketName: process.env.AWS_BUCKET_NAME,
+            region: process.env.AWS_REGION,
+        };
+    }
+
+    // Fallback to JSON file for local development
     await ensureFileExists();
     try {
         const fileContent = await fs.readFile(SETTINGS_FILE_PATH, 'utf-8');
-        return JSON.parse(fileContent);
+        const settingsFromFile = JSON.parse(fileContent);
+        // Return file settings only if they seem valid to avoid errors with empty strings
+        if (settingsFromFile.accessKeyId && settingsFromFile.secretAccessKey) {
+            return settingsFromFile;
+        }
+        return initialSettings;
     } catch (error) {
         console.error('Failed to read AWS settings file:', error);
         // Return empty settings on error
