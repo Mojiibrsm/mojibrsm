@@ -45,14 +45,16 @@ export default function Portfolio() {
               <div className="absolute -inset-0.5 bg-gradient-to-r from-primary via-accent to-secondary rounded-xl blur opacity-0 group-hover:opacity-75 transition duration-500"></div>
               <Card className="relative overflow-hidden shadow-md transition-all duration-300 rounded-2xl flex flex-col bg-card h-full">
                 <div className="relative overflow-hidden rounded-t-2xl">
-                  <Image
-                    src={project.image}
-                    alt={project.title}
-                    width={600}
-                    height={400}
-                    className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500"
-                    data-ai-hint={project.imageHint}
-                  />
+                  <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.3 }}>
+                    <Image
+                      src={project.image}
+                      alt={project.title}
+                      width={600}
+                      height={400}
+                      className="w-full h-auto object-cover"
+                      data-ai-hint={project.imageHint}
+                    />
+                  </motion.div>
                 </div>
                 <div className='relative bg-card rounded-b-2xl flex flex-col flex-grow'>
                     <CardHeader>

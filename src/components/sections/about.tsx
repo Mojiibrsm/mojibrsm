@@ -36,15 +36,19 @@ export default function About() {
       >
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <motion.div variants={itemVariants} className="relative group w-full max-w-md mx-auto">
-             <div className="absolute -inset-1.5 bg-gradient-to-r from-primary via-accent to-secondary rounded-full blur opacity-75 animate-pulse group-hover:opacity-100 transition duration-1000"></div>
-             <Image
-              src={t.about.image}
-              alt={t.hero.name}
-              width={600}
-              height={600}
-              className="relative rounded-lg shadow-lg w-full"
-              data-ai-hint={t.about.imageHint}
-            />
+             <div className="absolute -inset-1.5 bg-gradient-to-r from-primary via-accent to-secondary rounded-lg blur opacity-75 group-hover:opacity-100 transition duration-1000"></div>
+             <div className="relative rounded-lg shadow-lg overflow-hidden">
+                <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.3 }}>
+                 <Image
+                  src={t.about.image}
+                  alt={t.hero.name}
+                  width={600}
+                  height={600}
+                  className="w-full h-auto"
+                  data-ai-hint={t.about.imageHint}
+                />
+                </motion.div>
+             </div>
           </motion.div>
           <motion.div variants={itemVariants} className="space-y-6">
              <div className="space-y-4">

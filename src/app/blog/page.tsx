@@ -47,14 +47,16 @@ export default function BlogPage() {
                                 <motion.div key={post.title} variants={itemVariants} className="h-full">
                                     <Card className="relative overflow-hidden shadow-lg hover:shadow-primary/20 transition-all duration-300 rounded-2xl flex flex-col bg-card h-full">
                                         <div className="relative overflow-hidden rounded-t-2xl">
-                                          <Image
-                                              src={post.image}
-                                              alt={post.title}
-                                              width={600}
-                                              height={400}
-                                              className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500"
-                                              data-ai-hint={post.imageHint}
-                                          />
+                                          <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.3 }}>
+                                            <Image
+                                                src={post.image}
+                                                alt={post.title}
+                                                width={600}
+                                                height={400}
+                                                className="w-full h-auto object-cover"
+                                                data-ai-hint={post.imageHint}
+                                            />
+                                          </motion.div>
                                         </div>
                                         <div className='relative bg-card rounded-b-2xl flex flex-col flex-grow p-6'>
                                             <p className="text-sm text-muted-foreground mb-2">{post.date}</p>

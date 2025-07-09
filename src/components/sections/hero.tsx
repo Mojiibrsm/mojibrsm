@@ -83,15 +83,21 @@ export default function Hero() {
             className="relative flex justify-center items-center"
           >
             <div className="absolute w-full h-full max-w-xs bg-gradient-to-br from-primary via-accent to-secondary/30 rounded-full blur-3xl animate-pulse"></div>
-            <Image
-              src={t.hero.image}
-              alt={t.hero.name}
-              width={600}
-              height={600}
-              className="relative mx-auto rounded-full object-cover aspect-square w-full max-w-sm shadow-2xl"
-              data-ai-hint={t.hero.imageHint}
-              priority
-            />
+            <motion.div 
+              className="relative mx-auto w-full max-w-sm rounded-full overflow-hidden shadow-2xl"
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+            >
+              <Image
+                src={t.hero.image}
+                alt={t.hero.name}
+                width={600}
+                height={600}
+                className="object-cover aspect-square w-full"
+                data-ai-hint={t.hero.imageHint}
+                priority
+              />
+            </motion.div>
           </motion.div>
         </div>
       </div>
