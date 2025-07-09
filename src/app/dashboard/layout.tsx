@@ -35,7 +35,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     logout();
   };
 
-  if (loading || !isLoggedIn || !user) {
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (!isLoggedIn || !user) {
     return (
       <div className="flex h-screen items-center justify-center">
         <p>Loading...</p>
