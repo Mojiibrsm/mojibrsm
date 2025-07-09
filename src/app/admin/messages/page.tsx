@@ -6,7 +6,7 @@ import { getMessageThreads, addMessageToThread, markThreadAsRead, IMessage, IMes
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Send, PlusCircle, Mail, MessageSquareText, Loader2, File, X } from 'lucide-react';
+import { Send, PlusCircle, Mail, MessageSquareText, Loader2, File, X, Upload } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,6 +17,8 @@ import { sendSms } from '@/services/sms';
 import { sendEmail } from '@/services/email';
 import { translations } from '@/lib/translations';
 import { useRouter } from 'next/navigation';
+import * as XLSX from 'xlsx';
+import { Separator } from '@/components/ui/separator';
 
 
 const generateDirectEmailHtml = (subject: string, message: string, attachment?: { name: string; url: string }): string => {
@@ -63,7 +65,6 @@ export default function AdminMessagesPage() {
   const [selectedThread, setSelectedThread] = useState<IMessageThread | null>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isComposeOpen, setIsComposeOpen] = useState(false);
-  const [replyText, setReplyText] = useState("");
   const [composeData, setComposeData] = useState({
       recipients: '',
       phones: '',
@@ -116,6 +117,80 @@ export default function AdminMessagesPage() {
       const { name, value } = e.target;
       setComposeData(prev => ({ ...prev, [name]: value }));
   };
+  
+  const handleContactFileUpload = async (file: File) => {
+    const reader = new FileReader();
+
+    reader.onload = async (e) => {
+        try {
+            const content = e.target?.result;
+            if (!content) {
+                toast({ variant: "destructive", title: "File Error", description: "Could not read the file." });
+                return;
+            }
+
+            let contacts: string[] = [];
+            const fileName = file.name.toLowerCase();
+
+            if (fileName.endsWith('.csv') || fileName.endsWith('.txt')) {
+                contacts = (content as string).split(/[\n,;\s]+/).filter(Boolean);
+            } else if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+                const workbook = XLSX.read(content, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                contacts = (jsonData as any[][]).flat().map(String).filter(Boolean);
+            } else {
+                toast({ variant: "destructive", title: "Unsupported File", description: "Please upload a CSV, TXT, or Excel file." });
+                return;
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            // A more general regex for phone numbers that can include country codes
+            const phoneRegex = /^\+?[0-9\s-()]{7,}$/;
+
+            const importedEmails: string[] = [];
+            const importedPhones: string[] = [];
+
+            contacts.forEach(contact => {
+                const trimmedContact = contact.trim();
+                if (emailRegex.test(trimmedContact)) {
+                    importedEmails.push(trimmedContact);
+                } else if (phoneRegex.test(trimmedContact)) {
+                    importedPhones.push(trimmedContact.replace(/[-\s()]/g, ''));
+                }
+            });
+
+            if (importedEmails.length === 0 && importedPhones.length === 0) {
+                 toast({ variant: "destructive", title: "No Contacts Found", description: "No valid email addresses or phone numbers were found in the file." });
+                 return;
+            }
+
+            setComposeData(prev => ({
+                ...prev,
+                recipients: [...(prev.recipients ? prev.recipients.split(/[,;\s]+/).filter(Boolean) : []), ...importedEmails].join(', '),
+                phones: [...(prev.phones ? prev.phones.split(/[,;\s]+/).filter(Boolean) : []), ...importedPhones].join(', ')
+            }));
+            
+            toast({ title: "Contacts Imported", description: `Added ${importedEmails.length} emails and ${importedPhones.length} phone numbers.` });
+
+        } catch (error) {
+            console.error("Error parsing contact file:", error);
+            toast({ variant: "destructive", title: "Parsing Error", description: "Could not parse the contact file." });
+        }
+    };
+    
+    reader.onerror = () => {
+         toast({ variant: "destructive", title: "File Read Error", description: "There was an error reading the file." });
+    }
+
+    if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+      reader.readAsArrayBuffer(file);
+    } else {
+      reader.readAsText(file);
+    }
+  };
+
 
   const clearForm = () => {
     setComposeData({ recipients: '', phones: '', subject: '', message: '' });
@@ -146,7 +221,7 @@ export default function AdminMessagesPage() {
             setIsUploading(false);
         }
 
-        const recipients = composeData.recipients.split(',').map(e => e.trim()).filter(e => e);
+        const recipients = composeData.recipients.split(/[,;\s]+/).map(e => e.trim()).filter(e => e);
         if (recipients.length === 0) {
             toast({ variant: "destructive", title: "No Recipients", description: "Please provide at least one valid email address." });
             setIsSendingEmail(false);
@@ -196,7 +271,7 @@ export default function AdminMessagesPage() {
            return;
       }
       setIsSendingSms(true);
-      const phones = composeData.phones.split(',').map(p => p.trim()).filter(p => p);
+      const phones = composeData.phones.split(/[,;\s]+/).map(p => p.trim()).filter(p => p);
        if (phones.length === 0) {
            toast({ variant: "destructive", title: "No Recipients", description: "Please provide at least one valid phone number." });
            setIsSendingSms(false);
@@ -255,13 +330,29 @@ export default function AdminMessagesPage() {
                         <DialogDescription>Send an email or SMS to multiple recipients. This will be logged in your history.</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto pr-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="contact-file">Import Contacts from File</Label>
+                            <Input 
+                                id="contact-file" 
+                                type="file" 
+                                accept=".csv,.txt,.xlsx,.xls"
+                                onChange={(e) => {
+                                    if (e.target.files?.[0]) {
+                                        handleContactFileUpload(e.target.files[0]);
+                                        e.target.value = ''; // Reset file input
+                                    }
+                                }}
+                            />
+                            <p className="text-xs text-muted-foreground">Upload a CSV, TXT, or Excel file to add recipients automatically.</p>
+                        </div>
+                        <Separator className="my-4" />
                         <div className="grid gap-2">
                             <Label htmlFor="recipients">Recipient Emails</Label>
                             <Textarea id="recipients" name="recipients" value={composeData.recipients} onChange={handleComposeChange} placeholder="john@example.com, jane@example.com"/>
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="phones">Recipient Phones</Label>
-                            <Textarea id="phones" name="phones" value={composeData.phones} onChange={handleComposeChange} placeholder="+123456, +987654"/>
+                            <Textarea id="phones" name="phones" value={composeData.phones} onChange={handleComposeChange} placeholder="+8801..., 017..."/>
                         </div>
                          <div className="grid gap-2">
                             <Label htmlFor="subject">Subject (for Email)</Label>
@@ -284,7 +375,7 @@ export default function AdminMessagesPage() {
                            )}
                         </div>
                     </div>
-                    <DialogFooter className="gap-2 sm:justify-end">
+                    <DialogFooter className="gap-2 sm:justify-end border-t pt-4">
                         <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
                         <Button variant="outline" onClick={handleSendSms} disabled={isSendingSms || isSendingEmail || !composeData.phones || !composeData.message}>
                             {(isSendingSms) ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <MessageSquareText className="mr-2 h-4 w-4"/>}
@@ -375,3 +466,5 @@ export default function AdminMessagesPage() {
     </div>
   )
 }
+
+    
