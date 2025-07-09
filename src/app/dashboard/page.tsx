@@ -4,15 +4,21 @@ import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Bell, FolderKanban, MessageSquare, PlusCircle } from 'lucide-react';
+import { FolderKanban, GitPullRequest, MessageSquare, PlusCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { getProjectsByUserId, getRequestsByUserId, getMessageThreadsForUser } from '@/services/firestore';
 
 export default function DashboardPage() {
     const { user, loading } = useAuth();
     const router = useRouter();
     const [showWelcome, setShowWelcome] = useState(false);
+    const [stats, setStats] = useState([
+        { title: "Active Projects", value: "0", icon: FolderKanban, description: "0 waiting for review" },
+        { title: "Pending Requests", value: "0", icon: GitPullRequest, description: "Awaiting approval" },
+        { title: "Unread Messages", value: "0", icon: MessageSquare, description: "No new messages" },
+    ]);
 
     useEffect(() => {
         const welcomeShown = sessionStorage.getItem('welcomeShown');
@@ -20,11 +26,31 @@ export default function DashboardPage() {
             setShowWelcome(true);
             sessionStorage.setItem('welcomeShown', 'true');
         }
+
+        if(user) {
+            const unsubProjects = getProjectsByUserId(user.uid, projects => {
+                 setStats(prev => prev.map(s => s.title === "Active Projects" ? { ...s, value: projects.filter(p => p.status === 'In Progress').length.toString(), description: `${projects.filter(p => p.status === 'Pending').length} waiting for review` } : s));
+            });
+            const unsubRequests = getRequestsByUserId(user.uid, requests => {
+                const pending = requests.filter(r => r.status === 'Pending').length;
+                 setStats(prev => prev.map(s => s.title === "Pending Requests" ? { ...s, value: pending.toString(), description: "Awaiting approval" } : s));
+            });
+            const unsubMessages = getMessageThreadsForUser(user.uid, threads => {
+                const unread = threads.filter(t => t.unreadByUser).length;
+                 setStats(prev => prev.map(s => s.title === "Unread Messages" ? { ...s, value: unread.toString(), description: `${unread} unread messages` } : s));
+            });
+
+            return () => {
+                unsubProjects();
+                unsubRequests();
+                unsubMessages();
+            }
+        }
     }, [user, loading]);
 
     if (loading) {
       return (
-           <div className="flex items-center justify-center h-screen bg-background text-foreground">
+           <div className="flex items-center justify-center h-full">
               <p>Loading...</p>
           </div>
       )
@@ -33,12 +59,6 @@ export default function DashboardPage() {
     if (!user) {
         return null;
     }
-
-    const stats = [
-        { title: "Active Projects", value: "2", icon: FolderKanban, description: "1 waiting for review" },
-        { title: "Pending Requests", value: "1", icon: Bell, description: "Awaiting approval" },
-        { title: "Unread Messages", value: "3", icon: MessageSquare, description: "+2 from yesterday" },
-    ];
     
     const quickActions = [
         { label: "Make a New Request", icon: PlusCircle, href: "/dashboard/requests" },

@@ -9,6 +9,7 @@ import { Eye } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/auth-context';
 import { getProjectsByUserId, Project } from '@/services/firestore';
+import { FormattedTimestamp } from '@/components/formatted-timestamp';
 
 const getStatusVariant = (status: string) => {
     switch (status) {
@@ -61,13 +62,14 @@ export default function ProjectsPage() {
                 <TableHead>Project Name</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Deadline</TableHead>
+                <TableHead>Created</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {projects.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center">
+                  <TableCell colSpan={5} className="h-24 text-center">
                     You have no projects yet.
                   </TableCell>
                 </TableRow>
@@ -79,6 +81,7 @@ export default function ProjectsPage() {
                       <Badge variant={getStatusVariant(project.status) as any}>{project.status}</Badge>
                     </TableCell>
                     <TableCell>{project.deadline}</TableCell>
+                    <TableCell><FormattedTimestamp timestamp={project.createdAt} format="toLocaleDateString" /></TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="icon" onClick={() => handleViewProject(project)}>
                         <Eye className="h-4 w-4" />
