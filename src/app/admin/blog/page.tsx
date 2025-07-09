@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -18,6 +17,18 @@ import { useToast } from '@/hooks/use-toast';
 import { translations } from '@/lib/translations';
 import { updateBlogPosts } from './actions';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
+import 'react-quill/dist/quill.snow.css';
+
+// Dynamically import ReactQuill to avoid SSR issues
+const ReactQuill = dynamic(() => import('react-quill'), { 
+    ssr: false,
+    loading: () => (
+        <div className="h-40 w-full rounded-md border flex items-center justify-center bg-muted">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+    )
+});
 
 type Post = (typeof translations.en.blog.posts)[0];
 type EditablePost = { en: Post; bn: Post; index: number };
@@ -183,6 +194,17 @@ function PostFormDialog({ isOpen, onOpenChange, onSave, post }: { isOpen: boolea
     const [uploadingImage, setUploadingImage] = useState(false);
     const { toast } = useToast();
 
+    // Editor configuration
+    const quillModules = {
+        toolbar: [
+            [{ 'header': [1, 2, 3, false] }],
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+            ['link', 'blockquote'],
+            ['clean']
+        ],
+    };
+
     const handleFieldChange = (lang: 'en' | 'bn', field: keyof Post, value: string | string[]) => {
         if (!formData) return;
         
@@ -239,8 +261,21 @@ function PostFormDialog({ isOpen, onOpenChange, onSave, post }: { isOpen: boolea
                 <div className="space-y-1"><Label>Title</Label><Input value={data.title} onChange={e => handleFieldChange(lang, 'title', e.target.value)} /></div>
                 <div className="space-y-1"><Label>Date</Label><Input value={data.date} onChange={e => handleFieldChange(lang, 'date', e.target.value)} /></div>
                 <div className="space-y-1"><Label>Excerpt</Label><Textarea value={data.excerpt} onChange={e => handleFieldChange(lang, 'excerpt', e.target.value)} className="h-24" /></div>
-                <div className="space-y-1"><Label>Content (HTML)</Label><Textarea value={data.content} onChange={e => handleFieldChange(lang, 'content', e.target.value)} className="h-40 font-mono" /></div>
-                <div className="space-y-1"><Label>Tags (comma separated)</Label><Input value={data.tags.join(', ')} onChange={e => handleFieldChange(lang, 'tags', e.target.value.split(',').map(t => t.trim()))} /></div>
+                
+                <div className="space-y-1">
+                    <Label>Content</Label>
+                    <div className="bg-background rounded-md border">
+                       <ReactQuill 
+                            theme="snow"
+                            value={data.content}
+                            onChange={(content) => handleFieldChange(lang, 'content', content)}
+                            modules={quillModules}
+                            className="h-64"
+                       />
+                    </div>
+                </div>
+
+                <div className="space-y-1 pt-12"><Label>Tags (comma separated)</Label><Input value={data.tags.join(', ')} onChange={e => handleFieldChange(lang, 'tags', e.target.value.split(',').map(t => t.trim()))} /></div>
                 <div className="space-y-1"><Label>Meta Title (for SEO)</Label><Input value={data.metaTitle} onChange={e => handleFieldChange(lang, 'metaTitle', e.target.value)} /></div>
                 <div className="space-y-1"><Label>Meta Description (for SEO)</Label><Textarea value={data.metaDescription} onChange={e => handleFieldChange(lang, 'metaDescription', e.target.value)} className="h-24" /></div>
             </div>
@@ -249,7 +284,7 @@ function PostFormDialog({ isOpen, onOpenChange, onSave, post }: { isOpen: boolea
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-4xl">
+            <DialogContent className="sm:max-w-5xl">
                 <DialogHeader>
                     <DialogTitle>{post?.index === -1 ? 'Add New Blog Post' : 'Edit Blog Post'}</DialogTitle>
                     <DialogDescription>Make changes to your post here. Click save when you're done.</DialogDescription>
@@ -288,4 +323,3 @@ function PostFormDialog({ isOpen, onOpenChange, onSave, post }: { isOpen: boolea
         </Dialog>
     );
 }
-

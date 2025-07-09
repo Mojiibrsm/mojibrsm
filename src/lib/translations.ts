@@ -260,8 +260,12 @@ export const translations = {
           "slug": "the-importance-of-ui-ux",
           "title": "The Importance of UI/UX in Modern Web Design",
           "date": "July 15, 2025",
-          "tags": ["UI", "UX", "Web Design"],
-          "image": "https://placehold.co/600x400.png",
+          "tags": [
+            "UI",
+            "UX",
+            "Web Design"
+          ],
+          "image": "/uploads/1752065514481-IMG20250619130703f.jpg",
           "imageHint": "design charts",
           "excerpt": "An in-depth look at why a great user experience is crucial for success in today's digital landscape.",
           "content": "<h2>The Core of Digital Interaction</h2><p>In today's fast-paced digital world, User Interface (UI) and User Experience (UX) are more than just buzzwords; they are the bedrock of a successful digital product. While UI focuses on the visual elements—how things look—UX is concerned with the overall feel of the experience. Together, they create a cohesive, enjoyable, and effective journey for the user.</p><h3>Why Does It Matter?</h3><ul><li><strong>First Impressions:</strong> A well-designed interface immediately builds trust and engages users.</li><li><strong>Increased Conversions:</strong> An intuitive and easy-to-navigate website or app leads to higher conversion rates, whether it's making a purchase, signing up for a newsletter, or filling out a contact form.</li><li><strong>Customer Loyalty:</strong> A positive experience makes users more likely to return. Good UX fosters brand loyalty and encourages word-of-mouth recommendations.</li></ul><p>Ultimately, investing in quality UI/UX is not just about aesthetics; it's a fundamental business decision that directly impacts user satisfaction, engagement, and the bottom line.</p>",
@@ -272,7 +276,11 @@ export const translations = {
           "slug": "getting-started-with-react",
           "title": "Getting Started with React in 2025",
           "date": "July 10, 2025",
-          "tags": ["React", "JavaScript", "Web Development"],
+          "tags": [
+            "React",
+            "JavaScript",
+            "Web Development"
+          ],
           "image": "https://placehold.co/600x400.png",
           "imageHint": "code screen",
           "excerpt": "A beginner-friendly guide to setting up your first React project and understanding the core concepts.",
@@ -284,7 +292,11 @@ export const translations = {
           "slug": "10-seo-tips-to-boost-ranking",
           "title": "10 SEO Tips to Boost Your Website Ranking",
           "date": "July 05, 2025",
-          "tags": ["SEO", "Marketing", "Ranking"],
+          "tags": [
+            "SEO",
+            "Marketing",
+            "Ranking"
+          ],
           "image": "https://placehold.co/600x400.png",
           "imageHint": "marketing analytics",
           "excerpt": "Practical and effective SEO strategies to help your website climb the search engine rankings.",
@@ -636,8 +648,12 @@ export const translations = {
           "slug": "the-importance-of-ui-ux",
           "title": "আধুনিক ওয়েব ডিজাইনে UI/UX এর গুরুত্ব",
           "date": "জুলাই ১৫, ২০২৫",
-          "tags": ["ইউআই", "ইউএক্স", "ওয়েব ডিজাইন"],
-          "image": "https://placehold.co/600x400.png",
+          "tags": [
+            "ইউআই",
+            "ইউএক্স",
+            "ওয়েব ডিজাইন"
+          ],
+          "image": "/uploads/1752065514481-IMG20250619130703f.jpg",
           "imageHint": "design charts",
           "excerpt": "আজকের ডিজিটাল বিশ্বে সাফল্যের জন্য কেন একটি দুর্দান্ত ব্যবহারকারীর অভিজ্ঞতা অত্যন্ত গুরুত্বপূর্ণ তার উপর একটি গভীর দৃষ্টি।",
           "content": "<h2>ডিজিটাল মিথস্ক্রিয়ার মূল ভিত্তি</h2><p>আজকের দ্রুতগতির ডিজিটাল বিশ্বে, ইউজার ইন্টারফেস (ইউআই) এবং ইউজার এক্সপেরিয়েন্স (ইউএক্স) কেবল কিছু প্রচলিত শব্দ নয়; এগুলো একটি সফল ডিজিটাল পণ্যের ভিত্তি। ইউআই যেখানে ভিজ্যুয়াল উপাদানগুলির উপর মনোযোগ দেয় - অর্থাৎ জিনিসগুলি দেখতে কেমন - সেখানে ইউএক্স অভিজ্ঞতার সামগ্রিক অনুভূতির সাথে সম্পর্কিত। উভয় মিলে ব্যবহারকারীর জন্য একটি সুসংহত, আনন্দদায়ক এবং কার্যকর যাত্রা তৈরি করে।</p><h3>এটি কেন গুরুত্বপূর্ণ?</h3><ul><li><strong>প্রথম প্রভাব:</strong> একটি ভাল ডিজাইন করা ইন্টারফেস অবিলম্বে বিশ্বাস তৈরি করে এবং ব্যবহারকারীদের নিযুক্ত করে।</li><li><strong>রূপান্তর বৃদ্ধি:</strong> একটি স্বজ্ঞাত এবং সহজে নেভিগেট করা যায় এমন ওয়েবসাইট বা অ্যাপ উচ্চতর রূপান্তর হারের দিকে পরিচালিত করে, তা সে কেনাকাটা করা হোক, নিউজলেটারের জন্য সাইন আপ করা হোক বা যোগাযোগের ফর্ম পূরণ করা হোক।</li><li><strong>গ্রাহক আনুগত্য:</strong> একটি ইতিবাচক অভিজ্ঞতা ব্যবহারকারীদের ফিরে আসার সম্ভাবনা বাড়িয়ে তোলে। ভাল ইউএক্স ব্র্যান্ডের প্রতি আনুগত্য বাড়ায় এবং মুখে মুখে সুপারিশকে উৎসাহিত করে।</li></ul><p>পরিশেষে, মানসম্পন্ন ইউআই/ইউএক্সে বিনিয়োগ কেবল নান্দনিকতার বিষয় নয়; এটি একটি মৌলিক ব্যবসায়িক সিদ্ধান্ত যা সরাসরি ব্যবহারকারীর সন্তুষ্টি, ব্যস্ততা এবং নীট লাভকে প্রভাবিত করে।</p>",
@@ -648,7 +664,11 @@ export const translations = {
           "slug": "getting-started-with-react",
           "title": "২০২৫ সালে রিঅ্যাক্ট দিয়ে শুরু করুন",
           "date": "জুলাই ১০, ২০২৫",
-          "tags": ["রিঅ্যাক্ট", "জাভাস্ক্রিপ্ট", "ওয়েব ডেভেলপমেন্ট"],
+          "tags": [
+            "রিঅ্যাক্ট",
+            "জাভাস্ক্রিপ্ট",
+            "ওয়েব ডেভেলপমেন্ট"
+          ],
           "image": "https://placehold.co/600x400.png",
           "imageHint": "code screen",
           "excerpt": "আপনার প্রথম রিঅ্যাক্ট প্রজেক্ট সেট আপ করার এবং মূল ধারণাগুলো বোঝার জন্য একটি শিক্ষানবিস-বান্ধব গাইড।",
@@ -660,7 +680,11 @@ export const translations = {
           "slug": "10-seo-tips-to-boost-ranking",
           "title": "ওয়েবসাইট র‍্যাঙ্কিং বাড়ানোর ১০টি এসইও টিপস",
           "date": "জুলাই ০৫, ২০২৫",
-          "tags": ["এসইও", "মার্কেটিং", "র‍্যাঙ্কিং"],
+          "tags": [
+            "এসইও",
+            "মার্কেটিং",
+            "র‍্যাঙ্কিং"
+          ],
           "image": "https://placehold.co/600x400.png",
           "imageHint": "marketing analytics",
           "excerpt": "আপনার ওয়েবসাইটকে সার্চ ইঞ্জিন র‍্যাঙ্কিংয়ে উপরে তুলতে সাহায্য করার জন্য ব্যবহারিক এবং কার্যকর এসইও কৌশল।",
