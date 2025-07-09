@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { CheckCircle } from 'lucide-react';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
-import Link from 'next/link';
 
 export default function Pricing() {
     const { t } = useLanguage();
@@ -21,6 +20,8 @@ export default function Pricing() {
         hidden: { opacity: 0, y: 50, scale: 0.95 },
         visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } },
     };
+
+    const whatsappNumber = t.contact.details.phone.replace(/[^0-9]/g, '');
 
     return (
         <section id="pricing" className="w-full py-16 md:py-24 bg-card">
@@ -42,34 +43,39 @@ export default function Pricing() {
                     initial="hidden"
                     animate={isInView ? 'visible' : 'hidden'}
                 >
-                    {t.pricing.packages.map((pkg, index) => (
-                        <motion.div key={index} variants={itemVariants} className="relative group h-full">
-                             <div className={`absolute -inset-0.5 bg-gradient-to-r ${pkg.popular ? 'from-accent to-primary' : 'from-secondary to-primary/50'} rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt`}></div>
-                            <Card className="relative overflow-hidden shadow-lg transition-all duration-300 rounded-2xl flex flex-col h-full">
-                                <CardHeader className="text-center p-6">
-                                    {pkg.popular && <div className="absolute top-0 right-0 m-4"><span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-accent text-accent-foreground">{t.pricing.popular}</span></div>}
-                                    <CardTitle className="text-2xl font-bold font-headline">{pkg.name}</CardTitle>
-                                    <CardDescription className="text-4xl font-bold text-primary mt-2">{pkg.price}</CardDescription>
-                                    <p className="text-sm text-muted-foreground">{pkg.billing}</p>
-                                </CardHeader>
-                                <CardContent className="flex-grow p-6">
-                                    <ul className="space-y-4">
-                                        {pkg.features.map((feature, i) => (
-                                            <li key={i} className="flex items-center gap-3">
-                                                <CheckCircle className="w-5 h-5 text-green-500" />
-                                                <span className="text-muted-foreground">{feature}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </CardContent>
-                                <CardFooter className="p-6">
-                                    <Button asChild className="w-full" variant={pkg.popular ? 'default' : 'secondary'}>
-                                        <Link href="#contact">{t.pricing.buttonText}</Link>
-                                    </Button>
-                                </CardFooter>
-                            </Card>
-                        </motion.div>
-                    ))}
+                    {t.pricing.packages.map((pkg, index) => {
+                        const message = encodeURIComponent(t.pricing.whatsappMessage.replace('{packageName}', pkg.name));
+                        const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${message}`;
+
+                        return (
+                            <motion.div key={index} variants={itemVariants} className="relative group h-full">
+                                 <div className={`absolute -inset-0.5 bg-gradient-to-r ${pkg.popular ? 'from-accent to-primary' : 'from-secondary to-primary/50'} rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-tilt`}></div>
+                                <Card className="relative overflow-hidden shadow-lg transition-all duration-300 rounded-2xl flex flex-col h-full">
+                                    <CardHeader className="text-center p-6">
+                                        {pkg.popular && <div className="absolute top-0 right-0 m-4"><span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-accent text-accent-foreground">{t.pricing.popular}</span></div>}
+                                        <CardTitle className="text-2xl font-bold font-headline">{pkg.name}</CardTitle>
+                                        <CardDescription className="text-4xl font-bold text-primary mt-2">{pkg.price}</CardDescription>
+                                        <p className="text-sm text-muted-foreground">{pkg.billing}</p>
+                                    </CardHeader>
+                                    <CardContent className="flex-grow p-6">
+                                        <ul className="space-y-4">
+                                            {pkg.features.map((feature, i) => (
+                                                <li key={i} className="flex items-center gap-3">
+                                                    <CheckCircle className="w-5 h-5 text-green-500" />
+                                                    <span className="text-muted-foreground">{feature}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </CardContent>
+                                    <CardFooter className="p-6">
+                                        <Button asChild className="w-full" variant={pkg.popular ? 'default' : 'secondary'}>
+                                            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">{t.pricing.buttonText}</a>
+                                        </Button>
+                                    </CardFooter>
+                                </Card>
+                            </motion.div>
+                        );
+                    })}
                 </motion.div>
                  <div className="text-center mt-12 text-muted-foreground">
                     <p>{t.pricing.paymentMethods.title}</p>

@@ -287,6 +287,7 @@ export const translations = {
       "description": "Choose a package that suits your needs or contact me for a custom quote.",
       "popular": "Popular",
       "buttonText": "Order Now",
+      "whatsappMessage": "Hello, I am interested in your \"{packageName}\" package.",
       "paymentMethods": {
         "title": "We accept:",
         "bkash": "bKash",
@@ -650,6 +651,7 @@ export const translations = {
       "description": "আপনার প্রয়োজন অনুযায়ী একটি প্যাকেজ বেছে নিন বা কাস্টম কোটেশনের জন্য আমার সাথে যোগাযোগ করুন।",
       "popular": "জনপ্রিয়",
       "buttonText": "অর্ডার করুন",
+      "whatsappMessage": "হ্যালো, আমি আপনার \"{packageName}\" প্যাকেজটিতে আগ্রহী।",
       "paymentMethods": {
         "title": "আমরা গ্রহণ করি:",
         "bkash": "বিকাশ",
