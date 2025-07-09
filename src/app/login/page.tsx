@@ -85,6 +85,8 @@ export default function LoginPage() {
         description = 'অনেকবার চেষ্টা করা হয়েছে। অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন।';
       } else if (error.code === 'auth/network-request-failed') {
         description = 'নেটওয়ার্ক অনুরোধ ব্যর্থ হয়েছে। এটি সাধারণত ফায়ারবেস কনফিগারেশন সমস্যার কারণে হয়। আপনার ডেভেলপমেন্ট ডোমেইনটি Firebase কনসোলে অনুমোদিত আছে কিনা তা পরীক্ষা করুন।';
+      } else {
+         description = `একটি অপ্রত্যাশিত ত্রুটি ঘটেছে। বিস্তারিত: ${error.message}`;
       }
       
       toast({
