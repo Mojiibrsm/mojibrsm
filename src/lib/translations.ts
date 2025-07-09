@@ -1,4 +1,3 @@
-
 export const translations = {
   "en": {
     "site": {
@@ -257,6 +256,20 @@ export const translations = {
       "viewAll": "View All Posts",
       "readMore": "Read More",
       "posts": [
+        {
+          "slug": "new-post-1752066563820",
+          "title": "New Blog Post ন্নন",
+          "excerpt": "A short excerpt for the new post.",
+          "content": "<p>Start writing your amazing blog content here!</p>",
+          "image": "https://placehold.co/800x400.png",
+          "imageHint": "blog post",
+          "date": "July 9, 2025",
+          "tags": [
+            "New Tag"
+          ],
+          "metaTitle": "New Post Meta Title",
+          "metaDescription": "New post meta description for SEO."
+        },
         {
           "slug": "the-importance-of-ui-ux",
           "title": "The Importance of UI/UX in Modern Web Design",
@@ -645,6 +658,20 @@ export const translations = {
       "viewAll": "সব পোস্ট দেখুন",
       "readMore": "আরও পড়ুন",
       "posts": [
+        {
+          "slug": "new-post-1752066563820",
+          "title": "New Blog Post ন্নন",
+          "excerpt": "A short excerpt for the new post.",
+          "content": "<p>Start writing your amazing blog content here!</p>",
+          "image": "https://placehold.co/800x400.png",
+          "imageHint": "blog post",
+          "date": "July 9, 2025",
+          "tags": [
+            "New Tag"
+          ],
+          "metaTitle": "New Post Meta Title",
+          "metaDescription": "New post meta description for SEO."
+        },
         {
           "slug": "the-importance-of-ui-ux",
           "title": "The Importance of UI/UX in Modern Web Design",

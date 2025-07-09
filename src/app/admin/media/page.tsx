@@ -1,0 +1,137 @@
+
+'use client';
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { getMediaItems, addMediaItem, deleteMediaItem, IMediaItem } from '@/services/data';
+import Image from 'next/image';
+import { Upload, Trash2, Copy, Loader2, ImageOff } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { FormattedTimestamp } from '@/components/formatted-timestamp';
+
+export default function AdminMediaPage() {
+    const [mediaItems, setMediaItems] = useState<IMediaItem[]>([]);
+    const [isUploading, setIsUploading] = useState(false);
+    const { toast } = useToast();
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+    const loadMedia = useCallback(() => {
+        setMediaItems(getMediaItems());
+    }, []);
+
+    useEffect(() => {
+        loadMedia();
+    }, [loadMedia]);
+
+    const handleFileUpload = async (file: File) => {
+        setIsUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('destination', 's3');
+
+        try {
+            const response = await fetch('/api/upload', { method: 'POST', body: formData });
+            const result = await response.json();
+            if (response.ok && result.success) {
+                addMediaItem({ url: result.url, name: file.name });
+                toast({ title: "Upload Successful", description: `${file.name} has been added to the library.` });
+                loadMedia(); // Refresh list
+            } else {
+                throw new Error(result.message || 'Upload failed');
+            }
+        } catch (error: any) {
+            toast({ title: "Upload Error", description: error.message, variant: "destructive" });
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            handleFileUpload(file);
+        }
+    };
+    
+    const handleDelete = (id: string) => {
+        deleteMediaItem(id);
+        toast({ title: "Media Deleted", description: "The item has been removed from the library." });
+        loadMedia();
+    };
+
+    const handleCopyUrl = (url: string) => {
+        navigator.clipboard.writeText(url);
+        toast({ title: "URL Copied", description: "The image URL has been copied to your clipboard." });
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="flex items-start justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold">Media Library</h1>
+                    <p className="text-muted-foreground">Manage all uploaded images and files.</p>
+                </div>
+                <Button onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+                    {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                    Upload New File
+                </Button>
+                <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" accept="image/*,application/pdf" />
+            </div>
+            <Card>
+                <CardHeader>
+                    <CardTitle>All Media</CardTitle>
+                    <CardDescription>
+                        {mediaItems.length} items in the library. Deleting from here does not remove the file from the server.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {mediaItems.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center text-center text-muted-foreground py-12 border-2 border-dashed rounded-lg">
+                           <ImageOff className="h-12 w-12 mb-4" />
+                           <p className="font-semibold">Your media library is empty.</p>
+                           <p className="text-sm mt-1">Click "Upload New File" to get started.</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+                            {mediaItems.map(item => (
+                                <Card key={item.id} className="group relative overflow-hidden">
+                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center justify-center gap-2">
+                                         <Button size="icon" variant="secondary" onClick={() => handleCopyUrl(item.url)}>
+                                            <Copy className="h-4 w-4" />
+                                        </Button>
+                                         <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button size="icon" variant="destructive">
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>This removes the item from your library, but the file remains on the server. This action cannot be undone.</AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDelete(item.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </div>
+                                    <Image src={item.url} alt={item.name} width={200} height={200} className="w-full h-full object-cover aspect-square bg-muted" unoptimized/>
+                                    <CardFooter className="p-2 text-xs absolute bottom-0 w-full bg-background/80">
+                                        <div className="truncate">
+                                            <p className="font-semibold truncate">{item.name}</p>
+                                            <FormattedTimestamp timestamp={item.createdAt} format="toLocaleDateString" />
+                                        </div>
+                                    </CardFooter>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+        </div>
+    );
+}

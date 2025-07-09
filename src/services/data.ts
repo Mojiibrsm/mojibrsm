@@ -259,3 +259,34 @@ export const deleteSmsLog = (id: string) => {
     logs = logs.filter(log => log.id !== id);
     saveCollection('smsLogs', logs);
 };
+
+
+// --- MEDIA LIBRARY ---
+export interface IMediaItem {
+    id: string;
+    url: string;
+    name: string;
+    createdAt: string; // ISO String
+}
+
+export const addMediaItem = (itemData: Omit<IMediaItem, 'id' | 'createdAt'>): IMediaItem => {
+    const media = getCollection<IMediaItem>('mediaLibrary');
+    const newItem: IMediaItem = {
+        ...itemData,
+        id: crypto.randomUUID(),
+        createdAt: new Date().toISOString(),
+    };
+    media.unshift(newItem);
+    saveCollection('mediaLibrary', media);
+    return newItem;
+};
+
+export const getMediaItems = (): IMediaItem[] => {
+    return getCollection<IMediaItem>('mediaLibrary');
+};
+
+export const deleteMediaItem = (id: string) => {
+    let media = getCollection<IMediaItem>('mediaLibrary');
+    media = media.filter(item => item.id !== id);
+    saveCollection('mediaLibrary', media);
+};

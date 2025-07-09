@@ -1,13 +1,13 @@
 
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, PlusCircle, Pencil, Trash2, Loader2, Save, Image as ImageIcon, Bold, Italic, Strikethrough, List, ListOrdered, Quote, Underline, Palette, ImagePlus } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Pencil, Trash2, Loader2, Save, Image as ImageIcon, Bold, Italic, Strikethrough, List, ListOrdered, Quote, Underline, Palette, ImagePlus, Upload } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { translations } from '@/lib/translations';
 import { updateBlogPosts } from './actions';
+import { addMediaItem } from '@/services/data';
 import Image from 'next/image';
 import { useEditor, EditorContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -181,17 +182,54 @@ export default function AdminBlogPage() {
 
 // --- Tiptap Editor Components ---
 const TiptapToolbar = ({ editor }: { editor: Editor | null }) => {
+  const { toast } = useToast();
+
+  const addImage = useCallback(() => {
+    if (!editor) return;
+
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.style.display = 'none';
+
+    fileInput.onchange = async (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (!file) {
+            document.body.removeChild(fileInput);
+            return;
+        }
+
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', file);
+        uploadFormData.append('destination', 's3');
+
+        toast({ title: "Uploading image..." });
+        
+        try {
+            const response = await fetch('/api/upload', { method: 'POST', body: uploadFormData });
+            const result = await response.json();
+            if (response.ok && result.success) {
+                editor.chain().focus().setImage({ src: result.url, alt: file.name }).run();
+                addMediaItem({ url: result.url, name: file.name });
+                toast({ title: "Image Uploaded", description: "Image inserted into content." });
+            } else {
+                throw new Error(result.message || 'Upload failed');
+            }
+        } catch (error: any) {
+            toast({ title: "Upload Error", description: error.message, variant: "destructive" });
+        } finally {
+            document.body.removeChild(fileInput);
+        }
+    };
+    
+    document.body.appendChild(fileInput);
+    fileInput.click();
+  }, [editor, toast]);
+
+
   if (!editor) {
     return null;
   }
-
-  const addImage = useCallback(() => {
-    const url = window.prompt('Enter image URL:');
-
-    if (url) {
-      editor.chain().focus().setImage({ src: url }).run();
-    }
-  }, [editor]);
 
   const ToggleButton = ({ onClick, children, isActive }: { onClick: () => void, children: React.ReactNode, isActive: boolean }) => (
     <Button
@@ -233,11 +271,13 @@ const TiptapToolbar = ({ editor }: { editor: Editor | null }) => {
 const TiptapEditor = ({ value, onChange }: { value: string; onChange: (value: string) => void }) => {
     const editor = useEditor({
         extensions: [
-            StarterKit.configure({ link: false }), // Disable links as requested
+            StarterKit.configure({ link: false }),
             TiptapUnderline,
             TiptapTextStyle,
             TiptapColor,
-            TiptapImage,
+            TiptapImage.configure({
+                allowBase64: true,
+            }),
         ],
         content: value,
         onUpdate: ({ editor }) => {
@@ -263,6 +303,7 @@ function PostFormDialog({ isOpen, onOpenChange, onSave, post }: { isOpen: boolea
     const [formData, setFormData] = useState<EditablePost | null>(post ? JSON.parse(JSON.stringify(post)) : null);
     const [uploadingImage, setUploadingImage] = useState(false);
     const { toast } = useToast();
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFieldChange = (field: keyof Post, value: string | string[]) => {
         if (!formData) return;
@@ -284,7 +325,8 @@ function PostFormDialog({ isOpen, onOpenChange, onSave, post }: { isOpen: boolea
             const result = await response.json();
             if (response.ok && result.success) {
                 handleFieldChange('image', result.url);
-                toast({ title: "Image Uploaded", description: "Image URL has been updated." });
+                addMediaItem({ name: file.name, url: result.url });
+                toast({ title: "Image Uploaded", description: "Featured image has been updated." });
             } else {
                 throw new Error(result.message || 'Upload failed');
             }
@@ -293,7 +335,14 @@ function PostFormDialog({ isOpen, onOpenChange, onSave, post }: { isOpen: boolea
         } finally {
             setUploadingImage(false);
         }
-      };
+    };
+    
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            handleImageUpload(file);
+        }
+    };
 
     const handleSubmit = () => {
         if(formData) onSave(formData);
@@ -334,7 +383,11 @@ function PostFormDialog({ isOpen, onOpenChange, onSave, post }: { isOpen: boolea
                                 <div className="relative w-full aspect-video border rounded-md overflow-hidden bg-muted">
                                     {uploadingImage ? <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div> : <Image src={data.image} alt="Post image" layout="fill" objectFit="cover" unoptimized />}
                                 </div>
-                                <Input id="image" type="file" accept="image/*" onChange={(e) => { if (e.target.files?.[0]) handleImageUpload(e.target.files[0]); }} disabled={uploadingImage} />
+                                <Button className="w-full" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage}>
+                                    <Upload className="mr-2 h-4 w-4" />
+                                    {uploadingImage ? 'Uploading...' : 'Change Image'}
+                                </Button>
+                                <input type="file" ref={fileInputRef} accept="image/*" onChange={handleFileSelect} className="hidden" />
                                 <div className="space-y-1 pt-2">
                                   <Label>Image AI Hint (for alt text generation)</Label>
                                   <Input value={data.imageHint} onChange={e => handleFieldChange('imageHint', e.target.value)} />
