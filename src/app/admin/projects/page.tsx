@@ -175,7 +175,12 @@ export default function AdminProjectsPage() {
         // Send SMS
         if (formData.clientPhone) {
             const t = translations[language];
-            const smsMessage = `${t.hero.greeting} ${formData.client}, ${isNew ? (language === 'bn' ? 'আপনার নতুন প্রজেক্ট তৈরি হয়েছে' : 'your new project has been created') : (language === 'bn' ? 'আপনার প্রজেক্ট আপডেট হয়েছে' : 'your project has been updated')}: "${formData.name}". ${t.hero.name}`;
+            const myPhoneNumber = t.contact.details.phone;
+            const myName = t.hero.name;
+
+            const smsMessage = language === 'bn'
+              ? `হ্যালো ${formData.client}, আমি ${myName}। আপনার প্রজেক্ট "${formData.name}" ${isNew ? 'তৈরি হয়েছে' : 'আপডেট হয়েছে'}। বিস্তারিত জানতে আমার সাথে যোগাযোগ করুন: ${myPhoneNumber}।`
+              : `Hello ${formData.client}, this is ${myName}. Your project "${formData.name}" has been ${isNew ? 'created' : 'updated'}. For details, contact me at ${myPhoneNumber}.`;
             
             sendSms(formData.clientPhone, smsMessage)
             .then(smsResult => {
