@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { FormattedTimestamp } from '@/components/formatted-timestamp';
 
 export default function MessagesPage() {
   const { user } = useAuth();
@@ -101,11 +102,6 @@ export default function MessagesPage() {
     }
   }
 
-  const formatTimestamp = (timestamp: Timestamp | undefined) => {
-    if (!timestamp) return '';
-    return timestamp.toDate().toLocaleString();
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -161,7 +157,7 @@ export default function MessagesPage() {
                     <div className="grid gap-1 flex-1">
                         <div className="flex items-center justify-between">
                             <p className={`font-semibold ${thread.unreadByUser ? 'text-primary' : ''}`}>{thread.subject}</p>
-                            <p className="text-xs text-muted-foreground">{formatTimestamp(thread.lastMessageTimestamp)}</p>
+                            <FormattedTimestamp timestamp={thread.lastMessageTimestamp} className="text-xs text-muted-foreground" />
                         </div>
                     <p className={`text-sm text-muted-foreground line-clamp-2 ${thread.unreadByUser ? 'font-medium text-foreground' : ''}`}>{thread.lastMessage}</p>
                     </div>
@@ -184,7 +180,7 @@ export default function MessagesPage() {
                    {message.from === 'admin' && <Avatar className="h-8 w-8"><AvatarImage src={''} alt="Admin" /><AvatarFallback>A</AvatarFallback></Avatar>}
                    <div className={`max-w-xs md:max-w-md p-3 rounded-2xl ${message.from === 'client' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-muted rounded-bl-none'}`}>
                         <p className="text-sm">{message.text}</p>
-                        <p className="text-xs text-right mt-1 opacity-70">{formatTimestamp(message.timestamp)}</p>
+                        <FormattedTimestamp timestamp={message.timestamp} className="text-xs text-right mt-1 opacity-70" />
                    </div>
                    {message.from === 'client' && user && <Avatar className="h-8 w-8"><AvatarImage src={user.photoURL || ''} alt={user.displayName || 'You'} /><AvatarFallback>{user.displayName?.charAt(0) || 'U'}</AvatarFallback></Avatar>}
                 </div>

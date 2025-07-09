@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from '@/hooks/use-toast';
 import { getAllRequests, updateRequestStatus, IRequest, RequestStatus } from '@/services/firestore';
 import { useAuth } from '@/contexts/auth-context';
+import { FormattedTimestamp } from '@/components/formatted-timestamp';
 
 const getStatusVariant = (status: string) => {
     switch (status) {
@@ -94,7 +95,7 @@ export default function AdminRequestsPage() {
                     <TableCell>
                       <Badge variant={getStatusVariant(request.status) as any}>{request.status}</Badge>
                     </TableCell>
-                    <TableCell>{request.createdAt.toDate().toLocaleDateString()}</TableCell>
+                    <TableCell><FormattedTimestamp timestamp={request.createdAt} format="toLocaleDateString" /></TableCell>
                     <TableCell className="text-right space-x-2">
                       <Button variant="ghost" size="icon" onClick={() => handleViewRequest(request)}>
                           <Eye className="h-4 w-4" />
@@ -135,7 +136,7 @@ export default function AdminRequestsPage() {
             </div>
              <div>
               <h4 className="font-semibold text-foreground">Date Submitted</h4>
-              <p className="text-muted-foreground">{selectedRequest?.createdAt.toDate().toLocaleString()}</p>
+              <p className="text-muted-foreground"><FormattedTimestamp timestamp={selectedRequest?.createdAt} /></p>
             </div>
             <div>
               <h4 className="font-semibold text-foreground">Current Status</h4>

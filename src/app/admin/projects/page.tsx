@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
 import { addProject, getProjects, updateProject, deleteProject, Project, ProjectStatus } from '@/services/firestore';
+import { FormattedTimestamp } from '@/components/formatted-timestamp';
 
 const getStatusVariant = (status: string) => {
     switch (status) {
@@ -126,7 +127,7 @@ export default function AdminProjectsPage() {
                       <Badge variant={getStatusVariant(project.status) as any}>{project.status}</Badge>
                     </TableCell>
                     <TableCell>{project.deadline}</TableCell>
-                     <TableCell>{project.createdAt.toDate().toLocaleDateString()}</TableCell>
+                     <TableCell><FormattedTimestamp timestamp={project.createdAt} format="toLocaleDateString" /></TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

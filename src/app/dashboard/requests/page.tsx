@@ -16,6 +16,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { addRequest, getRequestsByUserId, IRequest, RequestStatus } from '@/services/firestore';
 import { Timestamp } from 'firebase/firestore';
+import { FormattedTimestamp } from '@/components/formatted-timestamp';
 
 const getStatusVariant = (status: RequestStatus) => {
     switch (status) {
@@ -92,7 +93,7 @@ export default function RequestsPage() {
                     <TableCell>
                         <Badge variant={getStatusVariant(request.status)}>{request.status}</Badge>
                     </TableCell>
-                    <TableCell>{request.createdAt.toDate().toLocaleDateString()}</TableCell>
+                    <TableCell><FormattedTimestamp timestamp={request.createdAt} format="toLocaleDateString" /></TableCell>
                     <TableCell className="text-right">
                         <Button variant="ghost" size="icon" onClick={() => handleViewRequest(request)}>
                         <Eye className="h-4 w-4" />
@@ -114,7 +115,7 @@ export default function RequestsPage() {
           <DialogHeader>
             <DialogTitle>{selectedRequest?.service}</DialogTitle>
             <DialogDescription>
-              Status: <Badge variant={getStatusVariant(selectedRequest?.status || 'Pending')}>{selectedRequest?.status}</Badge> | Submitted: {selectedRequest?.createdAt.toDate().toLocaleString()}
+              Status: <Badge variant={getStatusVariant(selectedRequest?.status || 'Pending')}>{selectedRequest?.status}</Badge> | Submitted: <FormattedTimestamp timestamp={selectedRequest?.createdAt} />
             </DialogDescription>
           </DialogHeader>
           <div className="py-4 text-sm text-muted-foreground">

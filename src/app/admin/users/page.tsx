@@ -11,6 +11,7 @@ import { MoreHorizontal, ShieldCheck, UserCog, UserX } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getUsers, FirestoreUser, updateUserRole } from '@/services/firestore';
 import { useAuth } from '@/contexts/auth-context';
+import { FormattedTimestamp } from '@/components/formatted-timestamp';
 
 const getRoleVariant = (role: string) => {
   switch (role) {
@@ -115,7 +116,7 @@ export default function AdminUsersPage() {
                     <TableCell>
                       <Badge variant={getRoleVariant(user.role) as any}>{user.role}</Badge>
                     </TableCell>
-                    <TableCell>{user.createdAt?.toDate().toLocaleDateString() || 'N/A'}</TableCell>
+                    <TableCell><FormattedTimestamp timestamp={user.createdAt} format="toLocaleDateString" /></TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

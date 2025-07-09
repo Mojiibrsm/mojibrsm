@@ -11,6 +11,7 @@ import { Send, PlusCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/auth-context';
+import { FormattedTimestamp } from '@/components/formatted-timestamp';
 
 export default function AdminMessagesPage() {
   const [threads, setThreads] = useState<IMessageThread[]>([]);
@@ -60,11 +61,6 @@ export default function AdminMessagesPage() {
     }
   }
 
-  const formatTimestamp = (timestamp: Timestamp | undefined) => {
-    if (!timestamp) return '';
-    return timestamp.toDate().toLocaleString();
-  }
-  
   // Note: 'New Message' from Admin is a more complex feature (requires user selection)
   // and is scoped out for this update to focus on fixing replies.
   // A placeholder dialog is kept for future implementation.
@@ -113,7 +109,7 @@ export default function AdminMessagesPage() {
                         <div className="grid gap-1 flex-1">
                             <div className="flex items-center justify-between">
                                 <p className={`font-semibold ${thread.unreadByAdmin ? 'text-primary' : ''}`}>{thread.clientName} - <span className="font-normal text-muted-foreground">{thread.subject}</span></p>
-                                <p className="text-xs text-muted-foreground">{formatTimestamp(thread.lastMessageTimestamp)}</p>
+                                <FormattedTimestamp timestamp={thread.lastMessageTimestamp} className="text-xs text-muted-foreground" />
                             </div>
                         <p className={`text-sm text-muted-foreground line-clamp-2 ${thread.unreadByAdmin ? 'font-medium text-foreground' : ''}`}>{thread.lastMessage}</p>
                         </div>
@@ -137,7 +133,7 @@ export default function AdminMessagesPage() {
                    {message.from === 'client' && <Avatar className="h-8 w-8"><AvatarImage src={selectedThread.clientAvatar} alt={selectedThread.clientName}/><AvatarFallback>{selectedThread.clientName.charAt(0)}</AvatarFallback></Avatar>}
                    <div className={`max-w-xs md:max-w-md p-3 rounded-2xl ${message.from === 'admin' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-muted rounded-bl-none'}`}>
                         <p className="text-sm">{message.text}</p>
-                        <p className="text-xs text-right mt-1 opacity-70">{formatTimestamp(message.timestamp)}</p>
+                        <FormattedTimestamp timestamp={message.timestamp} className="text-xs text-right mt-1 opacity-70" />
                    </div>
                    {message.from === 'admin' && user && <Avatar className="h-8 w-8"><AvatarImage src={user.photoURL || ''} alt={user.displayName || 'Admin'} /><AvatarFallback>{user.displayName?.charAt(0) || 'A'}</AvatarFallback></Avatar>}
                 </div>
