@@ -4,14 +4,67 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
-import { Mail, Phone, MapPin, Github, Facebook, Linkedin } from 'lucide-react';
+import { Mail, Phone, MapPin, Github, Facebook, Linkedin, Loader2 } from 'lucide-react';
 import { motion, useInView } from 'framer-motion';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { useToast } from '@/hooks/use-toast';
+import { submitContactForm } from './contact-actions';
+
+const ContactFormSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters."),
+  email: z.string().email("Please enter a valid email address."),
+  subject: z.string().min(5, "Subject must be at least 5 characters."),
+  message: z.string().min(10, "Message must be at least 10 characters long."),
+});
+
+type ContactFormValues = z.infer<typeof ContactFormSchema>;
+
 
 export default function Contact() {
   const { t } = useLanguage();
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.1 });
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<ContactFormValues>({
+    resolver: zodResolver(ContactFormSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      subject: '',
+      message: '',
+    },
+  });
+
+  const onSubmit = async (data: ContactFormValues) => {
+    setIsSubmitting(true);
+    try {
+      const result = await submitContactForm(data);
+      if (result.status === 'success') {
+        toast({
+          title: "Message Sent!",
+          description: result.message,
+        });
+        form.reset();
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: "Submission Failed",
+        description: error.message || "An unknown error occurred.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
 
   const socialLinks = [
     { icon: Github, href: "https://github.com/mojibrsm" },
@@ -45,13 +98,62 @@ export default function Contact() {
         </motion.div>
         <div className="grid md:grid-cols-2 gap-12">
           <motion.div variants={itemVariants}>
-            <form className="space-y-4">
-              <Input type="text" placeholder={t.contact.form.name} />
-              <Input type="email" placeholder={t.contact.form.email} suppressHydrationWarning />
-              <Input type="text" placeholder={t.contact.form.subject} />
-              <Textarea placeholder={t.contact.form.message} rows={5} />
-              <Button type="submit" size="lg" className="w-full">{t.contact.form.submit}</Button>
-            </form>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                 <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input placeholder={t.contact.form.name} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input type="email" placeholder={t.contact.form.email} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="subject"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input placeholder={t.contact.form.subject} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="message"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Textarea placeholder={t.contact.form.message} rows={5} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {t.contact.form.submit}
+                </Button>
+              </form>
+            </Form>
           </motion.div>
           <motion.div variants={itemVariants} className="space-y-6">
             <Card>
