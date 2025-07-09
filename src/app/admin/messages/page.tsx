@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/auth-context';
 import { FormattedTimestamp } from '@/components/formatted-timestamp';
 import { Label } from '@/components/ui/label';
+import { sendOtp } from '@/services/sms';
 
 export default function AdminMessagesPage() {
   const [threads, setThreads] = useState<IMessageThread[]>([]);
@@ -29,6 +30,7 @@ export default function AdminMessagesPage() {
       message: ''
   });
   const [isSending, setIsSending] = useState(false);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -76,7 +78,7 @@ export default function AdminMessagesPage() {
       setIsSending(true);
 
       const threadData = {
-          userId: user.uid, // This is a limitation of the single-user auth system.
+          userId: newThreadData.clientEmail, // Using email as a unique user ID for simplicity
           clientName: newThreadData.clientName || 'N/A',
           clientEmail: newThreadData.clientEmail,
           clientAvatar: `https://placehold.co/100x100.png`,
@@ -104,12 +106,20 @@ export default function AdminMessagesPage() {
       }
   };
   
-  const handleSendOtp = () => {
+  const handleSendOtp = async () => {
       if (!newThreadData.clientPhone) {
            toast({ variant: "destructive", title: "Missing Phone Number", description: "Please enter a client phone number to send an OTP." });
            return;
       }
-      toast({ title: "OTP Sent (Simulation)", description: `An OTP has been sent to ${newThreadData.clientPhone}.` });
+      setIsSendingOtp(true);
+      const otp = Math.floor(100000 + Math.random() * 900000).toString(); // Generate 6-digit OTP
+      const result = await sendOtp(newThreadData.clientPhone, otp);
+      toast({
+          title: result.success ? "OTP Status" : "OTP Failed",
+          description: result.message,
+          variant: result.success ? "default" : "destructive",
+      });
+      setIsSendingOtp(false);
   }
 
   return (
@@ -154,7 +164,10 @@ export default function AdminMessagesPage() {
                         </div>
                     </div>
                     <DialogFooter className="sm:justify-between">
-                        <Button variant="outline" onClick={handleSendOtp}><FileKey className="mr-2 h-4 w-4"/> Send OTP (Simulated)</Button>
+                        <Button variant="outline" onClick={handleSendOtp} disabled={isSendingOtp || !newThreadData.clientPhone}>
+                            {isSendingOtp ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <FileKey className="mr-2 h-4 w-4"/>}
+                            Send OTP
+                        </Button>
                         <div className="flex gap-2">
                           <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
                           <Button onClick={handleCreateThread} disabled={isSending}>
@@ -243,5 +256,3 @@ export default function AdminMessagesPage() {
     </div>
   )
 }
-
-    

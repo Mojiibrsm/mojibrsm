@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, PlusCircle, Pencil, Trash2 } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Pencil, Trash2, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
 import { addProject, getProjects, updateProject, deleteProject, Project, ProjectStatus } from '@/services/firestore';
 import { FormattedTimestamp } from '@/components/formatted-timestamp';
+import { sendEmail } from '@/services/email';
 
 const getStatusVariant = (status: string) => {
     switch (status) {
@@ -34,6 +35,7 @@ export default function AdminProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -69,21 +71,30 @@ export default function AdminProjectsPage() {
         toast({ title: "Authentication Error", description: "You must be logged in.", variant: "destructive" });
         return;
     }
+    setIsSaving(true);
     try {
       if (editingProject) {
-        // When updating, we pass the existing project data, updated with new form data
         await updateProject(editingProject.id!, formData);
         toast({ title: "Project Updated", description: "The project has been successfully updated." });
         if(formData.clientEmail){
-             toast({ title: "Notification Sent (Simulated)", description: `An email notification would be sent to ${formData.clientEmail}.` });
+             const emailResult = await sendEmail({
+                 to: formData.clientEmail,
+                 subject: `Update on your project: ${formData.name}`,
+                 html: `<h1>Project Updated</h1><p>The status of your project, <strong>${formData.name}</strong>, has been updated to: <strong>${formData.status}</strong>.</p><p>You can view details in your dashboard.</p>`
+             });
+             toast({ title: "Email Notification", description: emailResult.message, variant: emailResult.success ? 'default' : 'destructive' });
         }
       } else {
-        // When adding, we combine form data with the user's ID
         const newProject: Omit<Project, 'id' | 'createdAt'> = { ...formData, userId: user.uid };
         await addProject(newProject);
         toast({ title: "Project Added", description: "A new project has been successfully added." });
         if(formData.clientEmail){
-             toast({ title: "Notification Sent (Simulated)", description: `An email notification would be sent to ${formData.clientEmail}.` });
+             const emailResult = await sendEmail({
+                 to: formData.clientEmail,
+                 subject: `New Project Created: ${formData.name}`,
+                 html: `<h1>New Project Started</h1><p>A new project, <strong>${formData.name}</strong>, has been created for you.</p><p>The current status is: <strong>${formData.status}</strong>.</p><p>You can track its progress in your dashboard.</p>`
+             });
+             toast({ title: "Email Notification", description: emailResult.message, variant: emailResult.success ? 'default' : 'destructive' });
         }
       }
       setIsDialogOpen(false);
@@ -91,6 +102,8 @@ export default function AdminProjectsPage() {
     } catch (error) {
       console.error("Save Error:", error);
       toast({ title: "Save Error", description: "Could not save the project. Check console for details.", variant: "destructive" });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -190,16 +203,17 @@ export default function AdminProjectsPage() {
         isOpen={isDialogOpen} 
         onOpenChange={setIsDialogOpen} 
         project={editingProject} 
-        onSave={handleSave} 
+        onSave={handleSave}
+        isSaving={isSaving}
       />
     </div>
   );
 }
 
 // Sub-component for the Project Form Dialog
-function ProjectFormDialog({ isOpen, onOpenChange, project, onSave }: { isOpen: boolean; onOpenChange: (open: boolean) => void; project: Project | null; onSave: (data: ProjectFormData) => Promise<void>; }) {
+function ProjectFormDialog({ isOpen, onOpenChange, project, onSave, isSaving }: { isOpen: boolean; onOpenChange: (open: boolean) => void; project: Project | null; onSave: (data: ProjectFormData) => Promise<void>; isSaving: boolean; }) {
   // We only manage the core form fields here. `userId` is handled by the parent component.
-  const [formData, setFormData] = useState({ name: '', client: '', clientEmail: '', status: 'Pending' as ProjectStatus, deadline: '' });
+  const [formData, setFormData] = useState<ProjectFormData>({ name: '', client: '', clientEmail: '', status: 'Pending' as ProjectStatus, deadline: '' });
   
   React.useEffect(() => {
     if (isOpen) {
@@ -230,7 +244,7 @@ function ProjectFormDialog({ isOpen, onOpenChange, project, onSave }: { isOpen: 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSave(formData); // Pass only the form data to the parent handler
+    await onSave(formData);
   };
 
   return (
@@ -276,14 +290,14 @@ function ProjectFormDialog({ isOpen, onOpenChange, project, onSave }: { isOpen: 
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="outline">Cancel</Button>
+              <Button type="button" variant="outline" disabled={isSaving}>Cancel</Button>
             </DialogClose>
-            <Button type="submit">Save Project</Button>
+            <Button type="submit" disabled={isSaving}>
+              {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Save Project'}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
   );
 }
-
-    
