@@ -85,6 +85,8 @@ export default function SignupPage() {
         description = 'অনেকবার চেষ্টা করা হয়েছে। অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন।';
       } else if (error.code === 'auth/network-request-failed') {
         description = 'নেটওয়ার্ক অনুরোধ ব্যর্থ হয়েছে। এটি সাধারণত ফায়ারবেস কনফিগারেশন সমস্যার কারণে হয়। আপনার ডেভেলপমেন্ট ডোমেইনটি Firebase কনসোলে অনুমোদিত আছে কিনা তা পরীক্ষা করুন।';
+      } else if (error.code === 'auth/billing-not-enabled') {
+        description = 'এই প্রকল্পের জন্য বিনামূল্যে ফোন যাচাইকরণ কোটা শেষ হয়ে গেছে। অনুগ্রহ করে আপনার Firebase প্রকল্পে বিলিং সক্ষম করুন।';
       } else {
          description = `একটি অপ্রত্যাশিত ত্রুটি ঘটেছে। বিস্তারিত: ${error.message}`;
       }
