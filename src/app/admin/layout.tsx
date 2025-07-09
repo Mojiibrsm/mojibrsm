@@ -1,8 +1,7 @@
-
 'use client';
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarTrigger, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { FileText, FolderKanban, GitPullRequest, LayoutDashboard, LogOut, MessageSquare, History, Settings } from 'lucide-react';
@@ -24,26 +23,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { user, isLoggedIn, loading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  useEffect(() => {
-    // Only attempt to redirect on the client and after initial loading is complete.
-    if (isClient && !loading && !isLoggedIn) {
+    // The `loading` state from `useAuth` ensures this only runs on the client
+    // after the initial auth state has been determined.
+    if (!loading && !isLoggedIn) {
       router.push('/login?redirectTo=/admin');
     }
-  }, [isClient, isLoggedIn, loading, router]);
+  }, [isLoggedIn, loading, router]);
   
   const handleLogout = () => {
     logout();
   };
 
-  // On the server, and on the initial client render, `isClient` will be false,
-  // showing a consistent loading state and avoiding a hydration mismatch.
-  if (!isClient || loading) {
+  // On the server and initial client render, `loading` will be true.
+  // This shows a consistent loading state and avoids a hydration mismatch.
+  if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <p>Loading access control...</p>
@@ -51,12 +46,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  // After mounting, if the user is not logged in, we show a loading state
-  // while the redirect is in progress.
+  // After loading, if the user is not logged in, the useEffect will trigger a redirect.
+  // We can show a loading/redirecting message to prevent a content flash.
   if (!isLoggedIn || !user) {
      return (
       <div className="flex h-screen items-center justify-center">
-        <p>Loading access control...</p>
+        <p>Redirecting to login...</p>
       </div>
     );
   }

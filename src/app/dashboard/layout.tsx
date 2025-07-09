@@ -3,7 +3,7 @@
 
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarTrigger, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { LayoutDashboard, User, Folder, MessageCircle, Settings, LogOut, GitPullRequest } from 'lucide-react';
@@ -24,23 +24,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { user, isLoggedIn, loading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  useEffect(() => {
-    if (isClient && !loading && !isLoggedIn) {
+    if (!loading && !isLoggedIn) {
       router.push('/login?redirectTo=/dashboard');
     }
-  }, [isClient, isLoggedIn, loading, router]);
+  }, [isLoggedIn, loading, router]);
   
   const handleLogout = () => {
     logout();
   };
 
-  if (!isClient || loading) {
+  if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <p>Loading...</p>
@@ -51,7 +46,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!isLoggedIn || !user) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <p>Loading...</p>
+        <p>Redirecting to login...</p>
       </div>
     );
   }
