@@ -340,7 +340,7 @@ export default function AdminContentPage() {
     setIsSaving(false);
   };
   
-  const sections = Object.keys(editableContent.en);
+  const sections = Object.keys(editableContent.en).filter(key => key !== 'site');
 
   return (
     <div className="space-y-6">
