@@ -105,11 +105,12 @@ export default function AdminProjectsPage() {
                     addEmailLog({
                         to: formData.clientEmail,
                         subject: emailSubject,
+                        html: emailHtml,
                         success: emailResult.success,
                         message: emailResult.message,
                     });
                     toast({
-                        title: "Email Notification",
+                        title: "Email Notification Status",
                         description: emailResult.message,
                         variant: emailResult.success ? 'default' : 'destructive'
                     });

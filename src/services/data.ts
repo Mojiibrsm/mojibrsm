@@ -204,6 +204,7 @@ export interface EmailLog {
     id: string;
     to: string;
     subject: string;
+    html: string;
     success: boolean;
     message: string;
     timestamp: string; // ISO String
@@ -244,4 +245,16 @@ export const getLogs = (): { email: EmailLog[], sms: SmsLog[] } => {
     const email = getCollection<EmailLog>('emailLogs');
     const sms = getCollection<SmsLog>('smsLogs');
     return { email, sms };
+};
+
+export const deleteEmailLog = (id: string) => {
+    let logs = getCollection<EmailLog>('emailLogs');
+    logs = logs.filter(log => log.id !== id);
+    saveCollection('emailLogs', logs);
+};
+
+export const deleteSmsLog = (id: string) => {
+    let logs = getCollection<SmsLog>('smsLogs');
+    logs = logs.filter(log => log.id !== id);
+    saveCollection('smsLogs', logs);
 };
