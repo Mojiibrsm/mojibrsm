@@ -43,8 +43,8 @@ const generateProjectEmailHtml = (projectData: ProjectFormData, isNew: boolean, 
     const { name: devName } = t.hero;
     const { phone: devPhone, email: devEmail } = t.contact.details;
     
-    // Construct absolute URL for email images.
-    const baseUrl = 'https://bartanow.com'; // Changed from oftern.com as it seems to be down
+    // Construct absolute URL for email images using a public domain.
+    const baseUrl = 'https://www.oftern.com'; 
     const absoluteImageUrl = notesImage ? (notesImage.startsWith('http') ? notesImage : `${baseUrl}${notesImage}`) : '';
 
     const title = isNew ? (lang === 'bn' ? "আপনার জন্য একটি নতুন প্রজেক্ট তৈরি করা হয়েছে" : "A New Project Has Been Created For You") : (lang === 'bn' ? "আপনার প্রজেক্টের আপডেট" : "Update on Your Project");
