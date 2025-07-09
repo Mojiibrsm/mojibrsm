@@ -20,22 +20,67 @@ const SECRET_KEY = 'mojibx';
 // Helper function to capitalize first letter
 const capitalizeFirstLetter = (string: string) => {
   if (!string) return '';
+  // Check if string is a number (for array indices)
   if (!isNaN(Number(string))) return `Item ${Number(string) + 1}`;
+  // Add spaces before capital letters for camelCase
   return string.charAt(0).toUpperCase() + string.slice(1).replace(/([A-Z])/g, ' $1');
 };
 
 // Recursive component to render form fields
 const RenderFields = ({ data, path, lang, handleFieldChange }: { data: any, path: (string | number)[], lang: 'en' | 'bn', handleFieldChange: (lang: 'en' | 'bn', path: (string | number)[], value: any) => void }) => {
+  // Case 1: Data is a string (used for items in a string array like skills)
+  if (typeof data === 'string') {
+    const elementId = `${lang}-${path.join('-')}`;
+    return (
+      <div key={elementId} className="flex items-center gap-2 mb-2">
+        <Input
+          id={elementId}
+          value={data}
+          onChange={(e) => handleFieldChange(lang, path, e.target.value)}
+        />
+      </div>
+    );
+  }
+
+  // If data is not an object or is null, we can't render it.
   if (typeof data !== 'object' || data === null) {
     return null;
   }
 
+  // Case 2: Data is an array. Map over its items and recurse.
+  if (Array.isArray(data)) {
+    return (
+      <div className="space-y-4">
+        {data.map((item, index) => (
+          <div key={`${lang}-${path.join('-')}-${index}`} className="border-l-2 pl-4 ml-1 pt-4 first:pt-0 first:border-l-0 first:pl-0 first:ml-0">
+             {typeof item === 'object' && item !== null && (
+                <h5 className="text-sm font-semibold text-muted-foreground mb-2">
+                    {/* Heuristic to find a title for the object */}
+                    {capitalizeFirstLetter(String(item.title || item.role || `Item ${index + 1}`))}
+                </h5>
+             )}
+            <RenderFields
+              data={item}
+              path={[...path, index]}
+              lang={lang}
+              handleFieldChange={handleFieldChange}
+            />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // Case 3: Data is an object. Map over its key-value pairs.
   return Object.entries(data).map(([key, value]) => {
     const newPath = [...path, key];
     const elementId = `${lang}-${newPath.join('-')}`;
 
+    // Handle primitive values like strings
     if (typeof value === 'string') {
-      const isTextarea = value.length > 80 || ['description', 'bio', 'mission', 'excerpt'].includes(key);
+      const isTextarea = value.length > 80 || ['description', 'bio', 'mission', 'excerpt', 'details'].some(k => key.toLowerCase().includes(k));
+      const isImageURL = key.toLowerCase().includes('image') || key.toLowerCase().includes('avatar');
+      
       return (
         <div key={elementId} className="space-y-2 mb-4">
           <Label htmlFor={elementId}>{capitalizeFirstLetter(key)}</Label>
@@ -51,28 +96,17 @@ const RenderFields = ({ data, path, lang, handleFieldChange }: { data: any, path
               id={elementId}
               value={value}
               onChange={(e) => handleFieldChange(lang, newPath, e.target.value)}
+              placeholder={isImageURL ? 'Enter image URL or hint' : ''}
             />
           )}
         </div>
       );
     }
 
-    if (Array.isArray(value)) {
-      return (
-        <div key={elementId} className="p-4 border rounded-lg mt-4 bg-muted/30">
-          <h4 className="text-md font-semibold mb-3 tracking-tight">{capitalizeFirstLetter(key)}</h4>
-          {value.map((item, index) => (
-            <div key={`${elementId}-${index}`} className="mb-4 border-t pt-4">
-                <RenderFields data={item} path={[...newPath, index]} lang={lang} handleFieldChange={handleFieldChange} />
-            </div>
-          ))}
-        </div>
-      );
-    }
-
+    // Handle nested objects or arrays by recursing
     if (typeof value === 'object' && value !== null) {
       return (
-        <div key={elementId} className="p-4 border rounded-lg mt-4">
+        <div key={elementId} className="p-4 border rounded-lg mt-4 bg-muted/30">
           <h4 className="text-md font-semibold mb-3 tracking-tight">{capitalizeFirstLetter(key)}</h4>
           <RenderFields data={value} path={newPath} lang={lang} handleFieldChange={handleFieldChange} />
         </div>
@@ -82,6 +116,7 @@ const RenderFields = ({ data, path, lang, handleFieldChange }: { data: any, path
     return null;
   });
 };
+
 
 export default function EditPage({ params }: { params: { secret_key: string } }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -99,7 +134,12 @@ export default function EditPage({ params }: { params: { secret_key: string } })
       const newContent = JSON.parse(JSON.stringify(prev)); // Deep copy
       let current = newContent[lang];
       for (let i = 0; i < path.length - 1; i++) {
-        current = current[path[i]];
+        const segment = path[i];
+        if (current[segment] === undefined) { // Path safety
+            if(typeof path[i+1] === 'number') current[segment] = [];
+            else current[segment] = {};
+        }
+        current = current[segment];
       }
       current[path[path.length - 1]] = value;
       return newContent;
@@ -107,10 +147,8 @@ export default function EditPage({ params }: { params: { secret_key: string } })
   }, []);
 
   const handleCopyToClipboard = () => {
-    // A helper function to format the JSON string nicely
     const formatCode = (obj: object) => {
         const jsonString = JSON.stringify(obj, null, 2);
-        // Add a trailing comma after the 'en' block for better formatting
         return jsonString.replace(/(\s+})\n(\s+)"bn":/g, '$1,\n$2"bn":');
     }
 
@@ -186,7 +224,7 @@ export default function EditPage({ params }: { params: { secret_key: string } })
                         <Separator className="mb-4" />
                         <RenderFields
                             data={editableContent.en[sectionKey as keyof typeof editableContent.en]}
-                            path={[]}
+                            path={[sectionKey]}
                             lang="en"
                             handleFieldChange={handleFieldChange}
                         />
@@ -196,7 +234,7 @@ export default function EditPage({ params }: { params: { secret_key: string } })
                         <Separator className="mb-4" />
                         <RenderFields
                            data={editableContent.bn[sectionKey as keyof typeof editableContent.bn]}
-                           path={[]}
+                           path={[sectionKey]}
                            lang="bn"
                            handleFieldChange={handleFieldChange}
                         />
