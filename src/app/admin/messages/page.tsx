@@ -7,14 +7,14 @@ import { Timestamp } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Send, PlusCircle, Mail, MessageSquareText, FileKey, Loader2 } from 'lucide-react';
+import { Send, PlusCircle, Mail, MessageSquareText, FileKey, Loader2, MessageSquare } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/auth-context';
 import { FormattedTimestamp } from '@/components/formatted-timestamp';
 import { Label } from '@/components/ui/label';
-import { sendOtp } from '@/services/sms';
+import { sendSms } from '@/services/sms';
 
 export default function AdminMessagesPage() {
   const [threads, setThreads] = useState<IMessageThread[]>([]);
@@ -30,7 +30,7 @@ export default function AdminMessagesPage() {
       message: ''
   });
   const [isSending, setIsSending] = useState(false);
-  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isSendingSms, setIsSendingSms] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -106,20 +106,19 @@ export default function AdminMessagesPage() {
       }
   };
   
-  const handleSendOtp = async () => {
-      if (!newThreadData.clientPhone) {
-           toast({ variant: "destructive", title: "Missing Phone Number", description: "Please enter a client phone number to send an OTP." });
+  const handleSendSms = async () => {
+      if (!newThreadData.clientPhone || !newThreadData.message) {
+           toast({ variant: "destructive", title: "Missing Info", description: "Client phone number and a message are required to send an SMS." });
            return;
       }
-      setIsSendingOtp(true);
-      const otp = Math.floor(100000 + Math.random() * 900000).toString(); // Generate 6-digit OTP
-      const result = await sendOtp(newThreadData.clientPhone, otp);
+      setIsSendingSms(true);
+      const result = await sendSms(newThreadData.clientPhone, newThreadData.message);
       toast({
-          title: result.success ? "OTP Status" : "OTP Failed",
+          title: result.success ? "SMS Status" : "SMS Failed",
           description: result.message,
           variant: result.success ? "default" : "destructive",
       });
-      setIsSendingOtp(false);
+      setIsSendingSms(false);
   }
 
   return (
@@ -164,9 +163,9 @@ export default function AdminMessagesPage() {
                         </div>
                     </div>
                     <DialogFooter className="sm:justify-between">
-                        <Button variant="outline" onClick={handleSendOtp} disabled={isSendingOtp || !newThreadData.clientPhone}>
-                            {isSendingOtp ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <FileKey className="mr-2 h-4 w-4"/>}
-                            Send OTP
+                        <Button variant="outline" onClick={handleSendSms} disabled={isSendingSms || !newThreadData.clientPhone || !newThreadData.message}>
+                            {isSendingSms ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <MessageSquare className="mr-2 h-4 w-4"/>}
+                            Send as SMS
                         </Button>
                         <div className="flex gap-2">
                           <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
