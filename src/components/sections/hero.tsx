@@ -29,7 +29,7 @@ export default function Hero() {
 
 
   return (
-    <section className="w-full py-12 md:py-16 lg:py-20 bg-card">
+    <section className="w-full py-16 md:py-20 lg:py-24 bg-card">
       <div className="container px-4 md:px-6">
         <div className="grid gap-10 lg:grid-cols-2 lg:gap-16 items-center">
           <motion.div 
@@ -41,9 +41,13 @@ export default function Hero() {
             <div className="space-y-4">
               <motion.h1 
                 variants={itemVariants}
-                className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none font-headline"
+                className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none font-headline animate-float"
               >
-                {t.hero.greeting} <span className="text-primary">{t.hero.name}</span>
+                {t.hero.greeting}{' '}
+                <span className="text-primary relative inline-block">
+                    {t.hero.name}
+                    <span className="absolute -bottom-2.5 left-0 h-1.5 w-full rounded-full bg-accent animate-underline-glow"></span>
+                </span>
               </motion.h1>
               <motion.h2 
                 variants={itemVariants}

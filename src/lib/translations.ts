@@ -1,7 +1,7 @@
 export const translations = {
   "en": {
     "site": {
-      "title": "Mojib Rsm",
+      "title": "Mojib",
       "url": "https://www.mojib.oftern.com",
       "logo": "/uploads/1752060795135-aulbtu.jpg",
       "publicLogo": "/uploads/1752063003787-Mojib.gif",
@@ -364,7 +364,7 @@ export const translations = {
   },
   "bn": {
     "site": {
-      "title": "Mojib Rsm",
+      "title": "Mojib",
       "url": "https://www.mojib.oftern.com",
       "logo": "/uploads/1752060795135-aulbtu.jpg",
       "publicLogo": "/uploads/1752063003787-Mojib.gif",
