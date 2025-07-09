@@ -1,15 +1,17 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardFooter } from '@/components/ui/card';
 import Image from 'next/image';
-import { getMediaItems, IMediaItem } from '@/services/data';
+import { getMediaItems, addMediaItem, IMediaItem } from '@/services/data';
 import { FormattedTimestamp } from '@/components/formatted-timestamp';
-import { Search, ImageOff } from 'lucide-react';
+import { Search, ImageOff, Upload, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 interface MediaLibraryDialogProps {
     isOpen: boolean;
@@ -20,12 +22,50 @@ interface MediaLibraryDialogProps {
 export function MediaLibraryDialog({ isOpen, onOpenChange, onSelect }: MediaLibraryDialogProps) {
     const [mediaItems, setMediaItems] = useState<IMediaItem[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [isUploading, setIsUploading] = useState(false);
+    const { toast } = useToast();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const loadMedia = useCallback(() => {
+        setMediaItems(getMediaItems());
+    }, []);
 
     useEffect(() => {
         if (isOpen) {
-            setMediaItems(getMediaItems());
+            loadMedia();
         }
-    }, [isOpen]);
+    }, [isOpen, loadMedia]);
+
+    const handleFileUpload = async (file: File) => {
+        setIsUploading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('destination', 's3');
+
+        try {
+            const response = await fetch('/api/upload', { method: 'POST', body: formData });
+            const result = await response.json();
+            if (response.ok && result.success) {
+                const newItem = addMediaItem({ url: result.url, name: file.name });
+                toast({ title: "Upload Successful", description: `${file.name} has been added.` });
+                loadMedia(); // Refresh list to show the new item
+                onSelect(newItem); // Automatically select the newly uploaded item
+            } else {
+                throw new Error(result.message || 'Upload failed');
+            }
+        } catch (error: any) {
+            toast({ title: "Upload Error", description: error.message, variant: "destructive" });
+        } finally {
+            setIsUploading(false);
+        }
+    };
+    
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            handleFileUpload(file);
+        }
+    };
 
     const filteredItems = mediaItems.filter(item => 
         item.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -41,7 +81,7 @@ export function MediaLibraryDialog({ isOpen, onOpenChange, onSelect }: MediaLibr
             <DialogContent className="sm:max-w-4xl h-[80vh] flex flex-col">
                 <DialogHeader>
                     <DialogTitle>Media Library</DialogTitle>
-                    <DialogDescription>Select an existing file from your library.</DialogDescription>
+                    <DialogDescription>Select an existing file from your library or upload a new one.</DialogDescription>
                 </DialogHeader>
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -54,7 +94,7 @@ export function MediaLibraryDialog({ isOpen, onOpenChange, onSelect }: MediaLibr
                 </div>
                 <ScrollArea className="flex-1 -mx-6">
                     <div className="px-6 py-4">
-                        {filteredItems.length === 0 ? (
+                        {filteredItems.length === 0 && !isUploading ? (
                              <div className="flex flex-col items-center justify-center text-center text-muted-foreground py-12 border-2 border-dashed rounded-lg h-full">
                                 <ImageOff className="h-12 w-12 mb-4" />
                                 <p className="font-semibold">No media found.</p>
@@ -84,6 +124,13 @@ export function MediaLibraryDialog({ isOpen, onOpenChange, onSelect }: MediaLibr
                         )}
                     </div>
                 </ScrollArea>
+                 <DialogFooter className="border-t pt-4">
+                    <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="hidden" accept="image/*,application/pdf" />
+                    <Button onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+                        {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                        Upload New File
+                    </Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     );

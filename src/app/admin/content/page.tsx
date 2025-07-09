@@ -145,7 +145,7 @@ const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, hand
         return (
           <div key={elementId} className="space-y-2 mb-4">
             <Label htmlFor={elementId}>{capitalizeFirstLetter(key)}</Label>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center gap-4">
               <div className="relative w-20 h-20 shrink-0">
                 {isUploading ? (
                   <div className="w-full h-full flex items-center justify-center bg-muted rounded-md border">
@@ -155,25 +155,23 @@ const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, hand
                   previewContent
                 )}
               </div>
-              <div className="flex-grow space-y-2">
-                <div className="flex gap-2">
-                    <Input
-                      id={elementId}
-                      type="file"
-                      accept={acceptType}
-                      onChange={(e) => {
-                        if (e.target.files?.[0]) {
-                          handleFileUpload(e.target.files[0], newPath, lang);
-                        }
-                      }}
-                      className="flex-grow"
-                      disabled={isUploading}
-                    />
-                    <Button type="button" variant="outline" size="icon" onClick={() => handleBrowseMedia(newPath, lang)} disabled={isUploading}>
-                        <FolderSearch className="h-4 w-4" />
-                    </Button>
-                </div>
-                 <p className="text-xs text-muted-foreground mt-1 truncate">URL: {value}</p>
+              <div className="flex-grow space-y-2 w-full">
+                <Input
+                  id={elementId}
+                  type="file"
+                  accept={acceptType}
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) {
+                      handleFileUpload(e.target.files[0], newPath, lang);
+                    }
+                  }}
+                  className="w-full"
+                  disabled={isUploading}
+                />
+                <Button type="button" variant="outline" className="w-full" onClick={() => handleBrowseMedia(newPath, lang)} disabled={isUploading}>
+                    <FolderSearch className="mr-2 h-4 w-4" /> Browse Library
+                </Button>
+                <p className="text-xs text-muted-foreground mt-1 truncate">URL: {value}</p>
               </div>
             </div>
           </div>

@@ -2,11 +2,11 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { getMessageThreads, addMessageToThread, markThreadAsRead, IMessage, IMessageThread, addSmsLog, addEmailLog } from '@/services/data';
+import { getMessageThreads, addMessageToThread, markThreadAsRead, IMessage, IMessageThread, addSmsLog, addEmailLog, addMediaItem, IMediaItem } from '@/services/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Send, PlusCircle, Mail, MessageSquareText, Loader2, File, X, Upload } from 'lucide-react';
+import { Send, PlusCircle, Mail, MessageSquareText, Loader2, File, X, Upload, FolderSearch } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,7 +19,14 @@ import { translations } from '@/lib/translations';
 import { useRouter } from 'next/navigation';
 import * as XLSX from 'xlsx';
 import { Separator } from '@/components/ui/separator';
+import { MediaLibraryDialog } from '@/components/media-library-dialog';
 
+
+type Attachment = {
+  name: string;
+  url?: string; // For library files or already uploaded files
+  file?: File;  // For new local files
+};
 
 const generateDirectEmailHtml = (subject: string, message: string, attachment?: { name: string; url: string }): string => {
     const t = translations['en']; 
@@ -73,10 +80,11 @@ export default function AdminMessagesPage() {
       subject: '',
       message: ''
   });
-  const [attachment, setAttachment] = useState<File | null>(null);
+  const [attachment, setAttachment] = useState<Attachment | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [isSendingSms, setIsSendingSms] = useState(false);
+  const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -163,7 +171,6 @@ export default function AdminMessagesPage() {
             }
 
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            // A more general regex for phone numbers that can include country codes
             const phoneRegex = /^\+?[0-9\s-()]{7,}$/;
 
             const importedEmails: string[] = [];
@@ -225,16 +232,26 @@ export default function AdminMessagesPage() {
     try {
         if (attachment) {
             setIsUploading(true);
-            const formData = new FormData();
-            formData.append('file', attachment);
-            formData.append('destination', 's3');
+            let fileUrl = attachment.url;
             
-            const response = await fetch('/api/upload', { method: 'POST', body: formData });
-            const result = await response.json();
+            // If it's a local file, upload it first
+            if (attachment.file) {
+                const formData = new FormData();
+                formData.append('file', attachment.file);
+                formData.append('destination', 's3');
+                
+                const response = await fetch('/api/upload', { method: 'POST', body: formData });
+                const result = await response.json();
+                
+                if (!response.ok || !result.success) throw new Error(result.message || 'File upload failed');
+                
+                addMediaItem({ url: result.url, name: attachment.name });
+                fileUrl = result.url;
+            }
+
+            if (!fileUrl) throw new Error("Could not get attachment URL.");
             
-            if (!response.ok || !result.success) throw new Error(result.message || 'File upload failed');
-            
-            attachmentPayload = { filename: attachment.name, path: result.url };
+            attachmentPayload = { filename: attachment.name, path: fileUrl };
             setIsUploading(false);
         }
 
@@ -245,7 +262,7 @@ export default function AdminMessagesPage() {
             return;
         }
 
-        const emailHtml = generateDirectEmailHtml(composeData.subject, composeData.message, attachment ? { name: attachment.name, url: attachmentPayload!.path } : undefined);
+        const emailHtml = generateDirectEmailHtml(composeData.subject, composeData.message, attachmentPayload);
         
         const result = await sendEmail({
             to: recipients,
@@ -327,6 +344,11 @@ export default function AdminMessagesPage() {
       }
   }
 
+  const handleSelectFromLibrary = (item: IMediaItem) => {
+    setAttachment({ name: item.name, url: item.url });
+  };
+
+
   return (
     <div className="space-y-6">
        <div className="flex items-center justify-between">
@@ -381,10 +403,15 @@ export default function AdminMessagesPage() {
                         </div>
                         <div className="grid gap-2">
                            <Label htmlFor="attachment">Attachment (for Email)</Label>
-                           <Input id="attachment" type="file" onChange={(e) => setAttachment(e.target.files?.[0] || null)} />
+                           <div className="flex gap-2">
+                                <Input id="attachment" type="file" className="flex-1" onChange={(e) => setAttachment(e.target.files?.[0] ? { name: e.target.files[0].name, file: e.target.files[0] } : null)} />
+                                <Button type="button" variant="outline" size="icon" onClick={() => setIsMediaDialogOpen(true)}>
+                                    <FolderSearch className="h-4 w-4" />
+                                </Button>
+                           </div>
                            {attachment && (
                              <div className="text-sm text-muted-foreground flex items-center justify-between p-2 bg-muted rounded-md">
-                               <span>{attachment.name}</span>
+                               <span className="truncate">{attachment.name}</span>
                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setAttachment(null)}>
                                  <X className="h-4 w-4"/>
                                </Button>
@@ -403,6 +430,7 @@ export default function AdminMessagesPage() {
                             {isUploading ? 'Uploading...' : 'Send as Email'}
                         </Button>
                     </DialogFooter>
+                    <MediaLibraryDialog isOpen={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen} onSelect={handleSelectFromLibrary} />
                 </DialogContent>
             </Dialog>
       </div>
