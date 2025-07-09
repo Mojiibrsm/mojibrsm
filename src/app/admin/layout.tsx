@@ -8,8 +8,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { LayoutDashboard, Users, FolderKanban, GitPullRequest, MessageSquare, BarChart2, Settings, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 
 const adminNavItems = [
@@ -23,22 +21,21 @@ const adminNavItems = [
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, isLoggedIn, loading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!loading && (!user || user.role !== 'Admin')) {
+    if (!loading && !isLoggedIn) {
       router.push('/login?redirectTo=/admin');
     }
-  }, [user, loading, router]);
+  }, [isLoggedIn, loading, router]);
   
-  const handleLogout = async () => {
-    await signOut(auth);
-    router.push('/');
+  const handleLogout = () => {
+    logout();
   };
 
-  if (loading || !user || user.role !== 'Admin') {
+  if (loading || !isLoggedIn || !user) {
     return (
       <div className="flex h-screen items-center justify-center">
         <p>Loading access control...</p>

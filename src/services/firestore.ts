@@ -1,52 +1,9 @@
 
-import { db, auth } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, query, where, onSnapshot, doc, updateDoc, deleteDoc, setDoc, getDoc, Timestamp, writeBatch, orderBy } from 'firebase/firestore';
-import type { User as FirebaseUser } from 'firebase/auth';
 
-// User Management
-export interface FirestoreUser {
-  uid: string;
-  email: string | null;
-  displayName: string | null;
-  photoURL: string | null;
-  phoneNumber: string | null;
-  role: 'Admin' | 'Client';
-  createdAt: Timestamp;
-}
-
-export const addUserToFirestore = async (user: FirebaseUser) => {
-  const userRef = doc(db, 'users', user.uid);
-  const userSnap = await getDoc(userRef);
-  if (!userSnap.exists()) {
-    const isAdminQuery = query(collection(db, 'users'), where('role', '==', 'Admin'));
-    const adminSnapshot = await getDocs(isAdminQuery);
-    const hasAdmin = !adminSnapshot.empty;
-    
-    await setDoc(userRef, {
-      uid: user.uid,
-      email: user.email || null,
-      displayName: user.displayName || null,
-      photoURL: user.photoURL || null,
-      phoneNumber: user.phoneNumber || null,
-      role: hasAdmin ? 'Client' : 'Admin',
-      createdAt: Timestamp.now(),
-    });
-  }
-};
-
-export const getUsers = (callback: (users: FirestoreUser[]) => void) => {
-  const q = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
-  return onSnapshot(q, (snapshot) => {
-    const users = snapshot.docs.map(doc => doc.data() as FirestoreUser);
-    callback(users);
-  });
-};
-
-export const updateUserRole = (uid: string, role: 'Admin' | 'Client') => {
-  const userRef = doc(db, 'users', uid);
-  return updateDoc(userRef, { role });
-};
-
+// Note: User management functions that depended on Firebase Auth have been removed.
+// The current simple password login does not support multi-user systems.
 
 // Project Management
 export type ProjectStatus = 'Pending' | 'In Progress' | 'Completed';

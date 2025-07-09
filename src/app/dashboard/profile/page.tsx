@@ -14,9 +14,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, Mail, Phone, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { updateProfile } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
 
 const profileFormSchema = z.object({
   fullName: z.string().min(1, 'Full name is required'),
@@ -24,10 +21,9 @@ const profileFormSchema = z.object({
 });
 
 export default function ProfilePage() {
-  const { user, reloadUser } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
@@ -41,43 +37,26 @@ export default function ProfilePage() {
     if (user) {
       form.reset({
         fullName: user.displayName || '',
-        bio: 'I am a passionate developer and designer.', // This could be fetched from a DB later
+        bio: 'I am a passionate developer and designer.', // This is now static
       });
-      if (user.photoURL) {
-        setAvatarPreview(user.photoURL);
-      }
     }
   }, [user, form]);
 
 
   async function onSubmit(data: z.infer<typeof profileFormSchema>) {
-    if (!auth.currentUser) return;
     setIsSubmitting(true);
-    try {
-      // Update both Firebase Auth profile and Firestore document
-      await updateProfile(auth.currentUser, {
-        displayName: data.fullName,
-      });
-      
-      const userRef = doc(db, 'users', auth.currentUser.uid);
-      await updateDoc(userRef, { displayName: data.fullName });
-
-      await reloadUser();
-      
-      toast({
-        title: 'প্রোফাইল আপডেট হয়েছে',
-        description: 'আপনার প্রোফাইলের তথ্য সফলভাবে আপডেট করা হয়েছে।',
-      });
-    } catch (error) {
-        console.error("Error updating profile:", error);
-        toast({
-            variant: 'destructive',
-            title: 'আপডেট ব্যর্থ হয়েছে',
-            description: 'আপনার প্রোফাইল আপডেট করার সময় একটি ত্রুটি হয়েছে।',
-        });
-    } finally {
-      setIsSubmitting(false);
-    }
+    
+    // Simulate an API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // With Firebase Auth removed, we just show a toast message.
+    // In a real app with a backend, you'd make an API call here.
+    toast({
+      title: 'প্রোফাইল আপডেট হয়েছে',
+      description: 'আপনার প্রোফাইলের তথ্য সফলভাবে আপডেট করা হয়েছে (সিমুলেশন)।',
+    });
+    
+    setIsSubmitting(false);
   }
 
   if (!user) return null;
@@ -92,13 +71,13 @@ export default function ProfilePage() {
         <CardHeader>
           <div className="flex items-center gap-4">
              <Avatar className="h-20 w-20">
-              <AvatarImage src={avatarPreview || user.photoURL || ''} alt={user?.displayName || 'User'} />
+              <AvatarImage src={user.photoURL || ''} alt={user?.displayName || 'User'} />
               <AvatarFallback>{user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}</AvatarFallback>
             </Avatar>
             <div className="grid gap-1">
               <h2 className="text-xl font-semibold">{user?.displayName || 'New User'}</h2>
-              <p className="text-sm text-muted-foreground">{user?.phoneNumber || user?.email}</p>
-              <p className="text-xs text-muted-foreground pt-2">To change your picture, sign in with a different Google account (if enabled).</p>
+              <p className="text-sm text-muted-foreground">{user?.email}</p>
+              <p className="text-xs text-muted-foreground pt-2">This is static profile information.</p>
             </div>
           </div>
         </CardHeader>
