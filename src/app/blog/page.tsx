@@ -25,7 +25,7 @@ export default function BlogPage() {
         <div className="flex flex-col min-h-screen bg-background text-foreground">
             <Header />
             <main className="flex-grow">
-                <section id="blog-list" className="w-full py-16 md:py-24">
+                <section id="blog-list" className="w-full py-16 md:py-24 bg-card">
                     <div className="container">
                         <motion.div
                             initial={{ opacity: 0, y: -20 }}

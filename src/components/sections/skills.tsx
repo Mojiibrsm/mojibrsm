@@ -30,7 +30,7 @@ export default function Skills() {
 
 
   return (
-    <section id="skills" className="w-full py-16 md:py-24">
+    <section id="skills" className="w-full py-16 md:py-24 bg-card">
       <div className="container">
         <motion.h2
           ref={ref}

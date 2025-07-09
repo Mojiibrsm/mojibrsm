@@ -26,7 +26,7 @@ export default function Experience() {
   };
 
   return (
-    <section id="experience" className="w-full py-16 md:py-24 bg-background">
+    <section id="experience" className="w-full py-16 md:py-24 bg-card">
       <div className="container">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
