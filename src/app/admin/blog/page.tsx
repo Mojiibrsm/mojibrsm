@@ -45,15 +45,14 @@ export default function AdminBlogPage() {
     }, []);
 
     const handleAddNew = () => {
-        const uniqueSlug = `new-post-${Date.now()}`;
         const newPost: Post = { 
-            slug: uniqueSlug, 
+            slug: 'new-blog-post', 
             title: 'New Blog Post', 
             excerpt: 'A short excerpt for the new post.', 
             content: '<p>Start writing your amazing blog content here!</p>', 
             image: 'https://placehold.co/800x400.png', 
             imageHint: 'blog post', 
-            date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), 
+            date: '', // Will be set on first save
             tags: ['New Tag'], 
             metaTitle: 'New Post Meta Title', 
             metaDescription: 'New post meta description for SEO.' 
@@ -98,9 +97,13 @@ export default function AdminBlogPage() {
         let nextPosts: { en: Post[], bn: Post[] };
 
         if (index === -1) { // New post
+             const finalPost = { 
+                ...post, 
+                date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) 
+            };
             nextPosts = {
-                en: [{ ...post, date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) }, ...posts.en],
-                bn: [{ ...post, date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) }, ...posts.bn],
+                en: [finalPost, ...posts.en],
+                bn: [finalPost, ...posts.bn],
             };
         } else { // Editing existing post
             const newEn = [...posts.en];
@@ -236,7 +239,6 @@ const TiptapToolbar = ({ editor }: { editor: Editor | null }) => {
     } catch (error: any) {
         toast({ title: "Upload Error", description: error.message, variant: "destructive" });
     } finally {
-        // Reset file input
         if(fileInputRef.current) fileInputRef.current.value = '';
     }
   };
@@ -317,29 +319,16 @@ const TiptapToolbar = ({ editor }: { editor: Editor | null }) => {
 const TiptapEditor = ({ value, onChange }: { value: string; onChange: (value: string) => void }) => {
     const editor = useEditor({
         extensions: [
-            StarterKit.configure({
-                link: false, // We'll use the standalone Link extension for more control
-            }),
-            TiptapLink.configure({
-                openOnClick: false,
-                autolink: true,
-            }),
+            StarterKit.configure({ link: false }),
+            TiptapLink.configure({ openOnClick: false, autolink: true }),
             TiptapUnderline,
             TiptapTextStyle,
             TiptapColor,
-            TiptapImage.configure({
-                allowBase64: true,
-            }),
+            TiptapImage.configure({ allowBase64: true }),
         ],
         content: value,
-        onUpdate: ({ editor }) => {
-            onChange(editor.getHTML());
-        },
-        editorProps: {
-            attributes: {
-                class: 'prose dark:prose-invert max-w-none focus:outline-none px-4 py-2',
-            },
-        },
+        onUpdate: ({ editor }) => { onChange(editor.getHTML()); },
+        editorProps: { attributes: { class: 'prose dark:prose-invert max-w-none focus:outline-none px-4 py-2' } },
     });
 
     return (
@@ -354,10 +343,49 @@ const TiptapEditor = ({ value, onChange }: { value: string; onChange: (value: st
 function PostFormDialog({ isOpen, onOpenChange, onSave, post, isSaving }: { isOpen: boolean; onOpenChange: (open: boolean) => void; onSave: (data: EditablePost) => void; post: EditablePost | null; isSaving: boolean }) {
     const [formData, setFormData] = useState<EditablePost | null>(post ? JSON.parse(JSON.stringify(post)) : null);
     const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
+    const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
     const { toast } = useToast();
+
+    const generateSlug = (title: string) => {
+        return title
+            .toLowerCase()
+            .replace(/&/g, 'and')
+            .replace(/[^a-z0-9\s-]/g, '') 
+            .replace(/\s+/g, '-') 
+            .replace(/-+/g, '-') 
+            .trim();
+    };
+
+    useEffect(() => {
+        if (formData && post?.index === -1 && !isSlugManuallyEdited && formData.post.title) {
+            const newSlug = generateSlug(formData.post.title);
+            if (newSlug && newSlug !== formData.post.slug) {
+                setFormData(prev => {
+                    if (!prev) return null;
+                    const newPost = { ...prev.post, slug: newSlug };
+                    return { ...prev, post: newPost };
+                });
+            }
+        }
+    }, [formData?.post.title, post?.index, isSlugManuallyEdited]);
+    
+    useEffect(() => {
+        if (isOpen) {
+            if (post?.index === -1) {
+                setIsSlugManuallyEdited(false);
+            } else {
+                setIsSlugManuallyEdited(true);
+            }
+        }
+    }, [isOpen, post]);
 
     const handleFieldChange = (field: keyof Post, value: string | string[]) => {
         if (!formData) return;
+        
+        if (field === 'slug') {
+            setIsSlugManuallyEdited(true);
+        }
+
         setFormData(prev => {
             if (!prev) return null;
             const newPost = { ...prev.post, [field]: value };
@@ -387,8 +415,8 @@ function PostFormDialog({ isOpen, onOpenChange, onSave, post, isSaving }: { isOp
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-4 max-h-[70vh] overflow-y-auto pr-4">
                     <div className="md:col-span-2 space-y-4">
-                        <div className="space-y-1"><Label>Slug (URL Identifier)</Label><Input value={data.slug} onChange={e => handleFieldChange('slug', e.target.value)} /><p className="text-xs text-muted-foreground">Keep this unique.</p></div>
                         <div className="space-y-1"><Label>Title</Label><Input value={data.title} onChange={e => handleFieldChange('title', e.target.value)} /></div>
+                        <div className="space-y-1"><Label>Slug (URL Identifier)</Label><Input value={data.slug} onChange={e => handleFieldChange('slug', e.target.value)} /><p className="text-xs text-muted-foreground">Auto-generated from title. Can be edited manually.</p></div>
                         <div className="space-y-1"><Label>Excerpt</Label><Textarea value={data.excerpt} onChange={e => handleFieldChange('excerpt', e.target.value)} className="h-24" /></div>
                         <div className="space-y-1">
                             <Label>Content</Label>
