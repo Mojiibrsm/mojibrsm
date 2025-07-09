@@ -6,7 +6,7 @@ import { getMessageThreads, addMessageToThread, markThreadAsRead, IMessage, IMes
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Send, PlusCircle, Mail, MessageSquareText, Loader2, File, X, Upload, FolderSearch } from 'lucide-react';
+import { Send, PlusCircle, Mail, MessageSquareText, Loader2, File, X, Upload, FolderSearch, Phone } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -66,6 +66,39 @@ const generateDirectEmailHtml = (subject: string, message: string, attachment?: 
     `;
 };
 
+const generateReplyEmailHtml = (threadSubject: string, clientName: string, replyMessage: string): string => {
+    const t = translations['en']; 
+    const { name: devName } = t.hero;
+    const { phone: devPhone, email: devEmail } = t.contact.details;
+    const siteUrl = t.site.url;
+    const whatsappNumber = devPhone.replace(/[^0-9]/g, '');
+
+    const messageBody = replyMessage.replace(/\n/g, '<br>');
+
+    return `
+        <div style="background-color: #f4f4f7; padding: 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333;">
+            <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                <div style="background: linear-gradient(to right, #6366f1, #a855f7); color: #ffffff; padding: 24px; text-align: left;">
+                    <h1 style="margin: 0; font-size: 24px; font-weight: bold;">Re: ${threadSubject}</h1>
+                </div>
+                <div style="padding: 24px; line-height: 1.6; font-size: 16px;">
+                    <p>Hello ${clientName},</p>
+                    ${messageBody}
+                </div>
+                <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+                    <h3 style="margin: 0 0 10px 0; font-size: 18px; font-weight: bold;">${devName}</h3>
+                    <p style="margin: 0 0 15px 0; color: #555555; font-size: 14px;">Email: ${devEmail} | Phone: ${devPhone}</p>
+                    <div style="margin-top: 15px;">
+                        <a href="https://wa.me/${whatsappNumber}" style="display: inline-block; background-color: #25D366; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px; font-size: 14px; font-weight: bold;">WhatsApp</a>
+                        <a href="https://facebook.com/MoJiiB.RsM" style="display: inline-block; background-color: #1877F2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px; font-size: 14px; font-weight: bold;">Facebook</a>
+                        <a href="${siteUrl}" style="display: inline-block; background-color: #6366f1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px; font-size: 14px; font-weight: bold;">Visit Website</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+};
+
 
 export default function AdminMessagesPage() {
   const router = useRouter();
@@ -74,6 +107,10 @@ export default function AdminMessagesPage() {
   const [replyText, setReplyText] = useState('');
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isComposeOpen, setIsComposeOpen] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [isSmsDialogOpen, setIsSmsDialogOpen] = useState(false);
+  const [isSendingSms, setIsSendingSms] = useState(false);
+  const [smsText, setSmsText] = useState('');
   const [composeData, setComposeData] = useState({
       recipients: '',
       phones: '',
@@ -83,7 +120,6 @@ export default function AdminMessagesPage() {
   const [attachment, setAttachment] = useState<Attachment | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
-  const [isSendingSms, setIsSendingSms] = useState(false);
   const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -126,15 +162,46 @@ export default function AdminMessagesPage() {
     }
   };
   
-  const handleReply = async () => {
-    if (!selectedThread?.id || !replyText || !user) return;
-    const newMessage: IMessage = { from: 'admin', text: replyText, timestamp: new Date().toISOString() };
+  const handleSendReply = async () => {
+    if (!selectedThread?.id || !replyText || !user || !selectedThread.clientEmail) {
+      toast({ variant: "destructive", title: "Error", description: "Cannot send reply. Client email or message is missing." });
+      return;
+    }
+
+    setIsSending(true);
+
+    const emailHtml = generateReplyEmailHtml(selectedThread.subject, selectedThread.clientName, replyText);
+    const emailSubject = `Re: ${selectedThread.subject}`;
+
     try {
+      const result = await sendEmail({
+        to: selectedThread.clientEmail,
+        subject: emailSubject,
+        html: emailHtml,
+      });
+
+      addEmailLog({
+        to: selectedThread.clientEmail,
+        subject: emailSubject,
+        html: emailHtml,
+        success: result.success,
+        message: result.message
+      });
+
+      if (result.success) {
+        const newMessage: IMessage = { from: 'admin', text: replyText, timestamp: new Date().toISOString() };
         addMessageToThread(selectedThread.id, newMessage, 'admin');
         setReplyText("");
         loadThreads();
-    } catch (error) {
-        toast({ variant: "destructive", title: "Error", description: "Failed to send reply." });
+        toast({ title: "Reply Sent", description: "Your email reply has been sent successfully." });
+      } else {
+        throw new Error(result.message);
+      }
+
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Reply Failed", description: error.message || "Could not send the email reply." });
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -322,6 +389,43 @@ export default function AdminMessagesPage() {
       }
   }
 
+  const handleSendSmsReply = async () => {
+      if (!selectedThread?.clientPhone || !smsText) {
+           toast({ variant: "destructive", title: "Missing Info", description: "Recipient phone number and a message are required." });
+           return;
+      }
+      setIsSendingSms(true);
+      try {
+          const result = await sendSms(selectedThread.clientPhone, smsText);
+          
+          addSmsLog({
+              to: selectedThread.clientPhone,
+              message: smsText,
+              success: result.success,
+              response: result.message,
+          });
+
+          toast({
+              title: result.success ? "SMS Sent" : "SMS Failed",
+              description: result.message,
+              variant: result.success ? "default" : "destructive",
+          });
+
+          if(result.success) {
+            const newMessage: IMessage = { from: 'admin', text: `(SMS Sent) ${smsText}`, timestamp: new Date().toISOString() };
+            addMessageToThread(selectedThread.id!, newMessage, 'admin');
+            setSmsText('');
+            setIsSmsDialogOpen(false);
+            loadThreads();
+          }
+
+      } catch (error: any) {
+          toast({ title: 'SMS Error', description: error.message, variant: 'destructive' });
+      } finally {
+        setIsSendingSms(false);
+      }
+  }
+
   const handleSelectFromLibrary = (item: IMediaItem) => {
     setAttachment({ name: item.name, url: item.url });
   };
@@ -446,46 +550,67 @@ export default function AdminMessagesPage() {
       
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
         <DialogContent className="sm:max-w-[625px] flex flex-col h-[70vh]">
-          <DialogHeader>
-            <div className="flex justify-between items-center">
-                <div>
-                    <DialogTitle>Conversation with {selectedThread?.clientName}</DialogTitle>
-                    <DialogDescription>{selectedThread?.subject}</DialogDescription>
+            <DialogHeader>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <DialogTitle>Conversation with {selectedThread?.clientName}</DialogTitle>
+                        <DialogDescription className="space-y-1 text-left">
+                            <p>Subject: {selectedThread?.subject}</p>
+                            <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 pt-1">
+                                <div className="flex items-center gap-1.5"><Mail className="h-3 w-3" /> {selectedThread?.clientEmail}</div>
+                                {selectedThread?.clientPhone && <div className="flex items-center gap-1.5"><Phone className="h-3 w-3" /> {selectedThread.clientPhone}</div>}
+                            </div>
+                        </DialogDescription>
+                    </div>
+                    
+                    <Dialog open={isSmsDialogOpen} onOpenChange={(open) => { if(!isSendingSms) setIsSmsDialogOpen(open) }}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" size="sm" disabled={!selectedThread?.clientPhone}>
+                                <MessageSquareText className="mr-2 h-4 w-4"/> SMS
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                                <DialogTitle>Send SMS to {selectedThread?.clientName}</DialogTitle>
+                                <DialogDescription>To: {selectedThread?.clientPhone}</DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-2 py-4">
+                                <Label htmlFor="sms-message">Message</Label>
+                                <Textarea id="sms-message" value={smsText} onChange={(e) => setSmsText(e.target.value)} placeholder="Type your SMS here..."/>
+                            </div>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setIsSmsDialogOpen(false)} disabled={isSendingSms}>Cancel</Button>
+                                <Button onClick={handleSendSmsReply} disabled={isSendingSms || !smsText}>
+                                    {isSendingSms ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                                    Send SMS
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
                 </div>
-                <div className="flex gap-2">
-                    <Button asChild variant="outline" size="sm" disabled={!selectedThread?.clientEmail}>
-                        <a href={`mailto:${selectedThread?.clientEmail}`}><Mail className="mr-2 h-4 w-4"/> Email</a>
-                    </Button>
-                    <Button asChild variant="outline" size="sm" disabled={!selectedThread?.clientPhone}>
-                        <a href={`sms:${selectedThread?.clientPhone}`}><MessageSquareText className="mr-2 h-4 w-4"/> SMS</a>
-                    </Button>
-                </div>
+            </DialogHeader>
+            <div className="py-4 flex-1 overflow-y-auto space-y-4 pr-4">
+                {selectedThread?.messages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()).map((message, index) => (
+                    <div key={index} className={`flex items-end gap-2 ${message.from === 'admin' ? 'justify-end' : 'justify-start'}`}>
+                    {message.from === 'client' && <Avatar className="h-8 w-8"><AvatarImage src={selectedThread.clientAvatar} alt={selectedThread.clientName}/><AvatarFallback>{selectedThread.clientName.charAt(0)}</AvatarFallback></Avatar>}
+                    <div className={`max-w-xs md:max-w-md p-3 rounded-2xl ${message.from === 'admin' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-muted rounded-bl-none'}`}>
+                            <p className="text-sm" style={{ whiteSpace: 'pre-wrap' }}>{message.text}</p>
+                            <FormattedTimestamp timestamp={message.timestamp} className="text-xs text-right mt-1 opacity-70" />
+                    </div>
+                    {message.from === 'admin' && user && <Avatar className="h-8 w-8"><AvatarImage src={user.photoURL || ''} alt={user.displayName || 'Admin'} /><AvatarFallback>{user.displayName?.charAt(0) || 'A'}</AvatarFallback></Avatar>}
+                    </div>
+                ))}
             </div>
-          </DialogHeader>
-          <div className="py-4 flex-1 overflow-y-auto space-y-4 pr-4">
-            {selectedThread?.messages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()).map((message, index) => (
-                <div key={index} className={`flex items-end gap-2 ${message.from === 'admin' ? 'justify-end' : 'justify-start'}`}>
-                   {message.from === 'client' && <Avatar className="h-8 w-8"><AvatarImage src={selectedThread.clientAvatar} alt={selectedThread.clientName}/><AvatarFallback>{selectedThread.clientName.charAt(0)}</AvatarFallback></Avatar>}
-                   <div className={`max-w-xs md:max-w-md p-3 rounded-2xl ${message.from === 'admin' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-muted rounded-bl-none'}`}>
-                        <p className="text-sm">{message.text}</p>
-                        <FormattedTimestamp timestamp={message.timestamp} className="text-xs text-right mt-1 opacity-70" />
-                   </div>
-                   {message.from === 'admin' && user && <Avatar className="h-8 w-8"><AvatarImage src={user.photoURL || ''} alt={user.displayName || 'Admin'} /><AvatarFallback>{user.displayName?.charAt(0) || 'A'}</AvatarFallback></Avatar>}
+            <DialogFooter className="mt-auto pt-4 border-t">
+                <div className="relative w-full flex items-center gap-2">
+                    <Textarea placeholder="Type your email reply..." className="pr-12" rows={1} value={replyText} onChange={(e) => setReplyText(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey && !isSending) { e.preventDefault(); handleSendReply(); } }} />
+                    <Button size="icon" className="h-9 w-9" onClick={handleSendReply} disabled={!replyText || isSending}>
+                        {isSending ? <Loader2 className="h-4 w-4 animate-spin"/> : <Send className="h-4 w-4"/>}
+                    </Button>
                 </div>
-            ))}
-          </div>
-          <DialogFooter className="mt-auto pt-4 border-t">
-            <div className="relative w-full flex items-center gap-2">
-                 <Textarea placeholder="Type your message..." className="pr-12" rows={1} value={replyText} onChange={(e) => setReplyText(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleReply(); } }} />
-                 <Button size="icon" className="h-9 w-9" onClick={handleReply} disabled={!replyText}>
-                    <Send className="h-4 w-4"/>
-                 </Button>
-            </div>
-          </DialogFooter>
+            </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   )
 }
-
-    
