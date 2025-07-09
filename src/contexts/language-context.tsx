@@ -15,17 +15,16 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>('en');
+  const [isMounted, setIsMounted] = useState(false);
 
-  // This effect runs only on the client, after initial hydration,
-  // to check for a user's preferred language from localStorage.
   useEffect(() => {
     const storedLanguage = localStorage.getItem('language');
     if (storedLanguage && (storedLanguage === 'en' || storedLanguage === 'bn')) {
       setLanguageState(storedLanguage as Language);
     }
+    setIsMounted(true);
   }, []);
 
-  // setLanguage function now also persists the choice to localStorage.
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
     if (typeof window !== 'undefined') {
@@ -33,10 +32,14 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const t = translations[language];
+  // To prevent hydration mismatch, use the default language ('en') until the client has mounted.
+  const currentLanguage = isMounted ? language : 'en';
+  const t = translations[currentLanguage];
+
+  const value = { language: currentLanguage, setLanguage, t };
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={value}>
       {children}
     </LanguageContext.Provider>
   );
