@@ -392,9 +392,14 @@ export const translations = {
     },
     "chat": {
       "title": "Live Chat",
-      "greeting": "Hello! How can we help you today?",
+      "greeting": "Hello! This is {adminName}. How can I help you today?",
       "placeholder": "Type your message...",
-      "send": "Send"
+      "send": "Send",
+      "formTitle": "Start a Conversation",
+      "formDescription": "Please provide your name and phone number to begin.",
+      "namePlaceholder": "Your Name",
+      "phonePlaceholder": "Your Phone Number",
+      "startButton": "Start Chat"
     },
     "footer": {
       "nav": {
@@ -801,9 +806,14 @@ export const translations = {
     },
     "chat": {
       "title": "লাইভ চ্যাট",
-      "greeting": "স্বাগতম! আমরা আপনাকে কিভাবে সাহায্য করতে পারি?",
+      "greeting": "হ্যালো! আমি {adminName}। আপনাকে কিভাবে সাহায্য করতে পারি?",
       "placeholder": "আপনার বার্তা লিখুন...",
-      "send": "পাঠান"
+      "send": "পাঠান",
+      "formTitle": "কথোপকথন শুরু করুন",
+      "formDescription": "শুরু করতে আপনার নাম এবং ফোন নম্বর দিন।",
+      "namePlaceholder": "আপনার নাম",
+      "phonePlaceholder": "আপনার ফোন নম্বর",
+      "startButton": "চ্যাট শুরু করুন"
     },
     "footer": {
       "nav": {
