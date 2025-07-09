@@ -39,7 +39,7 @@ export async function sendSms(phoneNumber: string, message: string): Promise<{ s
         
         return { success: true, message: 'SMS has been sent to the client successfully.' };
 
-    } catch (error) => {
+    } catch (error) {
         console.error('Failed to send SMS:', error);
         return { success: false, message: 'Failed to send SMS via API. Check server logs.' };
     }
