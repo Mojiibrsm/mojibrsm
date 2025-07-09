@@ -11,17 +11,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Mail, Phone, Lock, Loader2 } from 'lucide-react';
+import { User, Mail, Phone, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { updateProfile, sendPasswordResetEmail } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { updateProfile } from 'firebase/auth';
+import { auth, db } from '@/lib/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 
 const profileFormSchema = z.object({
   fullName: z.string().min(1, 'Full name is required'),
-  email: z.string().email(),
-  phoneNumber: z.string().optional(),
   bio: z.string().max(200, 'Bio cannot be longer than 200 characters').optional(),
 });
 
@@ -31,69 +29,51 @@ export default function ProfilePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
+  const form = useForm<z.infer<typeof profileFormSchema>>({
+    resolver: zodResolver(profileFormSchema),
+    defaultValues: {
+      fullName: '',
+      bio: '',
+    },
+  });
+
   useEffect(() => {
     if (user) {
       form.reset({
         fullName: user.displayName || '',
-        email: user.email || '',
-        phoneNumber: user.phoneNumber || '',
         bio: 'I am a passionate developer and designer.', // This could be fetched from a DB later
       });
       if (user.photoURL) {
         setAvatarPreview(user.photoURL);
       }
     }
-  }, [user]);
+  }, [user, form]);
 
-  const form = useForm<z.infer<typeof profileFormSchema>>({
-    resolver: zodResolver(profileFormSchema),
-    defaultValues: {
-      fullName: '',
-      email: '',
-      phoneNumber: '',
-      bio: '',
-    },
-  });
-
-  const handlePasswordChange = () => {
-    if (user?.email) {
-      sendPasswordResetEmail(auth, user.email)
-        .then(() => {
-          toast({
-            title: 'Password Reset Email Sent',
-            description: 'Please check your inbox to reset your password.',
-          });
-        })
-        .catch((error) => {
-          console.error("Error sending password reset email:", error);
-          toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'Could not send password reset email. Please try again later.',
-          });
-        });
-    }
-  };
 
   async function onSubmit(data: z.infer<typeof profileFormSchema>) {
     if (!auth.currentUser) return;
     setIsSubmitting(true);
     try {
+      // Update both Firebase Auth profile and Firestore document
       await updateProfile(auth.currentUser, {
         displayName: data.fullName,
       });
-      // Phone number is not part of the standard Firebase User profile, would need custom handling
+      
+      const userRef = doc(db, 'users', auth.currentUser.uid);
+      await updateDoc(userRef, { displayName: data.fullName });
+
       await reloadUser();
+      
       toast({
-        title: 'Profile Updated',
-        description: 'Your profile information has been successfully updated.',
+        title: 'প্রোফাইল আপডেট হয়েছে',
+        description: 'আপনার প্রোফাইলের তথ্য সফলভাবে আপডেট করা হয়েছে।',
       });
     } catch (error) {
         console.error("Error updating profile:", error);
         toast({
             variant: 'destructive',
-            title: 'Update Failed',
-            description: 'There was an error updating your profile.',
+            title: 'আপডেট ব্যর্থ হয়েছে',
+            description: 'আপনার প্রোফাইল আপডেট করার সময় একটি ত্রুটি হয়েছে।',
         });
     } finally {
       setIsSubmitting(false);
@@ -113,12 +93,12 @@ export default function ProfilePage() {
           <div className="flex items-center gap-4">
              <Avatar className="h-20 w-20">
               <AvatarImage src={avatarPreview || user.photoURL || ''} alt={user?.displayName || 'User'} />
-              <AvatarFallback>{user?.displayName?.charAt(0) || user?.email?.charAt(0)}</AvatarFallback>
+              <AvatarFallback>{user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}</AvatarFallback>
             </Avatar>
             <div className="grid gap-1">
-              <h2 className="text-xl font-semibold">{user?.displayName}</h2>
-              <p className="text-sm text-muted-foreground">{user?.email}</p>
-              <p className="text-xs text-muted-foreground pt-2">To change your picture, sign in with a different Google account.</p>
+              <h2 className="text-xl font-semibold">{user?.displayName || 'New User'}</h2>
+              <p className="text-sm text-muted-foreground">{user?.phoneNumber || user?.email}</p>
+              <p className="text-xs text-muted-foreground pt-2">To change your picture, sign in with a different Google account (if enabled).</p>
             </div>
           </div>
         </CardHeader>
@@ -141,38 +121,24 @@ export default function ProfilePage() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
+              <FormItem>
+                <FormLabel>Phone Number</FormLabel>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input value={user.phoneNumber || ''} disabled className="pl-10" />
+                </div>
+              </FormItem>
+              
+              {user.email && (
+                 <FormItem>
                     <FormLabel>Email Address</FormLabel>
-                    <FormControl>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input placeholder="your.email@example.com" {...field} disabled />
+                        <Input value={user.email} disabled className="pl-10" />
                       </div>
-                    </FormControl>
-                    <FormMessage />
                   </FormItem>
-                )}
-              />
-               <FormField
-                control={form.control}
-                name="phoneNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input placeholder="Your phone number" {...field} className="pl-10" />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              )}
+
               <FormField
                 control={form.control}
                 name="bio"
@@ -192,19 +158,6 @@ export default function ProfilePage() {
               </Button>
             </form>
           </Form>
-
-          <Separator className="my-8" />
-
-          <div>
-             <h3 className="text-lg font-medium">Change Password</h3>
-             <p className="text-sm text-muted-foreground">
-                Click the button below to receive a password reset link in your email.
-             </p>
-             <Button variant="outline" className="mt-4" onClick={handlePasswordChange}>
-                <Lock className="mr-2 h-4 w-4"/>
-                Change Password
-             </Button>
-          </div>
         </CardContent>
       </Card>
     </div>

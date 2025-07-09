@@ -40,7 +40,7 @@ export default function AdminSettingsPage() {
                         <Label htmlFor="s3">AWS S3 Storage</Label>
                     </div>
                 </RadioGroup>
-                <Button className="mt-6" onClick={() => handleSave('Storage Type')}>পরিবর্তন সেভ করুন</Button>
+                <Button className="mt-6" onClick={() => handleSave('Storage Type')}>Save Changes</Button>
             </CardContent>
         </Card>
         
@@ -65,7 +65,7 @@ export default function AdminSettingsPage() {
                     <Label htmlFor="aws-region-code">Region Code</Label>
                     <Input id="aws-region-code" placeholder="e.g., us-east-1" />
                 </div>
-                <Button className="mt-2" onClick={() => handleSave('AWS S3')}>পরিবর্তন সেভ করুন</Button>
+                <Button className="mt-2" onClick={() => handleSave('AWS S3')}>Save Changes</Button>
             </CardContent>
         </Card>
       </div>

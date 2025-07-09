@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Bell, Lock, Trash2 } from 'lucide-react';
+import { Bell, Trash2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,35 +20,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { sendPasswordResetEmail } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import { useToast } from '@/hooks/use-toast';
 
 export default function SettingsPage() {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(false);
-
-  const handlePasswordChange = () => {
-    if (user?.email) {
-      sendPasswordResetEmail(auth, user.email)
-        .then(() => {
-          toast({
-            title: 'Password Reset Email Sent',
-            description: 'Please check your inbox to reset your password.',
-          });
-        })
-        .catch((error) => {
-          console.error("Error sending password reset email:", error);
-          toast({
-            variant: 'destructive',
-            title: 'Error',
-            description: 'Could not send password reset email. Please try again later.',
-          });
-        });
-    }
-  };
 
 
   return (
@@ -73,6 +49,7 @@ export default function SettingsPage() {
               id="email-notifications" 
               checked={emailNotifications}
               onCheckedChange={setEmailNotifications}
+              disabled={!user?.email}
             />
           </div>
           <div className="flex items-center justify-between p-4 border rounded-lg">
@@ -92,18 +69,10 @@ export default function SettingsPage() {
 
        <Card>
         <CardHeader>
-          <CardTitle>Security</CardTitle>
-          <CardDescription>Manage your account security settings.</CardDescription>
+          <CardTitle>Account</CardTitle>
+          <CardDescription>Manage your account settings.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-4 border rounded-lg">
-              <div>
-                  <Label className="font-semibold">Change Password</Label>
-                  <p className="text-sm text-muted-foreground">Click the button to receive a password reset link in your email.</p>
-              </div>
-              <Button variant="outline" onClick={handlePasswordChange}><Lock className="mr-2 h-4 w-4"/> Change</Button>
-            </div>
-            <Separator />
             <div className="flex items-center justify-between p-4 border rounded-lg border-destructive/50">
                 <div>
                      <Label className="font-semibold text-destructive">Delete Account</Label>

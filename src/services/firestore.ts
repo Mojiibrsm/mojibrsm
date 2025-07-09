@@ -1,3 +1,4 @@
+
 import { db, auth } from '@/lib/firebase';
 import { collection, addDoc, getDocs, query, where, onSnapshot, doc, updateDoc, deleteDoc, setDoc, getDoc, Timestamp, writeBatch, orderBy } from 'firebase/firestore';
 import type { User as FirebaseUser } from 'firebase/auth';
@@ -8,6 +9,7 @@ export interface FirestoreUser {
   email: string | null;
   displayName: string | null;
   photoURL: string | null;
+  phoneNumber: string | null;
   role: 'Admin' | 'Client';
   createdAt: Timestamp;
 }
@@ -22,9 +24,10 @@ export const addUserToFirestore = async (user: FirebaseUser) => {
     
     await setDoc(userRef, {
       uid: user.uid,
-      email: user.email,
-      displayName: user.displayName,
-      photoURL: user.photoURL,
+      email: user.email || null,
+      displayName: user.displayName || null,
+      photoURL: user.photoURL || null,
+      phoneNumber: user.phoneNumber || null,
       role: hasAdmin ? 'Client' : 'Admin',
       createdAt: Timestamp.now(),
     });

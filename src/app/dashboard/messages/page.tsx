@@ -59,8 +59,8 @@ export default function MessagesPage() {
     try {
         const threadData = {
             userId: user.uid,
-            clientName: user.displayName || 'Anonymous',
-            clientEmail: user.email || 'No Email',
+            clientName: user.displayName || user.phoneNumber || 'Anonymous',
+            clientEmail: user.email || 'N/A',
             clientAvatar: user.photoURL || '',
             subject: newMessageSubject,
             unreadByAdmin: true,

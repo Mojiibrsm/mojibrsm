@@ -150,7 +150,7 @@ function NewRequestDialog({ open, onOpenChange }: { open: boolean, onOpenChange:
 
         const newRequest: Omit<IRequest, 'id' | 'createdAt'> = {
             userId: user.uid,
-            clientName: user.displayName || 'N/A',
+            clientName: user.displayName || user.phoneNumber || 'N/A',
             clientEmail: user.email || 'N/A',
             service,
             details,
