@@ -555,11 +555,13 @@ export default function AdminMessagesPage() {
                 <div className="flex justify-between items-start">
                     <div>
                         <DialogTitle>Conversation with {selectedThread?.clientName}</DialogTitle>
-                        <DialogDescription className="space-y-1 text-left">
-                            <p>Subject: {selectedThread?.subject}</p>
-                            <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 pt-1">
-                                <div className="flex items-center gap-1.5"><Mail className="h-3 w-3" /> {selectedThread?.clientEmail}</div>
-                                {selectedThread?.clientPhone && <div className="flex items-center gap-1.5"><Phone className="h-3 w-3" /> {selectedThread.clientPhone}</div>}
+                        <DialogDescription asChild>
+                            <div className="text-sm text-muted-foreground space-y-1 text-left">
+                                <div>Subject: {selectedThread?.subject}</div>
+                                <div className="text-xs flex flex-wrap items-center gap-x-4 gap-y-1 pt-1">
+                                    <div className="flex items-center gap-1.5"><Mail className="h-3 w-3" /> {selectedThread?.clientEmail}</div>
+                                    {selectedThread?.clientPhone && <div className="flex items-center gap-1.5"><Phone className="h-3 w-3" /> {selectedThread.clientPhone}</div>}
+                                </div>
                             </div>
                         </DialogDescription>
                     </div>
