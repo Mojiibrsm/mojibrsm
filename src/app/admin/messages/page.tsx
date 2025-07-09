@@ -254,7 +254,7 @@ export default function AdminMessagesPage() {
                         <DialogTitle>Send a Direct Message</DialogTitle>
                         <DialogDescription>Send an email or SMS to multiple recipients. This will be logged in your history.</DialogDescription>
                     </DialogHeader>
-                    <div className="grid gap-4 py-4">
+                    <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-4">
                         <div className="grid gap-2">
                             <Label htmlFor="recipients">Recipient Emails</Label>
                             <Textarea id="recipients" name="recipients" value={composeData.recipients} onChange={handleComposeChange} placeholder="john@example.com, jane@example.com"/>
