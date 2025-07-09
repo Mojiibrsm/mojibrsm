@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, PlusCircle, Pencil, Trash2, Loader2, Save, Image as ImageIcon, Bold, Italic, Strikethrough, List, ListOrdered, Quote, Underline, Palette, ImagePlus, Upload, FolderSearch } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Pencil, Trash2, Loader2, Image as ImageIcon, Bold, Italic, Strikethrough, List, ListOrdered, Quote, Underline, Palette, ImagePlus, Upload, FolderSearch, Link2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
@@ -24,12 +24,11 @@ import TiptapUnderline from '@tiptap/extension-underline';
 import { Color as TiptapColor } from '@tiptap/extension-color';
 import TiptapTextStyle from '@tiptap/extension-text-style';
 import TiptapImage from '@tiptap/extension-image';
+import TiptapLink from '@tiptap/extension-link';
 import { MediaLibraryDialog } from '@/components/media-library-dialog';
 
 type Post = (typeof translations.en.blog.posts)[0];
 type EditablePost = { post: Post; index: number };
-
-const newPostTemplate: Post = { slug: 'new-post-slug', title: 'New Blog Post', excerpt: 'A short excerpt for the new post.', content: '<p>Start writing your amazing blog content here!</p>', image: 'https://placehold.co/800x400.png', imageHint: 'blog post', date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), tags: ['New Tag'], metaTitle: 'New Post Meta Title', metaDescription: 'New post meta description for SEO.' };
 
 export default function AdminBlogPage() {
     const [posts, setPosts] = useState<{ en: Post[], bn: Post[] }>({ en: [], bn: [] });
@@ -47,8 +46,21 @@ export default function AdminBlogPage() {
 
     const handleAddNew = () => {
         const uniqueSlug = `new-post-${Date.now()}`;
+        const newPost: Post = { 
+            slug: uniqueSlug, 
+            title: 'New Blog Post', 
+            excerpt: 'A short excerpt for the new post.', 
+            content: '<p>Start writing your amazing blog content here!</p>', 
+            image: 'https://placehold.co/800x400.png', 
+            imageHint: 'blog post', 
+            date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), 
+            tags: ['New Tag'], 
+            metaTitle: 'New Post Meta Title', 
+            metaDescription: 'New post meta description for SEO.' 
+        };
+
         setEditingPost({
-            post: { ...newPostTemplate, slug: uniqueSlug },
+            post: newPost,
             index: -1,
         });
         setIsDialogOpen(true);
@@ -62,42 +74,54 @@ export default function AdminBlogPage() {
         setIsDialogOpen(true);
     };
     
-    const handleDelete = (indexToDelete: number) => {
-        setPosts(prev => ({
-            en: prev.en.filter((_, index) => index !== indexToDelete),
-            bn: prev.bn.filter((_, index) => index !== indexToDelete),
-        }));
-        toast({ title: "Post Removed", description: "The post has been removed from the list. Click 'Save Changes' to make it permanent." });
+    const handleDelete = async (indexToDelete: number) => {
+        setIsSaving(true);
+        const newPosts = {
+            en: posts.en.filter((_, index) => index !== indexToDelete),
+            bn: posts.bn.filter((_, index) => index !== indexToDelete),
+        };
+        const result = await updateBlogPosts(newPosts);
+        toast({
+            title: result.success ? 'Post Deleted' : 'Error!',
+            description: result.message,
+            variant: result.success ? 'default' : 'destructive'
+        });
+        if (result.success) {
+            setPosts(newPosts);
+        }
+        setIsSaving(false);
     };
 
-    const handleSaveFromDialog = (data: EditablePost) => {
+    const handleSaveFromDialog = async (data: EditablePost) => {
         const { post, index } = data;
         
-        if (index === -1) { // New post
-            setPosts(prev => ({
-                en: [post, ...prev.en],
-                bn: [post, ...prev.bn],
-            }));
-        } else { // Editing existing post
-            setPosts(prev => {
-                const newEn = [...prev.en];
-                const newBn = [...prev.bn];
-                newEn[index] = post;
-                newBn[index] = post;
-                return { en: newEn, bn: newBn };
-            });
-        }
-        setIsDialogOpen(false);
-    };
+        let nextPosts: { en: Post[], bn: Post[] };
 
-    const handleSaveAll = async () => {
+        if (index === -1) { // New post
+            nextPosts = {
+                en: [post, ...posts.en],
+                bn: [post, ...posts.bn],
+            };
+        } else { // Editing existing post
+            const newEn = [...posts.en];
+            const newBn = [...posts.bn];
+            newEn[index] = post;
+            newBn[index] = post;
+            nextPosts = { en: newEn, bn: newBn };
+        }
+        
         setIsSaving(true);
-        const result = await updateBlogPosts(posts);
+        const result = await updateBlogPosts(nextPosts);
         toast({
             title: result.success ? 'Success!' : 'Error!',
             description: result.message,
             variant: result.success ? 'default' : 'destructive'
         });
+
+        if (result.success) {
+            setPosts(nextPosts);
+            setIsDialogOpen(false);
+        }
         setIsSaving(false);
     };
 
@@ -109,11 +133,7 @@ export default function AdminBlogPage() {
                     <p className="text-muted-foreground">Add, edit, and manage all blog posts for your website.</p>
                 </div>
                 <div className="flex gap-2">
-                    <Button onClick={handleAddNew}><PlusCircle className="mr-2 h-4 w-4" /> Add New Post</Button>
-                    <Button onClick={handleSaveAll} disabled={isSaving} size="lg">
-                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                        Save All Changes
-                    </Button>
+                    <Button onClick={handleAddNew} disabled={isSaving}><PlusCircle className="mr-2 h-4 w-4" /> Add New Post</Button>
                 </div>
             </div>
             <Card>
@@ -146,7 +166,7 @@ export default function AdminBlogPage() {
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <DropdownMenu>
-                                                <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal /></Button></DropdownMenuTrigger>
+                                                <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" disabled={isSaving}><MoreHorizontal /></Button></DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuItem onClick={() => handleEdit(index)}><Pencil className="mr-2 h-4 w-4"/>Edit</DropdownMenuItem>
                                                     <AlertDialog>
@@ -154,7 +174,7 @@ export default function AdminBlogPage() {
                                                           <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
                                                         </AlertDialogTrigger>
                                                         <AlertDialogContent>
-                                                            <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will remove the post from the list. You must click "Save All Changes" to make it permanent. This action cannot be undone after saving.</AlertDialogDescription></AlertDialogHeader>
+                                                            <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the post. This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
                                                             <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(index)} className="bg-destructive hover:bg-destructive/90">Yes, delete</AlertDialogAction></AlertDialogFooter>
                                                         </AlertDialogContent>
                                                     </AlertDialog>
@@ -175,6 +195,7 @@ export default function AdminBlogPage() {
                     onOpenChange={setIsDialogOpen}
                     onSave={handleSaveFromDialog}
                     post={editingPost}
+                    isSaving={isSaving}
                 />
             )}
         </div>
@@ -227,6 +248,18 @@ const TiptapToolbar = ({ editor }: { editor: Editor | null }) => {
     fileInput.click();
   }, [editor, toast]);
 
+  const setLink = useCallback(() => {
+    if (!editor) return;
+    const previousUrl = editor.getAttributes('link').href;
+    const url = window.prompt('URL', previousUrl);
+
+    if (url === null) return;
+    if (url === '') {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run();
+      return;
+    }
+    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+  }, [editor]);
 
   if (!editor) {
     return null;
@@ -262,6 +295,7 @@ const TiptapToolbar = ({ editor }: { editor: Editor | null }) => {
           <Palette className="h-4 w-4 text-muted-foreground" style={{ color: editor.getAttributes('textStyle').color }} />
       </div>
       <ToggleButton onClick={addImage} isActive={false}><ImagePlus className="h-4 w-4" /></ToggleButton>
+      <ToggleButton onClick={setLink} isActive={editor.isActive('link')}><Link2 className="h-4 w-4" /></ToggleButton>
       <ToggleButton onClick={() => editor.chain().focus().toggleBulletList().run()} isActive={editor.isActive('bulletList')}><List className="h-4 w-4" /></ToggleButton>
       <ToggleButton onClick={() => editor.chain().focus().toggleOrderedList().run()} isActive={editor.isActive('orderedList')}><ListOrdered className="h-4 w-4" /></ToggleButton>
       <ToggleButton onClick={() => editor.chain().focus().toggleBlockquote().run()} isActive={editor.isActive('blockquote')}><Quote className="h-4 w-4" /></ToggleButton>
@@ -272,7 +306,13 @@ const TiptapToolbar = ({ editor }: { editor: Editor | null }) => {
 const TiptapEditor = ({ value, onChange }: { value: string; onChange: (value: string) => void }) => {
     const editor = useEditor({
         extensions: [
-            StarterKit.configure({ link: false }),
+            StarterKit.configure({
+                link: false, // We'll use the standalone Link extension for more control
+            }),
+            TiptapLink.configure({
+                openOnClick: false,
+                autolink: true,
+            }),
             TiptapUnderline,
             TiptapTextStyle,
             TiptapColor,
@@ -300,7 +340,7 @@ const TiptapEditor = ({ value, onChange }: { value: string; onChange: (value: st
 };
 
 // --- Blog Post Form Dialog ---
-function PostFormDialog({ isOpen, onOpenChange, onSave, post }: { isOpen: boolean; onOpenChange: (open: boolean) => void; onSave: (data: EditablePost) => void; post: EditablePost | null; }) {
+function PostFormDialog({ isOpen, onOpenChange, onSave, post, isSaving }: { isOpen: boolean; onOpenChange: (open: boolean) => void; onSave: (data: EditablePost) => void; post: EditablePost | null; isSaving: boolean }) {
     const [formData, setFormData] = useState<EditablePost | null>(post ? JSON.parse(JSON.stringify(post)) : null);
     const [uploadingImage, setUploadingImage] = useState(false);
     const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
@@ -370,7 +410,6 @@ function PostFormDialog({ isOpen, onOpenChange, onSave, post }: { isOpen: boolea
                     <div className="md:col-span-2 space-y-4">
                         <div className="space-y-1"><Label>Slug (URL Identifier)</Label><Input value={data.slug} onChange={e => handleFieldChange('slug', e.target.value)} /><p className="text-xs text-muted-foreground">Keep this unique.</p></div>
                         <div className="space-y-1"><Label>Title</Label><Input value={data.title} onChange={e => handleFieldChange('title', e.target.value)} /></div>
-                        <div className="space-y-1"><Label>Date</Label><Input value={data.date} onChange={e => handleFieldChange('date', e.target.value)} /></div>
                         <div className="space-y-1"><Label>Excerpt</Label><Textarea value={data.excerpt} onChange={e => handleFieldChange('excerpt', e.target.value)} className="h-24" /></div>
                         <div className="space-y-1">
                             <Label>Content</Label>
@@ -411,8 +450,10 @@ function PostFormDialog({ isOpen, onOpenChange, onSave, post }: { isOpen: boolea
                 </div>
 
                 <DialogFooter>
-                    <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
-                    <Button onClick={handleSubmit}>Save Post</Button>
+                    <DialogClose asChild><Button type="button" variant="outline" disabled={isSaving}>Cancel</Button></DialogClose>
+                    <Button onClick={handleSubmit} disabled={isSaving}>
+                         {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Save Post'}
+                    </Button>
                 </DialogFooter>
                 
                 <MediaLibraryDialog 
