@@ -16,7 +16,7 @@ export const translations = {
       "name": "Mojib Rsm",
       "title": "Full Stack Web & App Developer",
       "tagline": "Transforming ideas into impactful digital experiences.",
-      "image": "https://i.postimg.cc/zDV72KdK/Mojibur-Rahman-v.png",
+      "image": "https://bartanow.com/wp-content/uploads/2025/07/Mojibur-Rahman-sm.png",
       "imageHint": "man portrait",
       "buttons": {
         "cv": "Download CV",
@@ -30,7 +30,7 @@ export const translations = {
       "mission": "My mission is to leverage technology to solve real-world problems and deliver exceptional value to clients and users.",
       "educationTitle": "Education",
       "education": "HSC Candidate, 2025 – Business Management & Technology",
-      "image": "https://placehold.co/600x600.png",
+      "image": "https://bartanow.com/wp-content/uploads/2025/07/Mojibur-Rahman-sm.png",
       "imageHint": "man portrait"
     },
     "experience": {
@@ -323,7 +323,7 @@ export const translations = {
       "name": "মুজিব আরএসএম",
       "title": "ফুল স্ট্যাক ওয়েব এবং অ্যাপ ডেভেলপার",
       "tagline": "ধারণাকে প্রভাবশালী ডিজিটাল অভিজ্ঞতায় রূপান্তরিত করা।",
-      "image": "https://i.postimg.cc/zDV72KdK/Mojibur-Rahman-v.png",
+      "image": "https://bartanow.com/wp-content/uploads/2025/07/Mojibur-Rahman-sm.png",
       "imageHint": "man portrait",
       "buttons": {
         "cv": "সিভি ডাউনলোড করুন",
@@ -337,7 +337,7 @@ export const translations = {
       "mission": "আমার লক্ষ্য হলো প্রযুক্তি ব্যবহার করে বাস্তব-বিশ্বের সমস্যার সমাধান করা এবং ক্লায়েন্ট ও ব্যবহারকারীদের জন্য ব্যতিক্রমী মান সরবরাহ করা।",
       "educationTitle": "শিক্ষা",
       "education": "এইচএসসি প্রার্থী, ২০২৫ – ব্যবসায় ব্যবস্থাপনা ও প্রযুক্তি",
-      "image": "https://placehold.co/600x600.png",
+      "image": "https://bartanow.com/wp-content/uploads/2025/07/Mojibur-Rahman-sm.png",
       "imageHint": "man portrait"
     },
     "experience": {
