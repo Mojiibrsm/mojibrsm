@@ -4,7 +4,7 @@ export const translations = {
     "site": {
       "title": "Mojib Rsm",
       "logo": "https://i.postimg.cc/pVwVvBwR/logo.png",
-      "adminAvatar": "https://www.oftern.com/uploads/gallery/202507/image_500x_686de93ae4c44.jpg"
+      "adminAvatar": "https://www.oftern.com/uploads/gallery/202507/image_500x_686e52ba15db8.jpg"
     },
     "nav": {
       "home": "Home",
@@ -365,7 +365,7 @@ export const translations = {
     "site": {
       "title": "মুজিব আরএসএম",
       "logo": "https://i.postimg.cc/pVwVvBwR/logo.png",
-      "adminAvatar": "https://www.oftern.com/uploads/gallery/202507/image_500x_686de93ae4c44.jpg"
+      "adminAvatar": "https://www.oftern.com/uploads/gallery/202507/image_500x_686e52ba15db8.jpg"
     },
     "nav": {
       "home": "হোম",
