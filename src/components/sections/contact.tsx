@@ -1,3 +1,4 @@
+
 'use client';
 import { useLanguage } from '@/contexts/language-context';
 import { Button } from '@/components/ui/button';
@@ -12,12 +13,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { sendAdminNotificationEmail } from './contact-actions';
+import { handleContactFormSubmission } from './contact-actions';
 import { createMessageThread, IMessage, addMessageToThread, getMessageThreads } from '@/services/data';
 
 const ContactFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   email: z.string().email("Please enter a valid email address."),
+  phone: z.string().optional(),
   subject: z.string().min(5, "Subject must be at least 5 characters."),
   message: z.string().min(10, "Message must be at least 10 characters long."),
 });
@@ -37,6 +39,7 @@ export default function Contact() {
     defaultValues: {
       name: '',
       email: '',
+      phone: '',
       subject: '',
       message: '',
     },
@@ -46,13 +49,13 @@ export default function Contact() {
     setIsSubmitting(true);
     try {
       // Step 1: Handle data persistence on the client side using localStorage service
-      const { name, email, subject, message } = data;
+      const { name, email, phone, subject, message } = data;
       const threads = getMessageThreads();
-      let thread = threads.find(t => t.clientEmail === email && t.subject === subject);
+      let thread = threads.find(t => t.clientEmail === email);
 
       const newMessage: IMessage = {
         from: 'client',
-        text: message,
+        text: `Subject: ${subject}\n\n${message}`,
         timestamp: new Date().toISOString(),
       };
 
@@ -64,18 +67,19 @@ export default function Contact() {
           clientName: name,
           clientEmail: email,
           clientAvatar: `https://placehold.co/100x100.png?text=${name.charAt(0)}`,
-          clientPhone: '',
+          clientPhone: phone || '',
           subject: subject,
           unreadByAdmin: true,
           unreadByUser: false,
         }, newMessage);
       }
 
-      // Step 2: Call the server action to send the email notification
-      const emailResult = await sendAdminNotificationEmail(data);
+      // Step 2: Call the server action to send emails
+      const emailResult = await handleContactFormSubmission(data);
+      
       if (!emailResult.success) {
-        // Log the email failure but don't block the user from seeing success
-        console.warn('Admin notification email failed to send:', emailResult.message);
+        // If email fails, throw an error to be caught by the catch block
+        throw new Error(emailResult.message);
       }
 
       // Step 3: Inform the user of success
@@ -155,6 +159,18 @@ export default function Contact() {
                     </FormItem>
                   )}
                 />
+                 <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                         <Input placeholder={t.contact.form.phone} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="subject"
@@ -229,3 +245,5 @@ export default function Contact() {
     </section>
   );
 }
+
+    

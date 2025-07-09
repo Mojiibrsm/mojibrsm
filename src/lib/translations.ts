@@ -1,3 +1,4 @@
+
 export const translations = {
   "en": {
     "site": {
@@ -379,6 +380,7 @@ export const translations = {
       "form": {
         "name": "Your Name",
         "email": "Your Email",
+        "phone": "Your Phone (Optional)",
         "subject": "Subject",
         "message": "Your Message",
         "submit": "Send Message"
@@ -781,6 +783,7 @@ export const translations = {
       "form": {
         "name": "আপনার নাম",
         "email": "আপনার ইমেইল",
+        "phone": "আপনার ফোন (ঐচ্ছিক)",
         "subject": "বিষয়",
         "message": "আপনার বার্তা",
         "submit": "বার্তা পাঠান"
@@ -806,3 +809,5 @@ export const translations = {
 };
 
 export type Translations = typeof translations;
+
+    
