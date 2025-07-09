@@ -26,7 +26,7 @@ export async function sendEmail({ to, subject, html }: EmailOptions): Promise<{ 
 
     try {
         await transporter.sendMail({
-            from: `"Mojib Rsm Portfolio" <no-reply@oftern.com>`,
+            from: `"Mojib Rsm" <no-reply@oftern.com>`,
             to: to,
             subject: subject,
             html: html,
