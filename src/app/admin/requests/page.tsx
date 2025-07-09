@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Check, X, Eye } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { getAllRequests, updateRequestStatus, IRequest, RequestStatus } from '@/services/firestore';
+import { getAllRequests, updateRequestStatus, IRequest, RequestStatus } from '@/services/data';
 import { useAuth } from '@/contexts/auth-context';
 import { FormattedTimestamp } from '@/components/formatted-timestamp';
 
@@ -29,21 +29,24 @@ export default function AdminRequestsPage() {
   const { toast } = useToast();
   const { user } = useAuth();
 
+  const loadRequests = () => {
+    const fetchedRequests = getAllRequests();
+    setRequests(fetchedRequests);
+  }
+
   useEffect(() => {
     if (!user) return;
-    const unsubscribe = getAllRequests((fetchedRequests) => {
-        setRequests(fetchedRequests);
-    });
-    return () => unsubscribe();
+    loadRequests();
   }, [user]);
 
-  const handleStatusChange = async (id: string, newStatus: RequestStatus) => {
+  const handleStatusChange = (id: string, newStatus: RequestStatus) => {
     try {
-        await updateRequestStatus(id, newStatus);
+        updateRequestStatus(id, newStatus);
         toast({
             title: `Request ${newStatus}`,
             description: `Request has been marked as ${newStatus.toLowerCase()}.`,
         });
+        loadRequests();
     } catch (error) {
         toast({
             variant: 'destructive',

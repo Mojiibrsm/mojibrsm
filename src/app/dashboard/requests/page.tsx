@@ -7,15 +7,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye, PlusCircle } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { addRequest, getRequestsByUserId, IRequest, RequestStatus } from '@/services/firestore';
-import { Timestamp } from 'firebase/firestore';
+import { addRequest, getRequestsByUserId, IRequest, RequestStatus } from '@/services/data';
 import { FormattedTimestamp } from '@/components/formatted-timestamp';
 
 const getStatusVariant = (status: RequestStatus) => {
@@ -38,19 +36,25 @@ export default function RequestsPage() {
   const [selectedRequest, setSelectedRequest] = useState<IRequest | null>(null);
   const { user } = useAuth();
 
-  useEffect(() => {
+  const loadRequests = () => {
     if(user) {
-        const unsubscribe = getRequestsByUserId(user.uid, (fetchedRequests) => {
-            setRequests(fetchedRequests);
-        });
-        return () => unsubscribe();
+        const fetchedRequests = getRequestsByUserId(user.uid);
+        setRequests(fetchedRequests);
     }
+  }
+
+  useEffect(() => {
+    loadRequests();
   }, [user]);
 
   const handleViewRequest = (request: IRequest) => {
     setSelectedRequest(request);
     setIsViewDialogOpen(true);
   };
+
+  const handleRequestAdded = () => {
+    loadRequests();
+  }
 
   return (
     <div className="space-y-6">
@@ -108,7 +112,7 @@ export default function RequestsPage() {
         </CardContent>
       </Card>
 
-      <NewRequestDialog open={isNewRequestDialogOpen} onOpenChange={setIsNewRequestDialogOpen} />
+      <NewRequestDialog open={isNewRequestDialogOpen} onOpenChange={setIsNewRequestDialogOpen} onSubmitted={handleRequestAdded} />
       
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
         <DialogContent>
@@ -132,13 +136,13 @@ export default function RequestsPage() {
 }
 
 // Sub-component for New Request Dialog
-function NewRequestDialog({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
+function NewRequestDialog({ open, onOpenChange, onSubmitted }: { open: boolean, onOpenChange: (open: boolean) => void, onSubmitted: () => void }) {
     const [service, setService] = useState('');
     const [details, setDetails] = useState('');
     const { user } = useAuth();
     const { toast } = useToast();
 
-    const handleSubmit = async () => {
+    const handleSubmit = () => {
         if (!user) {
             toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to make a request.' });
             return;
@@ -158,11 +162,12 @@ function NewRequestDialog({ open, onOpenChange }: { open: boolean, onOpenChange:
         };
 
         try {
-            await addRequest(newRequest);
+            addRequest(newRequest);
             toast({ title: 'Success', description: 'Your request has been submitted.' });
             setService('');
             setDetails('');
             onOpenChange(false);
+            onSubmitted();
         } catch (error) {
             toast({ variant: 'destructive', title: 'Error', description: 'Failed to submit request.' });
         }

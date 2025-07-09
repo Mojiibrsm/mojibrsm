@@ -16,7 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
-import { addProject, getProjects, updateProject, deleteProject, Project, ProjectStatus } from '@/services/firestore';
+import { addProject, getProjects, updateProject, deleteProject, Project, ProjectStatus } from '@/services/data';
 import { FormattedTimestamp } from '@/components/formatted-timestamp';
 import { sendEmail } from '@/services/email';
 
@@ -39,12 +39,14 @@ export default function AdminProjectsPage() {
   const { toast } = useToast();
   const { user } = useAuth();
 
+  const loadProjects = () => {
+      const fetchedProjects = getProjects();
+      setProjects(fetchedProjects);
+  };
+
   useEffect(() => {
     if (!user) return;
-    const unsubscribe = getProjects((fetchedProjects) => {
-      setProjects(fetchedProjects);
-    });
-    return () => unsubscribe();
+    loadProjects();
   }, [user]);
 
   const handleAddNew = () => {
@@ -57,10 +59,11 @@ export default function AdminProjectsPage() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = async (projectId: string) => {
+  const handleDelete = (projectId: string) => {
     try {
-      await deleteProject(projectId);
+      deleteProject(projectId);
       toast({ title: "Project Deleted", description: `Project has been successfully deleted.` });
+      loadProjects();
     } catch (error) {
       toast({ title: "Error", description: "Failed to delete project.", variant: "destructive" });
     }
@@ -72,22 +75,24 @@ export default function AdminProjectsPage() {
         return;
     }
     setIsSaving(true);
-    const isNew = !editingProject;
 
     try {
-        if (isNew) {
-            const newProject: Omit<Project, 'id' | 'createdAt'> = { ...formData, userId: user.uid };
-            await addProject(newProject);
-            toast({ title: "Project Added", description: "A new project has been successfully added." });
-        } else {
-            await updateProject(editingProject!.id!, formData);
+        if (editingProject) {
+            updateProject(editingProject.id!, formData);
             toast({ title: "Project Updated", description: "The project has been successfully updated." });
+        } else {
+            const newProject: Omit<Project, 'id' | 'createdAt'> = { ...formData, userId: user.uid };
+            addProject(newProject);
+            toast({ title: "Project Added", description: "A new project has been successfully added." });
         }
 
         setIsDialogOpen(false);
         setEditingProject(null);
+        loadProjects();
 
+        // Send email in the background without awaiting it
         if (formData.clientEmail) {
+            const isNew = !editingProject;
             const emailSubject = isNew
                 ? `New Project Created: ${formData.name}`
                 : `Update on your project: ${formData.name}`;
@@ -104,9 +109,9 @@ export default function AdminProjectsPage() {
                     });
                 });
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error("Save Error:", error);
-        toast({ title: "Save Error", description: "Could not save the project. This might be a database permissions issue.", variant: "destructive" });
+        toast({ title: "Save Error", description: error.message || "Could not save the project.", variant: "destructive" });
     } finally {
         setIsSaving(false);
     }
@@ -187,7 +192,7 @@ export default function AdminProjectsPage() {
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  This action cannot be undone. This will permanently delete the project from the database.
+                                  This action cannot be undone. This will permanently delete the project from local storage.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>

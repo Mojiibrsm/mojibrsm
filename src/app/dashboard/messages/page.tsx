@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { createMessageThread, getMessageThreadsForUser, addMessageToThread, markThreadAsRead, IMessage, IMessageThread } from '@/services/firestore';
-import { Timestamp } from 'firebase/firestore';
+import { createMessageThread, getMessageThreadsForUser, addMessageToThread, markThreadAsRead, IMessage, IMessageThread } from '@/services/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -26,31 +25,32 @@ export default function MessagesPage() {
   const [newMessageSubject, setNewMessageSubject] = useState("");
   const [newMessageBody, setNewMessageBody] = useState("");
 
-  useEffect(() => {
-    if (user) {
-      const unsubscribe = getMessageThreadsForUser(user.uid, (fetchedThreads) => {
-        setThreads(fetchedThreads);
-        // If a thread is being viewed, update its content in real-time
-        if (selectedThread) {
-            const updatedThread = fetchedThreads.find(t => t.id === selectedThread.id);
-            if (updatedThread) {
-                setSelectedThread(updatedThread);
-            }
+  const loadThreads = () => {
+    if(!user) return;
+    const fetchedThreads = getMessageThreadsForUser(user.uid);
+    setThreads(fetchedThreads);
+    if (selectedThread) {
+        const updatedThread = fetchedThreads.find(t => t.id === selectedThread.id);
+        if (updatedThread) {
+            setSelectedThread(updatedThread);
         }
-      });
-      return () => unsubscribe();
     }
-  }, [user, selectedThread]);
+  }
 
-  const handleViewMessage = async (thread: IMessageThread) => {
+  useEffect(() => {
+    loadThreads();
+  }, [user]);
+
+  const handleViewMessage = (thread: IMessageThread) => {
     setSelectedThread(thread);
     setIsViewOpen(true);
     if (thread.id && thread.unreadByUser) {
-        await markThreadAsRead(thread.id, 'user');
+        markThreadAsRead(thread.id, 'user');
+        loadThreads();
     }
   };
 
-  const handleSendMessage = async () => {
+  const handleSendMessage = () => {
     if (!user || !newMessageSubject || !newMessageBody) {
         toast({ variant: "destructive", title: "Error", description: "Subject and message body cannot be empty." });
         return;
@@ -71,33 +71,35 @@ export default function MessagesPage() {
         const initialMessage: IMessage = {
             from: 'client',
             text: newMessageBody,
-            timestamp: Timestamp.now(),
+            timestamp: new Date().toISOString(),
         };
         
-        await createMessageThread(threadData, initialMessage);
+        createMessageThread(threadData, initialMessage);
 
         toast({ title: "Message Sent", description: "Your message has been sent to the site owner." });
         setIsComposeOpen(false);
         setNewMessageSubject("");
         setNewMessageBody("");
+        loadThreads();
     } catch (error) {
         console.error(error);
         toast({ variant: "destructive", title: "Error", description: "Failed to send message. Please try again." });
     }
   };
   
-  const handleReply = async () => {
+  const handleReply = () => {
     if (!selectedThread?.id || !replyText) return;
 
     const newMessage: IMessage = {
         from: 'client',
         text: replyText,
-        timestamp: Timestamp.now()
+        timestamp: new Date().toISOString()
     };
     
     try {
-        await addMessageToThread(selectedThread.id, newMessage, 'client');
+        addMessageToThread(selectedThread.id, newMessage, 'client');
         setReplyText("");
+        loadThreads();
     } catch (error) {
         toast({ variant: "destructive", title: "Error", description: "Failed to send reply." });
     }
@@ -176,7 +178,7 @@ export default function MessagesPage() {
             <DialogTitle>{selectedThread?.subject}</DialogTitle>
           </DialogHeader>
           <div className="py-4 flex-1 overflow-y-auto space-y-4 pr-4">
-            {selectedThread?.messages.sort((a, b) => a.timestamp.toMillis() - b.timestamp.toMillis()).map((message, index) => (
+            {selectedThread?.messages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()).map((message, index) => (
                 <div key={index} className={`flex items-end gap-2 ${message.from === 'client' ? 'justify-end' : 'justify-start'}`}>
                    {message.from === 'admin' && <Avatar className="h-8 w-8"><AvatarImage src={''} alt="Admin" /><AvatarFallback>A</AvatarFallback></Avatar>}
                    <div className={`max-w-xs md:max-w-md p-3 rounded-2xl ${message.from === 'client' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-muted rounded-bl-none'}`}>

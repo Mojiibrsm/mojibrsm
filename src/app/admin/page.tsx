@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { FolderKanban, GitPullRequest, MessageSquare, Users, PlusCircle } from 'lucide-react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import { useEffect, useState } from 'react';
-import { getProjects, getMessageThreads, getAllRequests } from '@/services/firestore';
+import { getProjects, getMessageThreads, getAllRequests } from '@/services/data';
 
 export default function AdminDashboardPage() {
     const { user } = useAuth();
@@ -41,25 +41,16 @@ export default function AdminDashboardPage() {
         setChartData(generateChartData());
 
         // Fetch real data for stats
-        const unsubProjects = getProjects(projects => {
-            setStats(prev => prev.map(s => s.title === "Total Projects" ? { ...s, value: projects.length.toString(), description: `${projects.filter(p => p.status === 'In Progress').length} active projects` } : s));
-        });
+        const projects = getProjects();
+        setStats(prev => prev.map(s => s.title === "Total Projects" ? { ...s, value: projects.length.toString(), description: `${projects.filter(p => p.status === 'In Progress').length} active projects` } : s));
 
-        const unsubRequests = getAllRequests(requests => {
-            const pending = requests.filter(r => r.status === 'Pending').length;
-            setStats(prev => prev.map(s => s.title === "Pending Requests" ? { ...s, value: pending.toString(), description: `Awaiting approval` } : s));
-        });
+        const requests = getAllRequests();
+        const pending = requests.filter(r => r.status === 'Pending').length;
+        setStats(prev => prev.map(s => s.title === "Pending Requests" ? { ...s, value: pending.toString(), description: `Awaiting approval` } : s));
 
-        const unsubMessages = getMessageThreads(threads => {
-             const unread = threads.filter(t => t.unreadByAdmin).length;
-            setStats(prev => prev.map(s => s.title === "New Messages" ? { ...s, value: unread.toString(), description: `${unread} unread messages` } : s));
-        });
-
-        return () => {
-            unsubProjects();
-            unsubRequests();
-            unsubMessages();
-        }
+        const threads = getMessageThreads();
+        const unread = threads.filter(t => t.unreadByAdmin).length;
+        setStats(prev => prev.map(s => s.title === "New Messages" ? { ...s, value: unread.toString(), description: `${unread} unread messages` } : s));
 
     }, []);
 

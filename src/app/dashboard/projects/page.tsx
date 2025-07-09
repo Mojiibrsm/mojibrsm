@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Eye } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/auth-context';
-import { getProjectsByUserId, Project } from '@/services/firestore';
+import { getProjectsByUserId, Project } from '@/services/data';
 import { FormattedTimestamp } from '@/components/formatted-timestamp';
 
 const getStatusVariant = (status: string) => {
@@ -32,10 +32,8 @@ export default function ProjectsPage() {
 
   useEffect(() => {
     if (user) {
-      const unsubscribe = getProjectsByUserId(user.uid, (userProjects) => {
-        setProjects(userProjects);
-      });
-      return () => unsubscribe();
+      const userProjects = getProjectsByUserId(user.uid);
+      setProjects(userProjects);
     }
   }, [user]);
 
@@ -53,7 +51,7 @@ export default function ProjectsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Projects</CardTitle>
-          <CardDescription>A list of all your ongoing and completed projects from our database.</CardDescription>
+          <CardDescription>A list of all your ongoing and completed projects.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -104,11 +102,17 @@ export default function ProjectsPage() {
               Status: <Badge variant={getStatusVariant(selectedProject?.status || '') as any}>{selectedProject?.status}</Badge> | Deadline: {selectedProject?.deadline}
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4 text-sm text-muted-foreground">
-            <p className="font-semibold text-foreground mb-1">Client:</p>
-            <p>{selectedProject?.client}</p>
-            {/* In a real app, you would fetch project description from Firestore as well */}
-            <p className="mt-4">This is a placeholder description. You can add a 'description' field to your project in Firestore.</p>
+          <div className="py-4 space-y-4 text-sm text-muted-foreground">
+            <div>
+              <p className="font-semibold text-foreground mb-1">Client:</p>
+              <p>{selectedProject?.client}</p>
+            </div>
+            {selectedProject?.notes && (
+                <div>
+                    <p className="font-semibold text-foreground mb-1">Notes:</p>
+                    <p className="p-3 bg-muted/50 rounded-md">{selectedProject.notes}</p>
+                </div>
+            )}
           </div>
           <DialogFooter>
             <Button onClick={() => setIsDialogOpen(false)}>Close</Button>

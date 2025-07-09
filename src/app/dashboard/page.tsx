@@ -8,7 +8,7 @@ import { FolderKanban, GitPullRequest, MessageSquare, PlusCircle } from 'lucide-
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { getProjectsByUserId, getRequestsByUserId, getMessageThreadsForUser } from '@/services/firestore';
+import { getProjectsByUserId, getRequestsByUserId, getMessageThreadsForUser } from '@/services/data';
 
 export default function DashboardPage() {
     const { user, loading } = useAuth();
@@ -28,23 +28,16 @@ export default function DashboardPage() {
         }
 
         if(user) {
-            const unsubProjects = getProjectsByUserId(user.uid, projects => {
-                 setStats(prev => prev.map(s => s.title === "Active Projects" ? { ...s, value: projects.filter(p => p.status === 'In Progress').length.toString(), description: `${projects.filter(p => p.status === 'Pending').length} waiting for review` } : s));
-            });
-            const unsubRequests = getRequestsByUserId(user.uid, requests => {
-                const pending = requests.filter(r => r.status === 'Pending').length;
-                 setStats(prev => prev.map(s => s.title === "Pending Requests" ? { ...s, value: pending.toString(), description: "Awaiting approval" } : s));
-            });
-            const unsubMessages = getMessageThreadsForUser(user.uid, threads => {
-                const unread = threads.filter(t => t.unreadByUser).length;
-                 setStats(prev => prev.map(s => s.title === "Unread Messages" ? { ...s, value: unread.toString(), description: `${unread} unread messages` } : s));
-            });
+            const projects = getProjectsByUserId(user.uid);
+            setStats(prev => prev.map(s => s.title === "Active Projects" ? { ...s, value: projects.filter(p => p.status === 'In Progress').length.toString(), description: `${projects.filter(p => p.status === 'Pending').length} waiting for review` } : s));
 
-            return () => {
-                unsubProjects();
-                unsubRequests();
-                unsubMessages();
-            }
+            const requests = getRequestsByUserId(user.uid);
+            const pending = requests.filter(r => r.status === 'Pending').length;
+            setStats(prev => prev.map(s => s.title === "Pending Requests" ? { ...s, value: pending.toString(), description: "Awaiting approval" } : s));
+            
+            const threads = getMessageThreadsForUser(user.uid);
+            const unread = threads.filter(t => t.unreadByUser).length;
+            setStats(prev => prev.map(s => s.title === "Unread Messages" ? { ...s, value: unread.toString(), description: `${unread} unread messages` } : s));
         }
     }, [user, loading]);
 

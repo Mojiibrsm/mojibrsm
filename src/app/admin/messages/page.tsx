@@ -2,12 +2,11 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { getMessageThreads, addMessageToThread, markThreadAsRead, createMessageThread, IMessage, IMessageThread } from '@/services/firestore';
-import { Timestamp } from 'firebase/firestore';
+import { getMessageThreads, addMessageToThread, markThreadAsRead, createMessageThread, IMessage, IMessageThread } from '@/services/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Send, PlusCircle, Mail, MessageSquareText, FileKey, Loader2, MessageSquare } from 'lucide-react';
+import { Send, PlusCircle, Mail, MessageSquareText, Loader2, MessageSquare } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -34,32 +33,36 @@ export default function AdminMessagesPage() {
   const { toast } = useToast();
   const { user } = useAuth();
 
+  const loadThreads = () => {
+    const fetchedThreads = getMessageThreads();
+    setThreads(fetchedThreads);
+    if (selectedThread) {
+        const updatedThread = fetchedThreads.find(t => t.id === selectedThread.id);
+        if (updatedThread) setSelectedThread(updatedThread);
+    }
+  }
+
   useEffect(() => {
       if (!user) return;
-      const unsubscribe = getMessageThreads((fetchedThreads) => {
-          setThreads(fetchedThreads);
-          if (selectedThread) {
-            const updatedThread = fetchedThreads.find(t => t.id === selectedThread.id);
-            if (updatedThread) setSelectedThread(updatedThread);
-          }
-      });
-      return () => unsubscribe();
+      loadThreads();
   }, [user, selectedThread]);
 
-  const handleViewThread = async (thread: IMessageThread) => {
+  const handleViewThread = (thread: IMessageThread) => {
     setSelectedThread(thread);
     setIsViewOpen(true);
     if (thread.id && thread.unreadByAdmin) {
-        await markThreadAsRead(thread.id, 'admin');
+        markThreadAsRead(thread.id, 'admin');
+        loadThreads();
     }
   };
   
   const handleReply = async () => {
     if (!selectedThread?.id || !replyText || !user) return;
-    const newMessage: IMessage = { from: 'admin', text: replyText, timestamp: Timestamp.now() };
+    const newMessage: IMessage = { from: 'admin', text: replyText, timestamp: new Date().toISOString() };
     try {
-        await addMessageToThread(selectedThread.id, newMessage, 'admin');
+        addMessageToThread(selectedThread.id, newMessage, 'admin');
         setReplyText("");
+        loadThreads();
     } catch (error) {
         toast({ variant: "destructive", title: "Error", description: "Failed to send reply." });
     }
@@ -91,14 +94,15 @@ export default function AdminMessagesPage() {
       const initialMessage: IMessage = {
           from: 'admin',
           text: newThreadData.message,
-          timestamp: Timestamp.now(),
+          timestamp: new Date().toISOString(),
       };
 
       try {
-          await createMessageThread(threadData, initialMessage);
+          createMessageThread(threadData, initialMessage);
           toast({ title: "Message Sent", description: `A new conversation has been started with ${newThreadData.clientName || newThreadData.clientEmail}.` });
           setIsComposeOpen(false);
           setNewThreadData({ clientName: '', clientEmail: '', clientPhone: '', subject: '', message: '' });
+          loadThreads();
       } catch (error) {
           toast({ variant: "destructive", title: "Error", description: "Failed to create new conversation." });
       } finally {
@@ -231,7 +235,7 @@ export default function AdminMessagesPage() {
             </div>
           </DialogHeader>
           <div className="py-4 flex-1 overflow-y-auto space-y-4 pr-4">
-            {selectedThread?.messages.sort((a, b) => a.timestamp.toMillis() - b.timestamp.toMillis()).map((message, index) => (
+            {selectedThread?.messages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()).map((message, index) => (
                 <div key={index} className={`flex items-end gap-2 ${message.from === 'admin' ? 'justify-end' : 'justify-start'}`}>
                    {message.from === 'client' && <Avatar className="h-8 w-8"><AvatarImage src={selectedThread.clientAvatar} alt={selectedThread.clientName}/><AvatarFallback>{selectedThread.clientName.charAt(0)}</AvatarFallback></Avatar>}
                    <div className={`max-w-xs md:max-w-md p-3 rounded-2xl ${message.from === 'admin' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-muted rounded-bl-none'}`}>
