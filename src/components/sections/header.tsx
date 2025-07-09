@@ -118,7 +118,7 @@ export default function Header() {
             </DropdownMenu>
           ) : (
              <Button asChild className="hidden md:inline-flex rounded-lg">
-              <Link href="/login">{t.nav.contact}</Link>
+              <Link href="/login">{t.nav.login}</Link>
             </Button>
           )}
 
@@ -136,7 +136,7 @@ export default function Header() {
                       <Skeleton className="h-10 w-full mt-4" />
                    ) : (
                     <Button asChild className="w-full justify-start mt-4">
-                      <a href={user ? (user.role === 'Admin' ? '/admin' : '/dashboard') : "/login"} onClick={() => setIsMobileMenuOpen(false)}>{user ? "Dashboard" : t.nav.contact}</a>
+                      <a href={user ? (user.role === 'Admin' ? '/admin' : '/dashboard') : "/login"} onClick={() => setIsMobileMenuOpen(false)}>{user ? "Dashboard" : t.nav.login}</a>
                     </Button>
                    )}
                 </div>

@@ -34,13 +34,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (snapshot.exists()) {
             const firestoreData = snapshot.data() as FirestoreUser;
             setUser({ ...firebaseUser, ...firestoreData });
-            setLoading(false);
           } else {
-            // User is authenticated, but the Firestore document (with role) might still be creating.
-            // We'll keep `loading` as `true` until the document is available.
-            // Setting a partial user object is fine for display purposes (e.g., name in header).
-            setUser(firebaseUser);
+            // User is authenticated, but the Firestore document (with role) doesn't exist yet.
+            // This happens right after signup before the doc is created.
+            // We set the user from auth data and can assume a 'Client' role for now.
+            // The onSnapshot listener will update the role automatically when the doc is created.
+            setUser({ ...firebaseUser, role: 'Client' });
           }
+          // In either case, auth state is determined, so we can stop loading.
+          setLoading(false);
         }, (error) => {
             console.error("Auth context Firestore error:", error);
             setUser(null);
