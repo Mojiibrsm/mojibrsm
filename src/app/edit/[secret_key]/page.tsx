@@ -1,7 +1,7 @@
-
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import { useParams } from 'next/navigation';
 import { translations, Translations } from '@/lib/translations';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -180,7 +180,8 @@ const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, hand
 };
 
 
-export default function EditPage({ params }: { params: { secret_key: string } }) {
+export default function EditPage() {
+  const params = useParams<{ secret_key: string }>();
   const isAuthenticated = params.secret_key === SECRET_KEY;
   const [editableContent, setEditableContent] = useState<Translations>(translations);
   const { toast } = useToast();
