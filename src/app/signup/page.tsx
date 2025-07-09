@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Phone, KeyRound } from 'lucide-react';
-import { RecaptchaVerifier, signInWithPhoneNumber, setPersistence, browserSessionPersistence, localPersistence, type ConfirmationResult } from 'firebase/auth';
+import { RecaptchaVerifier, signInWithPhoneNumber, setPersistence, browserSessionPersistence, browserLocalPersistence, type ConfirmationResult } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { addUserToFirestore } from '@/services/firestore';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -67,7 +67,7 @@ export default function SignupPage() {
     }
 
     try {
-      const persistence = rememberMe ? localPersistence : browserSessionPersistence;
+      const persistence = rememberMe ? browserLocalPersistence : browserSessionPersistence;
       await setPersistence(auth, persistence);
       const verifier = window.recaptchaVerifier;
       const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, verifier);
