@@ -46,7 +46,14 @@ export default function Hero() {
                 {t.hero.greeting}{' '}
                 <span className="text-primary relative inline-block">
                     {t.hero.name}
-                    <span className="absolute -bottom-2.5 left-0 h-1.5 w-full rounded-full bg-accent animate-underline-glow"></span>
+                    <svg
+                        className="absolute -bottom-3 left-0 w-full h-auto text-accent animate-wavy-underline"
+                        viewBox="0 0 120 8"
+                        preserveAspectRatio="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                    >
+                        <path d="M0 5 C 20 0, 40 10, 60 5 S 100 0, 120 5" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round"/>
+                    </svg>
                 </span>
               </motion.h1>
               <motion.h2 

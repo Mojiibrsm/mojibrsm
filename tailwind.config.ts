@@ -103,9 +103,9 @@ export default {
           '0%, 100%': { transform: 'translateY(0px)' },
           '50%': { transform: 'translateY(-10px)' },
         },
-        'underline-glow': {
-            '0%, 100%': { 'box-shadow': '0 2px 15px -3px hsl(var(--accent))' },
-            '50%': { 'box-shadow': '0 2px 25px 0px hsl(var(--accent))' }
+        'wavy-underline': {
+          '0%, 100%': { transform: 'scaleX(0.95) translateY(0px)' },
+          '50%': { transform: 'scaleX(1.05) translateY(-2px)' },
         }
       },
       animation: {
@@ -113,7 +113,7 @@ export default {
         'accordion-up': 'accordion-up 0.2s ease-out',
         'spin-slow': 'spin-slow 6s linear infinite',
         'float': 'float 4s ease-in-out infinite',
-        'underline-glow': 'underline-glow 3s ease-in-out infinite',
+        'wavy-underline': 'wavy-underline 3s ease-in-out infinite',
       },
     },
   },
