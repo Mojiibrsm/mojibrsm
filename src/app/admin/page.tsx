@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { FolderKanban, GitPullRequest, MessageSquare, Users, PlusCircle } from 'lucide-react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import { useEffect, useState } from 'react';
-import { getProjects, getUsers, getMessageThreads, getAllRequests } from '@/services/firestore';
+import { getProjects, getMessageThreads, getAllRequests } from '@/services/firestore';
 
 export default function AdminDashboardPage() {
     const { user } = useAuth();
@@ -16,7 +16,7 @@ export default function AdminDashboardPage() {
     const [stats, setStats] = useState([
         { title: "Total Projects", value: "0", icon: FolderKanban, description: "0 active projects" },
         { title: "Pending Requests", value: "0", icon: GitPullRequest, description: "Awaiting approval" },
-        { title: "Total Users", value: "0", icon: Users, description: "Just the admin for now" },
+        { title: "Total Users", value: "1", icon: Users, description: "1 admin user" },
         { title: "New Messages", value: "0", icon: MessageSquare, description: "No new messages" },
     ]);
 
@@ -45,10 +45,6 @@ export default function AdminDashboardPage() {
             setStats(prev => prev.map(s => s.title === "Total Projects" ? { ...s, value: projects.length.toString(), description: `${projects.filter(p => p.status === 'In Progress').length} active projects` } : s));
         });
 
-        const unsubUsers = getUsers(users => {
-             setStats(prev => prev.map(s => s.title === "Total Users" ? { ...s, value: users.length.toString(), description: `${users.filter(u => u.role === 'Admin').length} admin(s)` } : s));
-        });
-
         const unsubRequests = getAllRequests(requests => {
             const pending = requests.filter(r => r.status === 'Pending').length;
             setStats(prev => prev.map(s => s.title === "Pending Requests" ? { ...s, value: pending.toString(), description: `Awaiting approval` } : s));
@@ -61,7 +57,6 @@ export default function AdminDashboardPage() {
 
         return () => {
             unsubProjects();
-            unsubUsers();
             unsubRequests();
             unsubMessages();
         }
