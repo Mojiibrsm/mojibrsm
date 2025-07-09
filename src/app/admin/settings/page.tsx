@@ -4,72 +4,71 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Settings, KeyRound, Mail, Bell } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 
 export default function AdminSettingsPage() {
   const { toast } = useToast();
   
-  const handleSaveApiKeys = () => {
+  const handleSave = (storageType: string) => {
     toast({
       title: "Settings Saved",
-      description: "API keys have been updated (simulation).",
+      description: `${storageType} settings have been saved (simulation).`,
     });
   };
 
   return (
     <div className="space-y-6">
        <div>
-        <h1 className="text-2xl font-bold">Admin Settings</h1>
-        <p className="text-muted-foreground">Configure global settings for the site.</p>
+        <h1 className="text-2xl font-bold">Storage Settings</h1>
+        <p className="text-muted-foreground">Configure storage options for file uploads.</p>
       </div>
       
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <KeyRound className="h-5 w-5" />
-            API Key Management
-            </CardTitle>
-           <CardDescription>Manage third-party service API keys. This is a placeholder and is not functional yet.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="google-maps-api">Google Maps API Key</Label>
-            <Input id="google-maps-api" placeholder="Enter Google Maps API Key" />
-          </div>
-           <div className="space-y-2">
-            <Label htmlFor="firebase-api">Firebase Service Account Key (JSON)</Label>
-            <Input id="firebase-api" placeholder="Paste your service account JSON here" />
-          </div>
-          <Button onClick={handleSaveApiKeys}>Save API Keys</Button>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Mail className="h-5 w-5" />
-            Email Configuration
-            </CardTitle>
-           <CardDescription>Configure settings for outgoing emails. Not yet functional.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-            <div className="space-y-2">
-                <Label htmlFor="smtp-host">SMTP Host</Label>
-                <Input id="smtp-host" placeholder="smtp.example.com" />
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="smtp-user">SMTP Username</Label>
-                <Input id="smtp-user" placeholder="user@example.com" />
-            </div>
-             <div className="space-y-2">
-                <Label htmlFor="smtp-pass">SMTP Password</Label>
-                <Input id="smtp-pass" type="password" placeholder="••••••••" />
-            </div>
-            <Button>Save Email Settings</Button>
-        </CardContent>
-      </Card>
+      <div className="grid md:grid-cols-2 gap-6 items-start">
+        <Card>
+            <CardHeader>
+                <CardTitle>Storage</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <RadioGroup defaultValue="local" className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="local" id="local" />
+                        <Label htmlFor="local">Local Storage</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="s3" id="s3" />
+                        <Label htmlFor="s3">AWS S3 Storage</Label>
+                    </div>
+                </RadioGroup>
+                <Button className="mt-6" onClick={() => handleSave('Storage Type')}>পরিবর্তন সেভ করুন</Button>
+            </CardContent>
+        </Card>
+        
+        <Card>
+            <CardHeader>
+                <CardTitle>AWS S3 Storage</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="space-y-2">
+                    <Label htmlFor="aws-access-key">AWS Access Key</Label>
+                    <Input id="aws-access-key" placeholder="AKIA..." />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="aws-secret-key">AWS Secret Key</Label>
+                    <Input id="aws-secret-key" type="password" placeholder="••••••••••••••••" />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="aws-bucket-name">Bucket Name</Label>
+                    <Input id="aws-bucket-name" placeholder="your-s3-bucket-name" />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="aws-region-code">Region Code</Label>
+                    <Input id="aws-region-code" placeholder="e.g., us-east-1" />
+                </div>
+                <Button className="mt-2" onClick={() => handleSave('AWS S3')}>পরিবর্তন সেভ করুন</Button>
+            </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
