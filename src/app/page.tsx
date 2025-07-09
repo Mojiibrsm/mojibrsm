@@ -12,6 +12,7 @@ import Contact from '@/components/sections/contact';
 import Footer from '@/components/sections/footer';
 import Pricing from '@/components/sections/pricing';
 import { ClientOnly } from '@/components/client-only';
+import LiveChatWidget from '@/components/live-chat-widget';
 
 export default function Home() {
   return (
@@ -37,6 +38,9 @@ function PortfolioPage() {
           <Contact />
         </ClientOnly>
       </main>
+      <ClientOnly>
+        <LiveChatWidget />
+      </ClientOnly>
       <Footer />
     </div>
   );

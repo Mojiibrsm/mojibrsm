@@ -150,9 +150,10 @@ export interface IMessageThread {
     lastMessageTimestamp: string; // ISO String
     unreadByAdmin: boolean;
     unreadByUser: boolean;
+    type: 'contact' | 'live';
 }
 
-export const createMessageThread = (threadData: Omit<IMessageThread, 'id' | 'messages' | 'lastMessage' | 'lastMessageTimestamp'>, initialMessage: IMessage) => {
+export const createMessageThread = (threadData: Omit<IMessageThread, 'id' | 'messages' | 'lastMessage' | 'lastMessageTimestamp'>, initialMessage: IMessage): IMessageThread => {
     const threads = getCollection<IMessageThread>('messageThreads');
     const newThread: IMessageThread = {
         ...threadData,
@@ -163,6 +164,7 @@ export const createMessageThread = (threadData: Omit<IMessageThread, 'id' | 'mes
     };
     threads.unshift(newThread);
     saveCollection('messageThreads', threads);
+    return newThread;
 };
 
 export const addMessageToThread = (threadId: string, message: IMessage, senderType: 'admin' | 'client') => {
@@ -179,7 +181,9 @@ export const addMessageToThread = (threadId: string, message: IMessage, senderTy
 };
 
 export const getMessageThreads = (): IMessageThread[] => {
-    return getCollection<IMessageThread>('messageThreads');
+    const threads = getCollection<IMessageThread>('messageThreads');
+    // Sort by most recent message
+    return threads.sort((a, b) => new Date(b.lastMessageTimestamp).getTime() - new Date(a.lastMessageTimestamp).getTime());
 };
 
 export const getMessageThreadsForUser = (userId: string): IMessageThread[] => {

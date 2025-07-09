@@ -51,7 +51,7 @@ export default function Contact() {
       // Step 1: Handle data persistence on the client side using localStorage service
       const { name, email, phone, subject, message } = data;
       const threads = getMessageThreads();
-      let thread = threads.find(t => t.clientEmail === email);
+      let thread = threads.find(t => t.clientEmail === email && t.type === 'contact');
 
       const newMessage: IMessage = {
         from: 'client',
@@ -71,6 +71,7 @@ export default function Contact() {
           subject: subject,
           unreadByAdmin: true,
           unreadByUser: false,
+          type: 'contact',
         }, newMessage);
       }
 
@@ -118,7 +119,7 @@ export default function Contact() {
   };
 
   return (
-    <section id="contact" className="w-full py-16 md:py-24 bg-card">
+    <section id="contact" className="w-full py-16 md:py-24 bg-card" suppressHydrationWarning>
       <motion.div
         ref={ref}
         className="container"
@@ -245,5 +246,3 @@ export default function Contact() {
     </section>
   );
 }
-
-    

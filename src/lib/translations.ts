@@ -390,6 +390,12 @@ export const translations = {
         "location": "Cox's Bazar, Bangladesh"
       }
     },
+    "chat": {
+      "title": "Live Chat",
+      "greeting": "Hello! How can we help you today?",
+      "placeholder": "Type your message...",
+      "send": "Send"
+    },
     "footer": {
       "nav": {
         "home": "Home",
@@ -792,6 +798,12 @@ export const translations = {
         "phone": "+৮৮০১৬০১৫১৯০২৭",
         "location": "কক্সবাজার, বাংলাদেশ"
       }
+    },
+    "chat": {
+      "title": "লাইভ চ্যাট",
+      "greeting": "স্বাগতম! আমরা আপনাকে কিভাবে সাহায্য করতে পারি?",
+      "placeholder": "আপনার বার্তা লিখুন...",
+      "send": "পাঠান"
     },
     "footer": {
       "nav": {
