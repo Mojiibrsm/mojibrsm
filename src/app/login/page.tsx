@@ -4,10 +4,12 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Phone, KeyRound } from 'lucide-react';
-import { RecaptchaVerifier, signInWithPhoneNumber, type ConfirmationResult } from 'firebase/auth';
+import { RecaptchaVerifier, signInWithPhoneNumber, setPersistence, browserSessionPersistence, localPersistence, type ConfirmationResult } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { addUserToFirestore } from '@/services/firestore';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -30,24 +32,30 @@ export default function LoginPage() {
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [rememberMe, setRememberMe] = useState(true);
 
   useEffect(() => {
-    // This effect runs once to set up the reCAPTCHA verifier
     if (!window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         'size': 'invisible',
-        'callback': (response: any) => {
-          // reCAPTCHA solved, allow signInWithPhoneNumber.
-        },
+        'callback': (response: any) => {},
       });
     }
   }, []);
 
-  const handleSendOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (resendCooldown > 0) {
+      timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
+
+  const handleSendOtp = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     setLoading(true);
 
-    // Basic validation for phone number with country code
     if (!/^\+[1-9]\d{1,14}$/.test(phoneNumber)) {
       toast({
         variant: 'destructive',
@@ -59,10 +67,13 @@ export default function LoginPage() {
     }
 
     try {
+      const persistence = rememberMe ? localPersistence : browserSessionPersistence;
+      await setPersistence(auth, persistence);
       const verifier = window.recaptchaVerifier;
       const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, verifier);
       window.confirmationResult = confirmationResult;
       setOtpSent(true);
+      setResendCooldown(30); // Start 30s cooldown
       toast({
         title: 'OTP পাঠানো হয়েছে',
         description: `আপনার ${phoneNumber} নম্বরে একটি OTP পাঠানো হয়েছে।`,
@@ -73,7 +84,7 @@ export default function LoginPage() {
       if (error.code === 'auth/too-many-requests') {
         description = 'অনেকবার চেষ্টা করা হয়েছে। অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন।';
       } else if (error.code === 'auth/network-request-failed') {
-        description = 'নেটওয়ার্ক অনুরোধ ব্যর্থ হয়েছে। এটি সাধারণত ফায়ারবেস কনফিগারেশন সমস্যার কারণে হয়।';
+        description = 'নেটওয়ার্ক অনুরোধ ব্যর্থ হয়েছে। এটি সাধারণত ফায়ারবেস কনফিগারেশন সমস্যার কারণে হয়। আপনার ডেভেলপমেন্ট ডোমেইনটি Firebase কনসোলে অনুমোদিত আছে কিনা তা পরীক্ষা করুন।';
       }
       
       toast({
@@ -128,21 +139,27 @@ export default function LoginPage() {
           <CardContent>
             {!otpSent ? (
               <form onSubmit={handleSendOtp} className="space-y-6">
-                <div>
-                  <label htmlFor="phone-number" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    ফোন নম্বর
-                  </label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="phone-number"
-                      type="tel"
-                      placeholder="+8801XXXXXXXXX"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      required
-                      className="pl-10"
-                    />
+                <div className="space-y-4">
+                  <div className="grid w-full items-center gap-1.5">
+                    <Label htmlFor="phone-number">ফোন নম্বর</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="phone-number"
+                        type="tel"
+                        placeholder="+8801XXXXXXXXX"
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
+                        required
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                      <Checkbox id="remember-me" checked={rememberMe} onCheckedChange={(checked) => setRememberMe(!!checked)} />
+                      <Label htmlFor="remember-me" className="font-normal">
+                        আমাকে মনে রাখুন
+                      </Label>
                   </div>
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
@@ -152,11 +169,9 @@ export default function LoginPage() {
               </form>
             ) : (
               <form onSubmit={handleVerifyOtp} className="space-y-6">
-                <div>
-                   <label htmlFor="otp" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    OTP কোড
-                  </label>
-                  <div className="relative">
+                 <div className="grid w-full items-center gap-1.5">
+                   <Label htmlFor="otp">OTP কোড</Label>
+                   <div className="relative">
                     <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="otp"
@@ -176,9 +191,20 @@ export default function LoginPage() {
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   যাচাই করুন
                 </Button>
-                 <Button variant="link" onClick={() => setOtpSent(false)} className="w-full">
-                  নম্বর পরিবর্তন করুন
-                </Button>
+                <div className="flex justify-between text-sm">
+                    <Button variant="link" type="button" onClick={() => { setOtpSent(false); setOtp(''); }} className="p-0 h-auto font-normal">
+                      নম্বর পরিবর্তন করুন
+                    </Button>
+                    <Button
+                        variant="link"
+                        type="button"
+                        onClick={() => handleSendOtp()}
+                        disabled={resendCooldown > 0 || loading}
+                        className="p-0 h-auto font-normal"
+                    >
+                        {resendCooldown > 0 ? `আবার পাঠান (${resendCooldown}s)` : 'OTP আবার পাঠান'}
+                    </Button>
+                </div>
               </form>
             )}
              <p className="mt-6 text-center text-sm text-muted-foreground">
