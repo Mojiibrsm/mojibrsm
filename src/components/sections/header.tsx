@@ -14,10 +14,11 @@ import { useRouter } from 'next/navigation';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { ThemeSwitcher } from '../theme-switcher';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Header() {
   const { t } = useLanguage();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -82,7 +83,9 @@ export default function Header() {
           <ThemeSwitcher />
           <LanguageSwitcher />
 
-          {user ? (
+          {loading ? (
+             <Skeleton className="hidden h-10 w-24 rounded-md md:inline-flex" />
+          ) : user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
@@ -129,9 +132,13 @@ export default function Header() {
               <SheetContent side="right">
                 <div className="flex flex-col space-y-2 p-4">
                   <NavItems isMobile={true}/>
-                   <Button asChild className="w-full justify-start mt-4">
-                    <a href={user ? "/dashboard" : "/login"} onClick={() => setIsMobileMenuOpen(false)}>{user ? "Dashboard" : t.nav.contact}</a>
-                  </Button>
+                   {loading ? (
+                      <Skeleton className="h-10 w-full mt-4" />
+                   ) : (
+                    <Button asChild className="w-full justify-start mt-4">
+                      <a href={user ? (user.role === 'Admin' ? '/admin' : '/dashboard') : "/login"} onClick={() => setIsMobileMenuOpen(false)}>{user ? "Dashboard" : t.nav.contact}</a>
+                    </Button>
+                   )}
                 </div>
               </SheetContent>
             </Sheet>
