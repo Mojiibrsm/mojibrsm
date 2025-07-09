@@ -10,8 +10,6 @@ export async function sendSms(phoneNumber: string, message: string): Promise<{ s
     const senderId = '8809617614208';
     const apiUrl = 'http://bulksmsbd.net/api/smsapi';
 
-    let result: { success: boolean; message: string };
-
     try {
         const urlWithParams = new URL(apiUrl);
         urlWithParams.searchParams.append('api_key', apiKey);
@@ -26,19 +24,29 @@ export async function sendSms(phoneNumber: string, message: string): Promise<{ s
 
         const responseText = await response.text();
 
+        // The API might return 200 OK even for errors, so we must parse the body.
         if (!response.ok) {
             throw new Error(`API request failed with status ${response.status}: ${responseText}`);
         }
         
-        // Assuming any 2xx response is a success and the text response is the message.
-        // We will pass this text directly to the toast notification.
-        result = { success: true, message: `SMS Status: ${responseText}` };
+        try {
+            const data = JSON.parse(responseText);
+            // According to bulksmsbd API, a response code of 202 means success.
+            if (data.response_code === 202) {
+                return { success: true, message: data.success_message || 'SMS submitted successfully.' };
+            } else {
+                // Any other code is an error.
+                return { success: false, message: data.error_message || `API Error: Code ${data.response_code}` };
+            }
+        } catch (e) {
+            // Handle cases where the response is not valid JSON
+            console.error('Could not parse SMS API response:', responseText, e);
+            throw new Error('Received an unreadable response from the SMS provider.');
+        }
 
     } catch (error: any) {
         console.error('Failed to send SMS:', error);
         const errorMessage = (error instanceof Error) ? error.message : 'An unknown error occurred.';
-        result = { success: false, message: `SMS sending failed: ${errorMessage}` };
+        return { success: false, message: `SMS sending failed: ${errorMessage}` };
     }
-    
-    return result;
 }
