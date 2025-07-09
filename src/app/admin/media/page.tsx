@@ -7,14 +7,16 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { getMediaItems, addMediaItem, deleteMediaItem, updateMediaItem, IMediaItem } from '@/services/data';
 import Image from 'next/image';
-import { Upload, Trash2, Copy, Loader2, ImageOff, Pencil, Crop as CropIcon } from 'lucide-react';
+import { Upload, Trash2, Copy, Loader2, ImageOff, Pencil } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { FormattedTimestamp } from '@/components/formatted-timestamp';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
 
-import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop';
+import ReactCrop, { type Crop, type PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 
 
@@ -24,8 +26,6 @@ export default function AdminMediaPage() {
     const { toast } = useToast();
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const [editingItem, setEditingItem] = useState<IMediaItem | null>(null);
-    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-    const [croppingItem, setCroppingItem] = useState<IMediaItem | null>(null);
 
     const loadMedia = useCallback(() => {
         setMediaItems(getMediaItems());
@@ -77,22 +77,12 @@ export default function AdminMediaPage() {
     };
 
     const handleEdit = (item: IMediaItem) => {
-        setEditingItem({ ...item }); // Create a copy to edit
-        setIsEditDialogOpen(true);
+        setEditingItem(item);
     };
 
-    const handleCrop = (item: IMediaItem) => {
-        setCroppingItem(item);
-    };
-
-    const handleSaveEdit = () => {
-        if (!editingItem) return;
-
-        updateMediaItem(editingItem.id, { name: editingItem.name });
-        toast({ title: "Media Updated", description: "The image name has been saved." });
+    const handleSaveSuccess = () => {
         loadMedia();
-        setIsEditDialogOpen(false);
-        setEditingItem(null); 
+        setEditingItem(null);
     };
 
 
@@ -127,19 +117,16 @@ export default function AdminMediaPage() {
                         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
                             {mediaItems.map(item => (
                                 <Card key={item.id} className="group relative overflow-hidden">
-                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center justify-center gap-1">
-                                         <Button size="icon" variant="secondary" onClick={() => handleCopyUrl(item.url)}>
+                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center justify-center gap-2 p-2">
+                                         <Button size="icon" variant="secondary" onClick={() => handleCopyUrl(item.url)} title="Copy URL">
                                             <Copy className="h-4 w-4" />
                                         </Button>
-                                         <Button size="icon" variant="secondary" onClick={() => handleEdit(item)}>
+                                         <Button size="icon" variant="secondary" onClick={() => handleEdit(item)} title="Edit Image">
                                             <Pencil className="h-4 w-4" />
-                                        </Button>
-                                        <Button size="icon" variant="secondary" onClick={() => handleCrop(item)}>
-                                            <CropIcon className="h-4 w-4" />
                                         </Button>
                                          <AlertDialog>
                                             <AlertDialogTrigger asChild>
-                                                <Button size="icon" variant="destructive">
+                                                <Button size="icon" variant="destructive" title="Delete Image">
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
                                             </AlertDialogTrigger>
@@ -169,162 +156,304 @@ export default function AdminMediaPage() {
                 </CardContent>
             </Card>
 
-             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Edit Media</DialogTitle>
-                        <DialogDescription>
-                           Change the details for this media item.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="media-name">Name (Alt Text)</Label>
-                            <Input 
-                                id="media-name" 
-                                value={editingItem?.name || ''} 
-                                onChange={(e) => setEditingItem(prev => prev ? { ...prev, name: e.target.value } : null)} 
-                            />
-                        </div>
-                         <div className="space-y-2">
-                           <Label>Preview</Label>
-                           <Image src={editingItem?.url || ''} alt="Preview" width={200} height={200} className="rounded-md border bg-muted object-contain" unoptimized />
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
-                        <Button onClick={handleSaveEdit}>Save Changes</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            {croppingItem && (
-                <CropImageDialog
-                    item={croppingItem}
-                    onClose={() => setCroppingItem(null)}
-                    onSaveSuccess={() => {
-                        loadMedia();
-                        setCroppingItem(null);
-                    }}
+            {editingItem && (
+                <EditMediaDialog
+                    item={editingItem}
+                    isOpen={!!editingItem}
+                    onOpenChange={(open) => !open && setEditingItem(null)}
+                    onSaveSuccess={handleSaveSuccess}
                 />
             )}
         </div>
     );
 }
 
-function CropImageDialog({
+function EditMediaDialog({
     item,
-    onClose,
+    isOpen,
+    onOpenChange,
     onSaveSuccess,
 }: {
     item: IMediaItem;
-    onClose: () => void;
-    onSaveSuccess: (newItem: IMediaItem) => void;
+    isOpen: boolean;
+    onOpenChange: (open: boolean) => void;
+    onSaveSuccess: () => void;
 }) {
-    const [crop, setCrop] = useState<Crop>();
-    const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
+    const [activeTab, setActiveTab] = useState("details");
     const [isSaving, setIsSaving] = useState(false);
-    const imgRef = useRef<HTMLImageElement>(null);
     const { toast } = useToast();
 
-    const getCroppedBlob = (image: HTMLImageElement, crop: PixelCrop): Promise<Blob | null> => {
-        const canvas = document.createElement('canvas');
-        canvas.width = crop.width;
-        canvas.height = crop.height;
-        const ctx = canvas.getContext('2d');
+    // Details State
+    const [name, setName] = useState(item.name);
 
-        if (!ctx) {
-            return Promise.resolve(null);
+    // Crop State
+    const [crop, setCrop] = useState<Crop>();
+    const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
+    
+    // Resize State
+    const [originalDimensions, setOriginalDimensions] = useState({ width: 0, height: 0 });
+    const [resizeDimensions, setResizeDimensions] = useState({ width: 0, height: 0 });
+    const [keepAspectRatio, setKeepAspectRatio] = useState(true);
+
+    const imgRef = useRef<HTMLImageElement>(null);
+
+    const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+        const img = e.currentTarget;
+        setOriginalDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+        setResizeDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+        
+        // Center crop on load
+        const { width, height } = e.currentTarget
+        const newCrop = centerCrop(
+          makeAspectCrop(
+            {
+              unit: '%',
+              width: 90,
+            },
+            1, // aspect ratio 1:1
+            width,
+            height
+          ),
+          width,
+          height
+        )
+        setCrop(newCrop);
+    };
+
+    const handleSaveDetails = () => {
+        setIsSaving(true);
+        updateMediaItem(item.id, { name });
+        toast({ title: "Media Updated", description: "The image name has been saved." });
+        setIsSaving(false);
+        onSaveSuccess();
+    };
+
+    const uploadEditedImage = async (blob: Blob | null, newName: string) => {
+        if (!blob) throw new Error('Could not create edited image.');
+
+        const editedFile = new File([blob], newName, { type: blob.type || 'image/png' });
+        
+        const formData = new FormData();
+        formData.append('file', editedFile);
+        formData.append('destination', 's3');
+
+        const response = await fetch('/api/upload', { method: 'POST', body: formData });
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            throw new Error(result.message || 'Upload failed');
         }
-        
-        const scaleX = image.naturalWidth / image.width;
-        const scaleY = image.naturalHeight / image.height;
 
-        ctx.drawImage(
-            image,
-            crop.x * scaleX,
-            crop.y * scaleY,
-            crop.width * scaleX,
-            crop.height * scaleY,
-            0,
-            0,
-            crop.width,
-            crop.height
-        );
-        
-        return new Promise((resolve) => {
-            canvas.toBlob(resolve, 'image/png');
-        });
-    }
+        addMediaItem({ url: result.url, name: editedFile.name });
+    };
 
     const handleSaveCrop = async () => {
         if (!completedCrop || !imgRef.current || completedCrop.width === 0) {
             toast({ variant: 'destructive', title: 'Error', description: 'Please select an area to crop.' });
             return;
         }
-
         setIsSaving(true);
         try {
-            const blob = await getCroppedBlob(imgRef.current, completedCrop);
-            if (!blob) throw new Error('Could not create cropped image.');
+            const canvas = document.createElement('canvas');
+            const scaleX = imgRef.current.naturalWidth / imgRef.current.width;
+            const scaleY = imgRef.current.naturalHeight / imgRef.current.height;
+            canvas.width = Math.floor(completedCrop.width * scaleX);
+            canvas.height = Math.floor(completedCrop.height * scaleY);
+            const ctx = canvas.getContext('2d');
+            if (!ctx) throw new Error('Canvas context not available');
 
-            const croppedFile = new File([blob], `cropped_${item.name.replace(/\.[^/.]+$/, "")}.png`, { type: 'image/png' });
+            ctx.drawImage(
+                imgRef.current,
+                completedCrop.x * scaleX,
+                completedCrop.y * scaleY,
+                completedCrop.width * scaleX,
+                completedCrop.height * scaleY,
+                0, 0,
+                canvas.width, canvas.height
+            );
+
+            const blob = await new Promise<Blob|null>(resolve => canvas.toBlob(resolve, 'image/png'));
+            await uploadEditedImage(blob, `cropped_${item.name.replace(/\.[^/.]+$/, "")}.png`);
             
-            const formData = new FormData();
-            formData.append('file', croppedFile);
-            formData.append('destination', 's3');
-
-            const response = await fetch('/api/upload', { method: 'POST', body: formData });
-            const result = await response.json();
-
-            if (!response.ok || !result.success) {
-                throw new Error(result.message || 'Upload failed');
-            }
-
-            const newItem = addMediaItem({ url: result.url, name: croppedFile.name });
             toast({ title: 'Success', description: 'Cropped image saved to library.' });
-            onSaveSuccess(newItem);
-            onClose();
+            onSaveSuccess();
 
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Save Error', description: error.message });
         } finally {
             setIsSaving(false);
         }
+    };
+    
+    const handleSaveResize = async () => {
+        if (!resizeDimensions.width || !resizeDimensions.height || !imgRef.current) {
+             toast({ variant: 'destructive', title: 'Error', description: 'Invalid dimensions provided.' });
+             return;
+        }
+        setIsSaving(true);
+        try {
+            const canvas = document.createElement('canvas');
+            canvas.width = resizeDimensions.width;
+            canvas.height = resizeDimensions.height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) throw new Error('Canvas context not available');
+
+            ctx.drawImage(imgRef.current, 0, 0, resizeDimensions.width, resizeDimensions.height);
+            
+            const blob = await new Promise<Blob|null>(resolve => canvas.toBlob(resolve, 'image/png'));
+            await uploadEditedImage(blob, `resized_${item.name.replace(/\.[^/.]+$/, "")}.png`);
+            
+            toast({ title: 'Success', description: 'Resized image saved to library.' });
+            onSaveSuccess();
+
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Save Error', description: error.message });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+    
+    const handleWidthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newWidth = parseInt(e.target.value, 10) || 0;
+        if (keepAspectRatio && originalDimensions.width > 0) {
+            const newHeight = Math.round((originalDimensions.height / originalDimensions.width) * newWidth);
+            setResizeDimensions({ width: newWidth, height: newHeight });
+        } else {
+            setResizeDimensions(prev => ({ ...prev, width: newWidth }));
+        }
+    };
+
+    const handleHeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newHeight = parseInt(e.target.value, 10) || 0;
+        if (keepAspectRatio && originalDimensions.height > 0) {
+            const newWidth = Math.round((originalDimensions.width / originalDimensions.height) * newHeight);
+            setResizeDimensions({ width: newWidth, height: newHeight });
+        } else {
+            setResizeDimensions(prev => ({ ...prev, height: newHeight }));
+        }
+    };
+    
+    const renderFooter = () => {
+        let button;
+        switch(activeTab) {
+            case 'details':
+                button = <Button onClick={handleSaveDetails} disabled={isSaving}>Save Details</Button>;
+                break;
+            case 'crop':
+                button = <Button onClick={handleSaveCrop} disabled={isSaving}>Save Cropped Image</Button>;
+                break;
+            case 'resize':
+                button = <Button onClick={handleSaveResize} disabled={isSaving}>Save Resized Image</Button>;
+                break;
+            default:
+                button = null;
+        }
+
+        return (
+             <DialogFooter>
+                <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>Cancel</Button>
+                {isSaving ? <Button disabled><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Saving...</Button> : button}
+            </DialogFooter>
+        );
     }
 
+
     return (
-        <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="sm:max-w-3xl">
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-4xl h-[90vh] flex flex-col">
                 <DialogHeader>
-                    <DialogTitle>Crop Image</DialogTitle>
-                    <DialogDescription>Select the area you want to keep. Then click save.</DialogDescription>
+                    <DialogTitle>Edit Media</DialogTitle>
+                    <DialogDescription>
+                       Make changes to your media item. Cropping or resizing will create a new item in the library.
+                    </DialogDescription>
                 </DialogHeader>
-                <div className="flex justify-center items-center p-4 bg-muted rounded-md min-h-[400px]">
-                     <ReactCrop
-                        crop={crop}
-                        onChange={(_, percentCrop) => setCrop(percentCrop)}
-                        onComplete={(c) => setCompletedCrop(c)}
-                    >
-                        <Image
-                            ref={imgRef}
-                            src={item.url}
-                            alt="Image to crop"
-                            width={800}
-                            height={600}
-                            className="max-h-[60vh] w-auto object-contain"
-                            crossOrigin="anonymous" 
-                            unoptimized
-                        />
-                    </ReactCrop>
-                </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={onClose} disabled={isSaving}>Cancel</Button>
-                    <Button onClick={handleSaveCrop} disabled={isSaving}>
-                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Save Cropped Image'}
-                    </Button>
-                </DialogFooter>
+
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-grow flex flex-col overflow-hidden">
+                    <TabsList className="shrink-0">
+                        <TabsTrigger value="details">Details</TabsTrigger>
+                        <TabsTrigger value="crop">Crop</TabsTrigger>
+                        <TabsTrigger value="resize">Resize</TabsTrigger>
+                    </TabsList>
+                    
+                    <div className="flex-grow py-4 overflow-y-auto">
+                        <TabsContent value="details">
+                            <div className="grid gap-4 py-4 max-w-md">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="media-name">Name (Alt Text)</Label>
+                                    <Input 
+                                        id="media-name" 
+                                        value={name} 
+                                        onChange={(e) => setName(e.target.value)} 
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Preview</Label>
+                                    <Image src={item.url} alt="Preview" width={200} height={200} className="rounded-md border bg-muted object-contain" unoptimized />
+                                </div>
+                            </div>
+                        </TabsContent>
+                        <TabsContent value="crop">
+                            <div className="flex justify-center items-center bg-muted rounded-md min-h-[400px]">
+                                <ReactCrop
+                                    crop={crop}
+                                    onChange={(_, percentCrop) => setCrop(percentCrop)}
+                                    onComplete={(c) => setCompletedCrop(c)}
+                                    aspect={1}
+                                >
+                                    <Image
+                                        ref={imgRef}
+                                        src={item.url}
+                                        alt="Image to crop"
+                                        width={800}
+                                        height={600}
+                                        onLoad={handleImageLoad}
+                                        className="max-h-[60vh] w-auto object-contain"
+                                        crossOrigin="anonymous" 
+                                        unoptimized
+                                    />
+                                </ReactCrop>
+                            </div>
+                        </TabsContent>
+                        <TabsContent value="resize">
+                            <div className="grid gap-6 py-4 max-w-md">
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox id="aspect-ratio" checked={keepAspectRatio} onCheckedChange={(checked) => setKeepAspectRatio(checked as boolean)} />
+                                    <Label htmlFor="aspect-ratio">Keep Aspect Ratio</Label>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                     <div className="grid gap-2">
+                                        <Label htmlFor="width">Width</Label>
+                                        <Input id="width" type="number" value={resizeDimensions.width} onChange={handleWidthChange} />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="height">Height</Label>
+                                        <Input id="height" type="number" value={resizeDimensions.height} onChange={handleHeightChange} />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Preview</Label>
+                                    <div className="flex justify-center items-center bg-muted rounded-md p-4">
+                                        <Image
+                                            ref={imgRef}
+                                            src={item.url}
+                                            alt="Preview"
+                                            width={200}
+                                            height={200}
+                                            className="rounded-md border bg-muted object-contain"
+                                            crossOrigin="anonymous" 
+                                            unoptimized
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </TabsContent>
+                    </div>
+                </Tabs>
+                {renderFooter()}
             </DialogContent>
         </Dialog>
     );
 }
+
+
+    
