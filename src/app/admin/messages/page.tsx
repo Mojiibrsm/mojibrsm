@@ -6,7 +6,7 @@ import { getMessageThreads, addMessageToThread, markThreadAsRead, IMessage, IMes
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Send, PlusCircle, Mail, MessageSquareText, Loader2 } from 'lucide-react';
+import { Send, PlusCircle, Mail, MessageSquareText, Loader2, File, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,6 +15,46 @@ import { FormattedTimestamp } from '@/components/formatted-timestamp';
 import { Label } from '@/components/ui/label';
 import { sendSms } from '@/services/sms';
 import { sendEmail } from '@/services/email';
+import { translations } from '@/lib/translations';
+
+
+const generateDirectEmailHtml = (subject: string, message: string, attachment?: { name: string; url: string }): string => {
+    const t = translations['en']; 
+    const { name: devName } = t.hero;
+    const { phone: devPhone, email: devEmail } = t.contact.details;
+    const whatsappNumber = devPhone.replace(/[^0-9]/g, '');
+
+    const messageBody = message.replace(/\n/g, '<br>');
+
+    return `
+        <div style="background-color: #f4f4f7; padding: 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333;">
+            <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                <div style="background: linear-gradient(to right, #6366f1, #a855f7); color: #ffffff; padding: 24px; text-align: center;">
+                    <h1 style="margin: 0; font-size: 24px; font-weight: bold;">${subject}</h1>
+                </div>
+                <div style="padding: 24px; line-height: 1.6; font-size: 16px;">
+                    ${messageBody}
+                    ${attachment ? `
+                        <div style="margin-top: 25px; padding: 15px; background-color: #f9f9f9; border-radius: 8px; border: 1px solid #e5e7eb;">
+                            <p style="margin: 0 0 5px 0; font-size: 14px; font-weight: bold;">Attachment:</p>
+                            <a href="${attachment.url}" target="_blank" style="color: #6366f1; text-decoration: none; word-break: break-all;">${attachment.name}</a>
+                        </div>
+                    ` : ''}
+                </div>
+                <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+                    <h3 style="margin: 0 0 10px 0; font-size: 18px; font-weight: bold;">${devName}</h3>
+                    <p style="margin: 0 0 15px 0; color: #555555; font-size: 14px;">Email: ${devEmail} | Phone: ${devPhone}</p>
+                    <div style="margin-top: 15px;">
+                        <a href="https://wa.me/${whatsappNumber}" style="display: inline-block; background-color: #25D366; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px; font-size: 14px; font-weight: bold;">WhatsApp</a>
+                        <a href="https://facebook.com/MoJiiB.RsM" style="display: inline-block; background-color: #1877F2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px; font-size: 14px; font-weight: bold;">Facebook</a>
+                        <a href="https://www.mojib.oftern.com" style="display: inline-block; background-color: #6366f1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px; font-size: 14px; font-weight: bold;">Visit Website</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+};
+
 
 export default function AdminMessagesPage() {
   const [threads, setThreads] = useState<IMessageThread[]>([]);
@@ -23,12 +63,13 @@ export default function AdminMessagesPage() {
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [composeData, setComposeData] = useState({
-      clientName: '',
-      clientEmail: '',
-      clientPhone: '',
+      recipients: '',
+      phones: '',
       subject: '',
       message: ''
   });
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [isSendingSms, setIsSendingSms] = useState(false);
   const { toast } = useToast();
@@ -74,69 +115,118 @@ export default function AdminMessagesPage() {
       setComposeData(prev => ({ ...prev, [name]: value }));
   };
 
+  const clearForm = () => {
+    setComposeData({ recipients: '', phones: '', subject: '', message: '' });
+    setAttachment(null);
+  }
+
   const handleSendEmail = async () => {
-    if (!composeData.clientEmail || !composeData.subject || !composeData.message) {
-        toast({ variant: "destructive", title: "Missing Information", description: "Client email, subject, and a message are required." });
+    if (!composeData.recipients || !composeData.subject || !composeData.message) {
+        toast({ variant: "destructive", title: "Missing Information", description: "Recipient emails, subject, and a message are required." });
         return;
     }
     setIsSendingEmail(true);
+    let attachmentPayload;
 
-    const emailHtml = composeData.message.replace(/\n/g, '<br>');
-    const result = await sendEmail({
-        to: composeData.clientEmail,
-        subject: composeData.subject,
-        html: emailHtml
-    });
+    try {
+        if (attachment) {
+            setIsUploading(true);
+            const formData = new FormData();
+            formData.append('file', attachment);
+            formData.append('destination', 's3');
+            
+            const response = await fetch('/api/upload', { method: 'POST', body: formData });
+            const result = await response.json();
+            
+            if (!response.ok || !result.success) throw new Error(result.message || 'File upload failed');
+            
+            attachmentPayload = { filename: attachment.name, path: result.url };
+            setIsUploading(false);
+        }
 
-    addEmailLog({
-        to: composeData.clientEmail,
-        subject: composeData.subject,
-        html: emailHtml,
-        success: result.success,
-        message: result.message,
-    });
+        const recipients = composeData.recipients.split(',').map(e => e.trim()).filter(e => e);
+        if (recipients.length === 0) {
+            toast({ variant: "destructive", title: "No Recipients", description: "Please provide at least one valid email address." });
+            setIsSendingEmail(false);
+            return;
+        }
 
-    toast({
-        title: result.success ? "Email Sent" : "Email Failed",
-        description: result.message,
-        variant: result.success ? "default" : "destructive",
-    });
-    
-    if (result.success) {
-        setIsComposeOpen(false);
-        setComposeData({ clientName: '', clientEmail: '', clientPhone: '', subject: '', message: '' });
+        const emailHtml = generateDirectEmailHtml(composeData.subject, composeData.message, attachment ? { name: attachment.name, url: attachmentPayload!.path } : undefined);
+        
+        const result = await sendEmail({
+            to: recipients,
+            subject: composeData.subject,
+            html: emailHtml,
+            attachments: attachmentPayload ? [attachmentPayload] : undefined
+        });
+
+        addEmailLog({
+            to: recipients.join(', '),
+            subject: composeData.subject,
+            html: `(Direct Message Sent) - ${composeData.message}`,
+            success: result.success,
+            message: result.message,
+        });
+
+        toast({
+            title: result.success ? "Email Sent" : "Email Failed",
+            description: result.message,
+            variant: result.success ? "default" : "destructive",
+        });
+
+        if (result.success) {
+            setIsComposeOpen(false);
+            clearForm();
+        }
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'An Error Occurred', description: error.message });
+    } finally {
+        setIsSendingEmail(false);
+        setIsUploading(false);
     }
-    
-    setIsSendingEmail(false);
   };
   
   const handleSendSms = async () => {
-      if (!composeData.clientPhone || !composeData.message) {
-           toast({ variant: "destructive", title: "Missing Info", description: "Client phone number and a message are required." });
+      if (!composeData.phones || !composeData.message) {
+           toast({ variant: "destructive", title: "Missing Info", description: "Recipient phone numbers and a message are required." });
            return;
       }
       setIsSendingSms(true);
-      const result = await sendSms(composeData.clientPhone, composeData.message);
-      
-      addSmsLog({
-        to: composeData.clientPhone,
-        message: composeData.message,
-        success: result.success,
-        response: result.message,
-      });
-
-      toast({
-          title: result.success ? "SMS Status" : "SMS Failed",
-          description: result.message,
-          variant: result.success ? "default" : "destructive",
-      });
-
-      if (result.success) {
-        setIsComposeOpen(false);
-        setComposeData({ clientName: '', clientEmail: '', clientPhone: '', subject: '', message: '' });
+      const phones = composeData.phones.split(',').map(p => p.trim()).filter(p => p);
+       if (phones.length === 0) {
+           toast({ variant: "destructive", title: "No Recipients", description: "Please provide at least one valid phone number." });
+           setIsSendingSms(false);
+           return;
       }
-      
-      setIsSendingSms(false);
+
+      try {
+          const results = await Promise.all(
+              phones.map(phone => sendSms(phone, composeData.message))
+          );
+          
+          results.forEach((result, index) => {
+              addSmsLog({
+                  to: phones[index],
+                  message: composeData.message,
+                  success: result.success,
+                  response: result.message,
+              });
+          });
+
+          const successCount = results.filter(r => r.success).length;
+          toast({
+              title: "SMS Sending Complete",
+              description: `${successCount} of ${phones.length} messages sent successfully. Check history for details.`
+          });
+
+          setIsComposeOpen(false);
+          clearForm();
+
+      } catch (error: any) {
+          toast({ title: 'SMS Error', description: error.message, variant: 'destructive' });
+      } finally {
+        setIsSendingSms(false);
+      }
   }
 
   return (
@@ -146,49 +236,57 @@ export default function AdminMessagesPage() {
                 <h1 className="text-2xl font-bold">Manage Messages</h1>
                 <p className="text-muted-foreground">View client conversations and send direct messages.</p>
             </div>
-            <Dialog open={isComposeOpen} onOpenChange={setIsComposeOpen}>
+            <Dialog open={isComposeOpen} onOpenChange={(open) => { setIsComposeOpen(open); if(!open) clearForm(); }}>
                 <DialogTrigger asChild>
                     <Button>
                         <PlusCircle className="mr-2 h-4 w-4" />
                         New Direct Message
                     </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="sm:max-w-2xl">
                     <DialogHeader>
                         <DialogTitle>Send a Direct Message</DialogTitle>
-                        <DialogDescription>Send an email or SMS directly to any recipient. This will be logged in your history.</DialogDescription>
+                        <DialogDescription>Send an email or SMS to multiple recipients. This will be logged in your history.</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="clientName" className="text-right">Recipient Name</Label>
-                            <Input id="clientName" name="clientName" value={composeData.clientName} onChange={handleComposeChange} className="col-span-3" placeholder="John Doe"/>
+                        <div className="grid gap-2">
+                            <Label htmlFor="recipients">Recipient Emails</Label>
+                            <Textarea id="recipients" name="recipients" value={composeData.recipients} onChange={handleComposeChange} placeholder="john@example.com, jane@example.com"/>
                         </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="clientEmail" className="text-right">Recipient Email</Label>
-                            <Input id="clientEmail" name="clientEmail" type="email" value={composeData.clientEmail} onChange={handleComposeChange} className="col-span-3" placeholder="recipient@example.com" />
+                        <div className="grid gap-2">
+                            <Label htmlFor="phones">Recipient Phones</Label>
+                            <Textarea id="phones" name="phones" value={composeData.phones} onChange={handleComposeChange} placeholder="+123456, +987654"/>
                         </div>
-                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="clientPhone" className="text-right">Recipient Phone</Label>
-                            <Input id="clientPhone" name="clientPhone" value={composeData.clientPhone} onChange={handleComposeChange} className="col-span-3" placeholder="+1234567890"/>
+                         <div className="grid gap-2">
+                            <Label htmlFor="subject">Subject (for Email)</Label>
+                            <Input id="subject" name="subject" value={composeData.subject} onChange={handleComposeChange} placeholder="Your message subject..."/>
                         </div>
-                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="subject" className="text-right">Subject</Label>
-                            <Input id="subject" name="subject" value={composeData.subject} onChange={handleComposeChange} className="col-span-3" placeholder="Message subject..."/>
+                        <div className="grid gap-2">
+                            <Label htmlFor="message">Message</Label>
+                            <Textarea id="message" name="message" value={composeData.message} onChange={handleComposeChange} className="min-h-[120px]" placeholder="Type your email or SMS content here." required/>
                         </div>
-                        <div className="grid grid-cols-4 items-start gap-4">
-                            <Label htmlFor="message" className="text-right pt-2">Message</Label>
-                            <Textarea id="message" name="message" value={composeData.message} onChange={handleComposeChange} className="col-span-3 min-h-[120px]" placeholder="Type your email or SMS content here." required/>
+                        <div className="grid gap-2">
+                           <Label htmlFor="attachment">Attachment (for Email)</Label>
+                           <Input id="attachment" type="file" onChange={(e) => setAttachment(e.target.files?.[0] || null)} />
+                           {attachment && (
+                             <div className="text-sm text-muted-foreground flex items-center justify-between p-2 bg-muted rounded-md">
+                               <span>{attachment.name}</span>
+                               <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setAttachment(null)}>
+                                 <X className="h-4 w-4"/>
+                               </Button>
+                             </div>
+                           )}
                         </div>
                     </div>
                     <DialogFooter className="gap-2 sm:justify-end">
                         <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
-                        <Button variant="outline" onClick={handleSendSms} disabled={isSendingSms || !composeData.clientPhone || !composeData.message}>
-                            {isSendingSms ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <MessageSquareText className="mr-2 h-4 w-4"/>}
+                        <Button variant="outline" onClick={handleSendSms} disabled={isSendingSms || isSendingEmail || !composeData.phones || !composeData.message}>
+                            {(isSendingSms) ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <MessageSquareText className="mr-2 h-4 w-4"/>}
                             Send as SMS
                         </Button>
-                        <Button onClick={handleSendEmail} disabled={isSendingEmail || !composeData.clientEmail || !composeData.subject || !composeData.message}>
-                            {isSendingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Mail className="mr-2 h-4 w-4"/>}
-                            Send as Email
+                        <Button onClick={handleSendEmail} disabled={isSendingEmail || isSendingSms || isUploading || !composeData.recipients || !composeData.subject || !composeData.message}>
+                            {(isUploading) ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : (isSendingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Mail className="mr-2 h-4 w-4"/>)}
+                            {isUploading ? 'Uploading...' : 'Send as Email'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

@@ -13,15 +13,19 @@ const smtpConfig = {
 };
 
 interface EmailOptions {
-    to: string;
+    to: string | string[];
     subject: string;
     html: string;
+    attachments?: {
+        filename: string;
+        path: string; // URL to the file
+    }[];
 }
 
 /**
  * Sends an email using Nodemailer. Logging is handled on the client-side.
  */
-export async function sendEmail({ to, subject, html }: EmailOptions): Promise<{ success: boolean; message: string }> {
+export async function sendEmail({ to, subject, html, attachments }: EmailOptions): Promise<{ success: boolean; message: string }> {
     const transporter = nodemailer.createTransport(smtpConfig);
     
     try {
@@ -31,6 +35,7 @@ export async function sendEmail({ to, subject, html }: EmailOptions): Promise<{ 
             to: to,
             subject: subject,
             html: html,
+            attachments: attachments,
         });
         return { success: true, message: 'Email sent successfully!' };
     } catch (error: any) {
