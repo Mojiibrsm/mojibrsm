@@ -10,8 +10,7 @@ export const translations = {
       "gallery": "Gallery",
       "pricing": "Pricing",
       "blog": "Blog",
-      "contact": "Contact",
-      "login": "Login"
+      "contact": "Contact"
     },
     "hero": {
       "greeting": "Hello, I'm",
@@ -334,8 +333,7 @@ export const translations = {
       "gallery": "গ্যালারি",
       "pricing": "প্যাকেজ",
       "blog": "ব্লগ",
-      "contact": "যোগাযোগ",
-      "login": "লগইন"
+      "contact": "যোগাযোগ"
     },
     "hero": {
       "greeting": "হ্যালো, আমি",
