@@ -63,7 +63,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <SidebarHeader>
                     <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
                         <Avatar className="h-8 w-8">
-                            <AvatarImage src={t.site.adminAvatar} alt={t.site.title}/>
+                            <AvatarImage src={"https://www.oftern.com/uploads/gallery/202507/image_500x_686e52ba15db8.jpg"} alt={t.site.title}/>
                             <AvatarFallback>{t.site.title.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col group-data-[collapsible=icon]:hidden">
@@ -94,7 +94,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                  </SidebarFooter>
              </SidebarContent>
         </Sidebar>
-        <div className="flex flex-col flex-1">
+        <div className="flex min-w-0 flex-1 flex-col">
             <header className="flex h-14 items-center gap-4 border-b bg-background px-4 lg:h-[60px] lg:px-6">
                 <div className="lg:hidden">
                     <SidebarTrigger />
