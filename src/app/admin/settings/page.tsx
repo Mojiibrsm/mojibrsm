@@ -1,7 +1,9 @@
 
 'use client';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Archive } from 'lucide-react';
+import { Server, HardDrive } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 export default function AdminSettingsPage() {
   return (
@@ -14,18 +16,38 @@ export default function AdminSettingsPage() {
       <Card>
           <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Archive className="h-5 w-5" />
-                Feature Under Development
+                <HardDrive className="h-5 w-5" />
+                File Storage Configuration
               </CardTitle>
-              <CardDescription>This section is for configuring file storage, but it is not yet functional.</CardDescription>
+              <CardDescription>Choose where to store uploaded files like images from the Content editor.</CardDescription>
           </CardHeader>
           <CardContent>
-              <p className="text-muted-foreground">
-                In a future update, this page will allow you to configure where files, such as images uploaded through the content manager, are stored. 
-                You will be able to choose between local server storage and cloud-based services like AWS S3.
-                <br/><br/>
-                Currently, all images are managed by pasting external URLs in the Content editor. No file upload functionality is implemented.
-              </p>
+             <RadioGroup defaultValue="local" className="space-y-4">
+                <Label htmlFor="local-storage" className="flex items-start gap-4 rounded-lg border p-4 cursor-pointer has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
+                    <RadioGroupItem value="local" id="local-storage" className="mt-1" />
+                    <div className="grid gap-1.5">
+                       <div className="font-semibold flex items-center gap-2">
+                           <HardDrive className="h-4 w-4" />
+                           Local Storage (Active)
+                       </div>
+                       <p className="text-sm text-muted-foreground">
+                           Files are stored directly on the server in the `public/uploads` folder. This is simple, free, and ideal for development or small sites.
+                       </p>
+                    </div>
+                </Label>
+                 <Label htmlFor="aws-s3" className="flex items-start gap-4 rounded-lg border p-4 cursor-pointer has-[:checked]:bg-primary/10 has-[:checked]:border-primary opacity-50">
+                    <RadioGroupItem value="aws-s3" id="aws-s3" disabled />
+                    <div className="grid gap-1.5">
+                       <div className="font-semibold flex items-center gap-2">
+                           <Server className="h-4 w-4" />
+                           Amazon S3 (Coming Soon)
+                       </div>
+                       <p className="text-sm text-muted-foreground">
+                           Store files in a scalable AWS S3 bucket. This is a robust solution for production applications with high traffic. This feature is under development.
+                       </p>
+                    </div>
+                </Label>
+             </RadioGroup>
           </CardContent>
       </Card>
     </div>
