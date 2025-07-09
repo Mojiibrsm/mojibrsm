@@ -1,3 +1,4 @@
+
 export const translations = {
   "en": {
     "site": {
@@ -646,51 +647,51 @@ export const translations = {
       "posts": [
         {
           "slug": "the-importance-of-ui-ux",
-          "title": "আধুনিক ওয়েব ডিজাইনে UI/UX এর গুরুত্ব",
-          "date": "জুলাই ১৫, ২০২৫",
+          "title": "The Importance of UI/UX in Modern Web Design",
+          "date": "July 15, 2025",
           "tags": [
-            "ইউআই",
-            "ইউএক্স",
-            "ওয়েব ডিজাইন"
+            "UI",
+            "UX",
+            "Web Design"
           ],
           "image": "/uploads/1752065514481-IMG20250619130703f.jpg",
           "imageHint": "design charts",
-          "excerpt": "আজকের ডিজিটাল বিশ্বে সাফল্যের জন্য কেন একটি দুর্দান্ত ব্যবহারকারীর অভিজ্ঞতা অত্যন্ত গুরুত্বপূর্ণ তার উপর একটি গভীর দৃষ্টি।",
-          "content": "<h2>ডিজিটাল মিথস্ক্রিয়ার মূল ভিত্তি</h2><p>আজকের দ্রুতগতির ডিজিটাল বিশ্বে, ইউজার ইন্টারফেস (ইউআই) এবং ইউজার এক্সপেরিয়েন্স (ইউএক্স) কেবল কিছু প্রচলিত শব্দ নয়; এগুলো একটি সফল ডিজিটাল পণ্যের ভিত্তি। ইউআই যেখানে ভিজ্যুয়াল উপাদানগুলির উপর মনোযোগ দেয় - অর্থাৎ জিনিসগুলি দেখতে কেমন - সেখানে ইউএক্স অভিজ্ঞতার সামগ্রিক অনুভূতির সাথে সম্পর্কিত। উভয় মিলে ব্যবহারকারীর জন্য একটি সুসংহত, আনন্দদায়ক এবং কার্যকর যাত্রা তৈরি করে।</p><h3>এটি কেন গুরুত্বপূর্ণ?</h3><ul><li><strong>প্রথম প্রভাব:</strong> একটি ভাল ডিজাইন করা ইন্টারফেস অবিলম্বে বিশ্বাস তৈরি করে এবং ব্যবহারকারীদের নিযুক্ত করে।</li><li><strong>রূপান্তর বৃদ্ধি:</strong> একটি স্বজ্ঞাত এবং সহজে নেভিগেট করা যায় এমন ওয়েবসাইট বা অ্যাপ উচ্চতর রূপান্তর হারের দিকে পরিচালিত করে, তা সে কেনাকাটা করা হোক, নিউজলেটারের জন্য সাইন আপ করা হোক বা যোগাযোগের ফর্ম পূরণ করা হোক।</li><li><strong>গ্রাহক আনুগত্য:</strong> একটি ইতিবাচক অভিজ্ঞতা ব্যবহারকারীদের ফিরে আসার সম্ভাবনা বাড়িয়ে তোলে। ভাল ইউএক্স ব্র্যান্ডের প্রতি আনুগত্য বাড়ায় এবং মুখে মুখে সুপারিশকে উৎসাহিত করে।</li></ul><p>পরিশেষে, মানসম্পন্ন ইউআই/ইউএক্সে বিনিয়োগ কেবল নান্দনিকতার বিষয় নয়; এটি একটি মৌলিক ব্যবসায়িক সিদ্ধান্ত যা সরাসরি ব্যবহারকারীর সন্তুষ্টি, ব্যস্ততা এবং নীট লাভকে প্রভাবিত করে।</p>",
-          "metaTitle": "আধুনিক ওয়েব ডিজাইনে UI/UX এর গুরুত্ব",
-          "metaDescription": "আজকের ডিজিটাল বিশ্বে সাফল্যের জন্য কেন একটি দুর্দান্ত ব্যবহারকারীর অভিজ্ঞতা অত্যন্ত গুরুত্বপূর্ণ তার উপর একটি গভীর দৃষ্টি।"
+          "excerpt": "An in-depth look at why a great user experience is crucial for success in today's digital landscape.",
+          "content": "<h2>The Core of Digital Interaction</h2><p>In today's fast-paced digital world, User Interface (UI) and User Experience (UX) are more than just buzzwords; they are the bedrock of a successful digital product. While UI focuses on the visual elements—how things look—UX is concerned with the overall feel of the experience. Together, they create a cohesive, enjoyable, and effective journey for the user.</p><h3>Why Does It Matter?</h3><ul><li><strong>First Impressions:</strong> A well-designed interface immediately builds trust and engages users.</li><li><strong>Increased Conversions:</strong> An intuitive and easy-to-navigate website or app leads to higher conversion rates, whether it's making a purchase, signing up for a newsletter, or filling out a contact form.</li><li><strong>Customer Loyalty:</strong> A positive experience makes users more likely to return. Good UX fosters brand loyalty and encourages word-of-mouth recommendations.</li></ul><p>Ultimately, investing in quality UI/UX is not just about aesthetics; it's a fundamental business decision that directly impacts user satisfaction, engagement, and the bottom line.</p>",
+          "metaTitle": "The Importance of UI/UX in Modern Web Design",
+          "metaDescription": "An in-depth look at why a great user experience is crucial for success in today's digital landscape."
         },
         {
           "slug": "getting-started-with-react",
-          "title": "২০২৫ সালে রিঅ্যাক্ট দিয়ে শুরু করুন",
-          "date": "জুলাই ১০, ২০২৫",
+          "title": "Getting Started with React in 2025",
+          "date": "July 10, 2025",
           "tags": [
-            "রিঅ্যাক্ট",
-            "জাভাস্ক্রিপ্ট",
-            "ওয়েব ডেভেলপমেন্ট"
+            "React",
+            "JavaScript",
+            "Web Development"
           ],
           "image": "https://placehold.co/600x400.png",
           "imageHint": "code screen",
-          "excerpt": "আপনার প্রথম রিঅ্যাক্ট প্রজেক্ট সেট আপ করার এবং মূল ধারণাগুলো বোঝার জন্য একটি শিক্ষানবিস-বান্ধব গাইড।",
-          "content": "<h2>আপনার রিঅ্যাক্ট যাত্রা শুরু</h2><p>রিঅ্যাক্ট ফ্রন্ট-এন্ড ডেভেলপমেন্টের জগতে তার আধিপত্য বজায় রেখেছে, এবং এর যথেষ্ট কারণ রয়েছে। এর কম্পোনেন্ট-ভিত্তিক আর্কিটেকচার জটিল ইউজার ইন্টারফেস তৈরিকে পরিচালনাযোগ্য এবং পরিমাপযোগ্য করে তোলে। আপনি যদি রিঅ্যাক্টে নতুন হন, তাহলে শুরু করা এখন আগের চেয়ে অনেক সহজ।</p><h3>আপনার প্রথম প্রজেক্ট সেটআপ</h3><p>একটি নতুন রিঅ্যাক্ট প্রজেক্ট শুরু করার দ্রুততম উপায় হলো Vite-এর মতো একটি টুল ব্যবহার করা। আপনার টার্মিনালে নিম্নলিখিত কমান্ডটি চালান:</p><pre><code>npm create vite@latest my-react-app -- --template react-ts</code></pre><p>এই কমান্ডটি টাইপস্ক্রিপ্ট সহ একটি নতুন রিঅ্যাক্ট প্রজেক্ট তৈরি করে, যা একটি দ্রুত ডেভেলপমেন্ট সার্ভার এবং একটি অপ্টিমাইজড বিল্ড প্রক্রিয়া সরবরাহ করে।</p><h3>মূল ধারণা যা বুঝতে হবে</h3><ul><li><strong>কম্পোনেন্টস:</strong> যেকোনো রিঅ্যাক্ট অ্যাপ্লিকেশনের বিল্ডিং ব্লক। ফাংশনাল এবং ক্লাস উভয় কম্পোনেন্ট তৈরি করতে শিখুন।</li><li><strong>জেএসএক্স (JSX):</strong> জাভাস্ক্রিপ্টের জন্য একটি সিনট্যাক্স এক্সটেনশন যা দেখতে এইচটিএমএল-এর মতো এবং ইউআই কেমন হওয়া উচিত তা বর্ণনা করতে ব্যবহৃত হয়।</li><li><strong>স্টেট এবং প্রপস:</strong> একটি কম্পোনেন্টের মধ্যে ডেটা কীভাবে পরিচালনা করতে হয় (স্টেট) এবং প্যারেন্ট থেকে চাইল্ড কম্পোনেন্টে ডেটা কীভাবে পাস করতে হয় (প্রপস) তা বুঝুন।</li></ul><p>এই মৌলিক বিষয়গুলিতে মনোযোগ দিয়ে, আপনি রিঅ্যাক্ট আয়ত্ত করার এবং শক্তিশালী ওয়েব অ্যাপ্লিকেশন তৈরির জন্য একটি শক্তিশালী ভিত্তি তৈরি করবেন।</p>",
-          "metaTitle": "২০২৫ সালে রিঅ্যাক্ট দিয়ে শুরু করুন | একটি শিক্ষানবিস গাইড",
-          "metaDescription": "আপনার প্রথম রিঅ্যাক্ট প্রজেক্ট সেট আপ করার এবং কম্পোনেন্টস, JSX, স্টেট এবং প্রপসের মতো মূল ধারণাগুলো বোঝার জন্য একটি শিক্ষানবিস-বান্ধব গাইড।"
+          "excerpt": "A beginner-friendly guide to setting up your first React project and understanding the core concepts.",
+          "content": "<h2>Embarking on Your React Journey</h2><p>React continues to dominate the world of front-end development, and for good reason. Its component-based architecture makes building complex user interfaces manageable and scalable. If you're new to React, getting started has never been easier.</p><h3>Setting Up Your First Project</h3><p>The quickest way to start a new React project is by using a tool like Vite. Simply run the following command in your terminal:</p><pre><code>npm create vite@latest my-react-app -- --template react-ts</code></pre><p>This command scaffolds a new React project with TypeScript, providing a fast development server and an optimized build process out of the box.</p><h3>Core Concepts to Grasp</h3><ul><li><strong>Components:</strong> The building blocks of any React application. Learn to create both functional and class components.</li><li><strong>JSX:</strong> A syntax extension for JavaScript that looks similar to HTML and is used to describe what the UI should look like.</li><li><strong>State and Props:</strong> Understand how to manage data within a component (state) and pass data down from parent to child components (props).</li></ul><p>By focusing on these fundamentals, you'll build a strong foundation for mastering React and creating powerful web applications.</p>",
+          "metaTitle": "Getting Started with React in 2025 | A Beginner's Guide",
+          "metaDescription": "A beginner-friendly guide to setting up your first React project and understanding the core concepts like components, JSX, state, and props."
         },
         {
           "slug": "10-seo-tips-to-boost-ranking",
-          "title": "ওয়েবসাইট র‍্যাঙ্কিং বাড়ানোর ১০টি এসইও টিপস",
-          "date": "জুলাই ০৫, ২০২৫",
+          "title": "10 SEO Tips to Boost Your Website Ranking",
+          "date": "July 05, 2025",
           "tags": [
-            "এসইও",
-            "মার্কেটিং",
-            "র‍্যাঙ্কিং"
+            "SEO",
+            "Marketing",
+            "Ranking"
           ],
           "image": "https://placehold.co/600x400.png",
           "imageHint": "marketing analytics",
-          "excerpt": "আপনার ওয়েবসাইটকে সার্চ ইঞ্জিন র‍্যাঙ্কিংয়ে উপরে তুলতে সাহায্য করার জন্য ব্যবহারিক এবং কার্যকর এসইও কৌশল।",
-          "content": "<h2>সার্চ ইঞ্জিনের সিঁড়ি বেয়ে উপরে ওঠা</h2><p>সার্চ ইঞ্জিন অপটিমাইজেশন (এসইও) একটি ম্যারাথন, স্প্রিন্ট নয়। সেরা অনুশীলনগুলির ধারাবাহিক প্রয়োগ উচ্চ র‍্যাঙ্কিং অর্জন এবং বজায় রাখার চাবিকাঠি। আপনাকে শুরু করতে সাহায্য করার জন্য এখানে ১০টি কার্যকরী টিপস দেওয়া হলো:</p><ol><li><strong>কীওয়ার্ড গবেষণা:</strong> আপনার লক্ষ্য দর্শকরা কোন শব্দগুলি অনুসন্ধান করছে তা চিহ্নিত করুন।</li><li><strong>উচ্চ-মানের সামগ্রী:</strong> মূল্যবান, তথ্যপূর্ণ এবং আকর্ষণীয় সামগ্রী তৈরি করুন যা ব্যবহারকারীর অভিপ্রায়ের উত্তর দেয়।</li><li><strong>অন-পেজ এসইও:</strong> টাইটেল ট্যাগ, মেটা বিবরণ, হেডার এবং ছবির অল্ট টেক্সট অপ্টিমাইজ করুন।</li><li><strong>মোবাইল-ফার্স্ট ডিজাইন:</strong> আপনার সাইটটি সম্পূর্ণরূপে প্রতিক্রিয়াশীল এবং একটি নির্বিঘ্ন মোবাইল অভিজ্ঞতা প্রদান করে তা নিশ্চিত করুন।</li><li><strong>সাইটের গতি:</strong> একটি দ্রুত লোড হওয়া ওয়েবসাইট ব্যবহারকারীর অভিজ্ঞতা এবং র‍্যাঙ্কিং উভয়ের জন্যই অত্যন্ত গুরুত্বপূর্ণ।</li><li><strong>অভ্যন্তরীণ লিঙ্কিং:</strong> আপনার নিজের সাইটের অন্যান্য প্রাসঙ্গিক পৃষ্ঠাগুলিতে লিঙ্ক করুন যাতে সার্চ ইঞ্জিনগুলি আপনার সামগ্রীর শ্রেণিবিন্যাস বুঝতে পারে।</li><li><strong>ব্যাকলিংক:</strong> আপনার ক্ষেত্রের प्रतिष्ठित ওয়েবসাইটগুলি থেকে উচ্চ-মানের ব্যাকলিংক অর্জন করুন।</li><li><strong>এইচটিটিপিএস ব্যবহার করুন:</strong> একটি এসএসএল সার্টিফিকেট দিয়ে আপনার সাইট সুরক্ষিত করুন।</li><li><strong>স্কিমা মার্কআপ:</strong> স্ট্রাকচার্ড ডেটা দিয়ে সার্চ ইঞ্জিনগুলিকে আপনার সামগ্রী আরও ভালভাবে বুঝতে সাহায্য করুন।</li><li><strong>পর্যবেক্ষণ ও বিশ্লেষণ:</strong> আপনার কর্মক্ষমতা ট্র্যাক করতে এবং উন্নতির জন্য ক্ষেত্রগুলি চিহ্নিত করতে গুগল অ্যানালিটিক্স এবং সার্চ কনসোলের মতো সরঞ্জামগুলি ব্যবহার করুন।</li></ol>",
-          "metaTitle": "আপনার ওয়েবসাইট র‍্যাঙ্কিং বাড়ানোর জন্য ১০টি কার্যকরী এসইও টিপস",
-          "metaDescription": "কীওয়ার্ড গবেষণা, অন-পেজ অপ্টিমাইজেশন এবং সাইটের গতি সহ ব্যবহারিক এবং কার্যকর এসইও কৌশল, যা আপনার ওয়েবসাইটকে সার্চ ইঞ্জিন র‍্যাঙ্কিংয়ে উপরে তুলতে সাহায্য করবে।"
+          "excerpt": "Practical and effective SEO strategies to help your website climb the search engine rankings.",
+          "content": "<h2>Climbing the Search Engine Ladder</h2><p>Search Engine Optimization (SEO) is a marathon, not a sprint. Consistently applying best practices is the key to achieving and maintaining high rankings. Here are 10 actionable tips to get you started:</p><ol><li><strong>Keyword Research:</strong> Identify the terms your target audience is searching for.</li><li><strong>High-Quality Content:</strong> Create valuable, informative, and engaging content that answers user intent.</li><li><strong>On-Page SEO:</strong> Optimize title tags, meta descriptions, headers, and image alt text.</li><li><strong>Mobile-First Design:</strong> Ensure your site is fully responsive and offers a seamless mobile experience.</li><li><strong>Site Speed:</strong> A fast-loading website is crucial for both user experience and rankings.</li><li><strong>Internal Linking:</strong> Link to other relevant pages on your own site to help search engines understand your content hierarchy.</li><li><strong>Backlinks:</strong> Earn high-quality backlinks from reputable websites in your niche.</li><li><strong>Use HTTPS:</strong> Secure your site with an SSL certificate.</li><li><strong>Schema Markup:</strong> Help search engines understand your content better with structured data.</li><li><strong>Monitor and Analyze:</strong> Use tools like Google Analytics and Search Console to track your performance and identify areas for improvement.</li></ol>",
+          "metaTitle": "10 Actionable SEO Tips to Boost Your Website Ranking",
+          "metaDescription": "Practical and effective SEO strategies, including keyword research, on-page optimization, and site speed, to help your website climb the search engine rankings."
         }
       ]
     },

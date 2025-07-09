@@ -7,25 +7,27 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, PlusCircle, Pencil, Trash2, Loader2, Save, Image as ImageIcon, Bold, Italic, Strikethrough, List, ListOrdered, Quote } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Pencil, Trash2, Loader2, Save, Image as ImageIcon, Bold, Italic, Strikethrough, List, ListOrdered, Quote, Underline, Palette, ImagePlus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { translations } from '@/lib/translations';
 import { updateBlogPosts } from './actions';
 import Image from 'next/image';
 import { useEditor, EditorContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import TiptapUnderline from '@tiptap/extension-underline';
+import { Color as TiptapColor } from '@tiptap/extension-color';
+import TiptapTextStyle from '@tiptap/extension-text-style';
+import TiptapImage from '@tiptap/extension-image';
 
 type Post = (typeof translations.en.blog.posts)[0];
-type EditablePost = { en: Post; bn: Post; index: number };
+type EditablePost = { post: Post; index: number };
 
-const newEnPostTemplate: Post = { slug: 'new-post-slug', title: 'New Blog Post', excerpt: 'A short excerpt for the new post.', content: '<p>Start writing your amazing blog content here!</p>', image: 'https://placehold.co/800x400.png', imageHint: 'blog post', date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), tags: ['New Tag'], metaTitle: 'New Post Meta Title', metaDescription: 'New post meta description for SEO.' };
-const newBnPostTemplate: Post = { slug: 'new-post-slug', title: 'নতুন ব্লগ পোস্ট', excerpt: 'নতুন পোস্টের জন্য একটি সংক্ষিপ্ত অংশ।', content: '<p>আপনার অসাধারণ ব্লগ কন্টেন্ট এখানে লেখা শুরু করুন!</p>', image: 'https://placehold.co/800x400.png', imageHint: 'blog post', date: new Date().toLocaleDateString('bn-BD', { month: 'long', day: 'numeric', year: 'numeric' }), tags: ['নতুন ট্যাগ'], metaTitle: 'নতুন পোস্টের মেটা টাইটেল', metaDescription: 'এসইও এর জন্য নতুন পোস্টের মেটা বিবরণ।' };
+const newPostTemplate: Post = { slug: 'new-post-slug', title: 'New Blog Post', excerpt: 'A short excerpt for the new post.', content: '<p>Start writing your amazing blog content here!</p>', image: 'https://placehold.co/800x400.png', imageHint: 'blog post', date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), tags: ['New Tag'], metaTitle: 'New Post Meta Title', metaDescription: 'New post meta description for SEO.' };
 
 export default function AdminBlogPage() {
     const [posts, setPosts] = useState<{ en: Post[], bn: Post[] }>({ en: [], bn: [] });
@@ -44,8 +46,7 @@ export default function AdminBlogPage() {
     const handleAddNew = () => {
         const uniqueSlug = `new-post-${Date.now()}`;
         setEditingPost({
-            en: { ...newEnPostTemplate, slug: uniqueSlug },
-            bn: { ...newBnPostTemplate, slug: uniqueSlug },
+            post: { ...newPostTemplate, slug: uniqueSlug },
             index: -1,
         });
         setIsDialogOpen(true);
@@ -53,8 +54,7 @@ export default function AdminBlogPage() {
 
     const handleEdit = (index: number) => {
         setEditingPost({
-            en: posts.en[index],
-            bn: posts.bn[index],
+            post: posts.en[index],
             index,
         });
         setIsDialogOpen(true);
@@ -69,18 +69,19 @@ export default function AdminBlogPage() {
     };
 
     const handleSaveFromDialog = (data: EditablePost) => {
-        const { en, bn, index } = data;
+        const { post, index } = data;
+        
         if (index === -1) { // New post
             setPosts(prev => ({
-                en: [en, ...prev.en],
-                bn: [bn, ...prev.bn],
+                en: [post, ...prev.en],
+                bn: [post, ...prev.bn],
             }));
         } else { // Editing existing post
             setPosts(prev => {
                 const newEn = [...prev.en];
                 const newBn = [...prev.bn];
-                newEn[index] = en;
-                newBn[index] = bn;
+                newEn[index] = post;
+                newBn[index] = post;
                 return { en: newEn, bn: newBn };
             });
         }
@@ -122,7 +123,7 @@ export default function AdminBlogPage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Title (English)</TableHead>
+                                <TableHead>Title</TableHead>
                                 <TableHead>Slug</TableHead>
                                 <TableHead>Date</TableHead>
                                 <TableHead>Tags</TableHead>
@@ -184,6 +185,14 @@ const TiptapToolbar = ({ editor }: { editor: Editor | null }) => {
     return null;
   }
 
+  const addImage = useCallback(() => {
+    const url = window.prompt('Enter image URL:');
+
+    if (url) {
+      editor.chain().focus().setImage({ src: url }).run();
+    }
+  }, [editor]);
+
   const ToggleButton = ({ onClick, children, isActive }: { onClick: () => void, children: React.ReactNode, isActive: boolean }) => (
     <Button
       type="button"
@@ -191,6 +200,7 @@ const TiptapToolbar = ({ editor }: { editor: Editor | null }) => {
       variant={isActive ? "secondary" : "ghost"}
       onClick={onClick}
       className="h-8 w-8"
+      aria-pressed={isActive}
     >
       {children}
     </Button>
@@ -200,7 +210,19 @@ const TiptapToolbar = ({ editor }: { editor: Editor | null }) => {
     <div className="p-2 border-b flex items-center flex-wrap gap-1">
       <ToggleButton onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')}><Bold className="h-4 w-4" /></ToggleButton>
       <ToggleButton onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')}><Italic className="h-4 w-4" /></ToggleButton>
+      <ToggleButton onClick={() => editor.chain().focus().toggleUnderline().run()} isActive={editor.isActive('underline')}><Underline className="h-4 w-4" /></ToggleButton>
       <ToggleButton onClick={() => editor.chain().focus().toggleStrike().run()} isActive={editor.isActive('strike')}><Strikethrough className="h-4 w-4" /></ToggleButton>
+      <div className="relative inline-flex items-center justify-center h-8 w-8">
+          <input
+            type="color"
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            onInput={event => editor.chain().focus().setColor((event.target as HTMLInputElement).value).run()}
+            value={editor.getAttributes('textStyle').color || '#000000'}
+            title="Text Color"
+          />
+          <Palette className="h-4 w-4 text-muted-foreground" style={{ color: editor.getAttributes('textStyle').color }} />
+      </div>
+      <ToggleButton onClick={addImage} isActive={false}><ImagePlus className="h-4 w-4" /></ToggleButton>
       <ToggleButton onClick={() => editor.chain().focus().toggleBulletList().run()} isActive={editor.isActive('bulletList')}><List className="h-4 w-4" /></ToggleButton>
       <ToggleButton onClick={() => editor.chain().focus().toggleOrderedList().run()} isActive={editor.isActive('orderedList')}><ListOrdered className="h-4 w-4" /></ToggleButton>
       <ToggleButton onClick={() => editor.chain().focus().toggleBlockquote().run()} isActive={editor.isActive('blockquote')}><Quote className="h-4 w-4" /></ToggleButton>
@@ -210,7 +232,13 @@ const TiptapToolbar = ({ editor }: { editor: Editor | null }) => {
 
 const TiptapEditor = ({ value, onChange }: { value: string; onChange: (value: string) => void }) => {
     const editor = useEditor({
-        extensions: [StarterKit],
+        extensions: [
+            StarterKit.configure({ link: false }), // Disable links as requested
+            TiptapUnderline,
+            TiptapTextStyle,
+            TiptapColor,
+            TiptapImage,
+        ],
         content: value,
         onUpdate: ({ editor }) => {
             onChange(editor.getHTML());
@@ -236,19 +264,13 @@ function PostFormDialog({ isOpen, onOpenChange, onSave, post }: { isOpen: boolea
     const [uploadingImage, setUploadingImage] = useState(false);
     const { toast } = useToast();
 
-    const handleFieldChange = (lang: 'en' | 'bn', field: keyof Post, value: string | string[]) => {
+    const handleFieldChange = (field: keyof Post, value: string | string[]) => {
         if (!formData) return;
-        
-        let newFormData = { ...formData };
-
-        if(field === 'slug') {
-            newFormData.en.slug = value as string;
-            newFormData.bn.slug = value as string;
-        } else {
-            (newFormData[lang] as any)[field] = value;
-        }
-
-        setFormData(newFormData);
+        setFormData(prev => {
+            if (!prev) return null;
+            const newPost = { ...prev.post, [field]: value };
+            return { ...prev, post: newPost };
+        });
     };
     
     const handleImageUpload = async (file: File) => {
@@ -261,8 +283,7 @@ function PostFormDialog({ isOpen, onOpenChange, onSave, post }: { isOpen: boolea
             const response = await fetch('/api/upload', { method: 'POST', body: uploadFormData });
             const result = await response.json();
             if (response.ok && result.success) {
-                handleFieldChange('en', 'image', result.url);
-                handleFieldChange('bn', 'image', result.url);
+                handleFieldChange('image', result.url);
                 toast({ title: "Image Uploaded", description: "Image URL has been updated." });
             } else {
                 throw new Error(result.message || 'Upload failed');
@@ -279,32 +300,7 @@ function PostFormDialog({ isOpen, onOpenChange, onSave, post }: { isOpen: boolea
     };
     
     if(!formData) return null;
-
-    const renderFormFields = (lang: 'en' | 'bn') => {
-        const data = formData[lang];
-        return (
-            <div className="space-y-4">
-                {lang === 'en' && <div className="space-y-1"><Label>Slug (URL Identifier)</Label><Input value={data.slug} onChange={e => handleFieldChange(lang, 'slug', e.target.value)} /><p className="text-xs text-muted-foreground">Keep this unique and sync'd across languages.</p></div>}
-                {lang === 'bn' && <div className="space-y-1"><Label>Slug (URL Identifier)</Label><Input value={data.slug} disabled /></div>}
-                
-                <div className="space-y-1"><Label>Title</Label><Input value={data.title} onChange={e => handleFieldChange(lang, 'title', e.target.value)} /></div>
-                <div className="space-y-1"><Label>Date</Label><Input value={data.date} onChange={e => handleFieldChange(lang, 'date', e.target.value)} /></div>
-                <div className="space-y-1"><Label>Excerpt</Label><Textarea value={data.excerpt} onChange={e => handleFieldChange(lang, 'excerpt', e.target.value)} className="h-24" /></div>
-                
-                <div className="space-y-1">
-                    <Label>Content</Label>
-                    <TiptapEditor
-                        value={data.content}
-                        onChange={(content) => handleFieldChange(lang, 'content', content)}
-                    />
-                </div>
-
-                <div className="space-y-1"><Label>Tags (comma separated)</Label><Input value={data.tags.join(', ')} onChange={e => handleFieldChange(lang, 'tags', e.target.value.split(',').map(t => t.trim()))} /></div>
-                <div className="space-y-1"><Label>Meta Title (for SEO)</Label><Input value={data.metaTitle} onChange={e => handleFieldChange(lang, 'metaTitle', e.target.value)} /></div>
-                <div className="space-y-1"><Label>Meta Description (for SEO)</Label><Textarea value={data.metaDescription} onChange={e => handleFieldChange(lang, 'metaDescription', e.target.value)} className="h-24" /></div>
-            </div>
-        )
-    }
+    const data = formData.post;
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -315,24 +311,33 @@ function PostFormDialog({ isOpen, onOpenChange, onSave, post }: { isOpen: boolea
                 </DialogHeader>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-4 max-h-[70vh] overflow-y-auto pr-4">
-                    <div className="md:col-span-2">
-                         <Tabs defaultValue="en">
-                            <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="en">English</TabsTrigger><TabsTrigger value="bn">Bengali</TabsTrigger></TabsList>
-                            <TabsContent value="en" className="pt-4">{renderFormFields('en')}</TabsContent>
-                            <TabsContent value="bn" className="pt-4">{renderFormFields('bn')}</TabsContent>
-                        </Tabs>
+                    <div className="md:col-span-2 space-y-4">
+                        <div className="space-y-1"><Label>Slug (URL Identifier)</Label><Input value={data.slug} onChange={e => handleFieldChange('slug', e.target.value)} /><p className="text-xs text-muted-foreground">Keep this unique.</p></div>
+                        <div className="space-y-1"><Label>Title</Label><Input value={data.title} onChange={e => handleFieldChange('title', e.target.value)} /></div>
+                        <div className="space-y-1"><Label>Date</Label><Input value={data.date} onChange={e => handleFieldChange('date', e.target.value)} /></div>
+                        <div className="space-y-1"><Label>Excerpt</Label><Textarea value={data.excerpt} onChange={e => handleFieldChange('excerpt', e.target.value)} className="h-24" /></div>
+                        <div className="space-y-1">
+                            <Label>Content</Label>
+                            <TiptapEditor
+                                value={data.content}
+                                onChange={(content) => handleFieldChange('content', content)}
+                            />
+                        </div>
+                        <div className="space-y-1"><Label>Tags (comma separated)</Label><Input value={data.tags.join(', ')} onChange={e => handleFieldChange('tags', e.target.value.split(',').map(t => t.trim()))} /></div>
+                        <div className="space-y-1"><Label>Meta Title (for SEO)</Label><Input value={data.metaTitle} onChange={e => handleFieldChange('metaTitle', e.target.value)} /></div>
+                        <div className="space-y-1"><Label>Meta Description (for SEO)</Label><Textarea value={data.metaDescription} onChange={e => handleFieldChange('metaDescription', e.target.value)} className="h-24" /></div>
                     </div>
                     <div className="space-y-4">
                         <Card>
                             <CardHeader><CardTitle className="text-lg flex items-center gap-2"><ImageIcon className="h-5 w-5"/>Featured Image</CardTitle></CardHeader>
                             <CardContent className="space-y-2">
                                 <div className="relative w-full aspect-video border rounded-md overflow-hidden bg-muted">
-                                    {uploadingImage ? <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div> : <Image src={formData.en.image} alt="Post image" layout="fill" objectFit="cover" unoptimized />}
+                                    {uploadingImage ? <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div> : <Image src={data.image} alt="Post image" layout="fill" objectFit="cover" unoptimized />}
                                 </div>
                                 <Input id="image" type="file" accept="image/*" onChange={(e) => { if (e.target.files?.[0]) handleImageUpload(e.target.files[0]); }} disabled={uploadingImage} />
                                 <div className="space-y-1 pt-2">
                                   <Label>Image AI Hint (for alt text generation)</Label>
-                                  <Input value={formData.en.imageHint} onChange={e => { handleFieldChange('en', 'imageHint', e.target.value); handleFieldChange('bn', 'imageHint', e.target.value); }} />
+                                  <Input value={data.imageHint} onChange={e => handleFieldChange('imageHint', e.target.value)} />
                                 </div>
                             </CardContent>
                         </Card>
