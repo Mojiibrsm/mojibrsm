@@ -1,4 +1,3 @@
-
 'use client';
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
@@ -33,26 +32,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (!loading && !isLoggedIn) {
-      router.push('/login?redirectTo=/admin');
+      router.push(`/login?redirectTo=${pathname}`);
     }
-  }, [isLoggedIn, loading, router]);
+  }, [isLoggedIn, loading, router, pathname]);
   
   const handleLogout = () => {
     logout();
   };
 
-  if (loading) {
+  if (loading || !isLoggedIn || !user) {
     return (
       <div className="flex h-screen items-center justify-center">
         <p>Loading access control...</p>
-      </div>
-    );
-  }
-
-  if (!isLoggedIn || !user) {
-     return (
-      <div className="flex h-screen items-center justify-center">
-        <p>Redirecting to login...</p>
       </div>
     );
   }
