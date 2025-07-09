@@ -84,9 +84,9 @@ export default function LoginPage() {
       if (error.code === 'auth/too-many-requests') {
         description = 'অনেকবার চেষ্টা করা হয়েছে। অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন।';
       } else if (error.code === 'auth/network-request-failed') {
-        description = 'নেটওয়ার্ক অনুরোধ ব্যর্থ হয়েছে। এটি সাধারণত ফায়ারবেস কনফিগারেশন সমস্যার কারণে হয়। আপনার ডেভেলপমেন্ট ডোমেইনটি Firebase কনসোলে অনুমোদিত আছে কিনা তা পরীক্ষা করুন।';
+        description = 'নেটওয়ার্ক অনুরোধ ব্যর্থ হয়েছে। আপনার ডেভেলপমেন্ট ডোমেইনটি Firebase কনসোলে অনুমোদিত আছে কিনা তা পরীক্ষা করুন।';
       } else if (error.code === 'auth/billing-not-enabled') {
-        description = 'এই প্রকল্পের জন্য বিনামূল্যে ফোন যাচাইকরণ কোটা শেষ হয়ে গেছে। প্রোডাকশনের জন্য আপনার Firebase প্রকল্পে বিলিং সক্ষম করুন, অথবা ডেভেলপমেন্টের জন্য টেস্ট ফোন নম্বর ব্যবহার করুন।';
+        description = 'এই প্রকল্পের জন্য বিনামূল্যে ফোন যাচাইকরণ কোটা শেষ হয়ে গেছে। প্রোডাকশনের জন্য বিলিং সক্ষম করুন, অথবা ডেভেলপমেন্টের জন্য টেস্ট ফোন নম্বর ব্যবহার করুন।';
       } else {
          description = `একটি অপ্রত্যাশিত ত্রুটি ঘটেছে। বিস্তারিত: ${error.message}`;
       }
@@ -111,6 +111,18 @@ export default function LoginPage() {
       });
       return;
     }
+
+    if (!window.confirmationResult) {
+      toast({
+        variant: 'destructive',
+        title: 'সেশন মেয়াদোত্তীর্ণ',
+        description: 'যাচাইকরণ সেশনটি আর সক্রিয় নেই। অনুগ্রহ করে আবার চেষ্টা করুন।',
+      });
+      setOtpSent(false);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const result = await window.confirmationResult.confirm(otp);
@@ -120,10 +132,16 @@ export default function LoginPage() {
       router.push(redirectTo);
     } catch (error: any) {
       console.error("Error verifying OTP:", error);
+      let description = 'আপনি ভুল OTP দিয়েছেন। অনুগ্রহ করে আবার চেষ্টা করুন।';
+       if (error.code === 'auth/invalid-verification-code') {
+        description = 'আপনি যে OTP কোডটি দিয়েছেন তা ভুল। অনুগ্রহ করে আবার চেষ্টা করুন।';
+      } else if (error.code === 'auth/code-expired') {
+        description = 'আপনার OTP কোডের মেয়াদ শেষ হয়ে গেছে। অনুগ্রহ করে আবার পাঠান।';
+      }
       toast({
         variant: 'destructive',
         title: 'OTP যাচাইকরণ ব্যর্থ',
-        description: 'আপনি ভুল OTP দিয়েছেন। অনুগ্রহ করে আবার চেষ্টা করুন।',
+        description: description,
       });
     } finally {
       setLoading(false);
