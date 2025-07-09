@@ -69,7 +69,7 @@ const generateProjectEmailHtml = (projectData: ProjectFormData, isNew: boolean, 
                         ${absoluteImageUrl ? `<tr style="background-color: #f9f9f9;"><td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 600; vertical-align: top;">${lang === 'bn' ? 'সংযুক্ত ছবি' : 'Attached Image'}:</td><td style="padding: 12px; border: 1px solid #e5e7eb;"><img src="${absoluteImageUrl}" alt="Project Notes Image" style="max-width: 100%; border-radius: 8px;"/></td></tr>` : ''}
                     </table>
                     
-                    <p style="font-size: 16px;">${lang === 'bn' ? 'আপনার যদি কোনো প্রশ্ন থাকে বা প্রকল্পটি নিয়ে আরও আলোচনার প্রয়োজন হয়, তাহলে নির্দ্বিধায় হোয়াটসঅ্যাপ, ফেসবুক বা এই ইমেইলের উত্তরে আমার সাথে যোগাযোগ করুন।' : 'If you have any questions or need to discuss the project further, feel free to contact me via WhatsApp, Facebook, or by replying to this email.'}</p>
+                    <p style="font-size: 16px;">${lang === 'bn' ? 'আপনার যদি কোনো প্রশ্ন থাকে বা প্রকল্পটি নিয়ে আরও আলোচনার প্রয়োজন হয়, তাহলে নির্দ্বিধায় আমার সাথে যোগাযোগ করুন।' : 'If you have any questions or need to discuss the project further, feel free to contact me.'}</p>
                 </div>
                 <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
                     <h3 style="margin: 0 0 10px 0; font-size: 18px; font-weight: bold;">${devName}</h3>
@@ -77,6 +77,7 @@ const generateProjectEmailHtml = (projectData: ProjectFormData, isNew: boolean, 
                     <div style="margin-top: 15px;">
                         <a href="https://wa.me/${whatsappNumber}" style="display: inline-block; background-color: #25D366; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px; font-size: 14px; font-weight: bold;">WhatsApp</a>
                         <a href="https://facebook.com/MoJiiB.RsM" style="display: inline-block; background-color: #1877F2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px; font-size: 14px; font-weight: bold;">Facebook</a>
+                        <a href="https://www.mojib.oftern.com" style="display: inline-block; background-color: #6366f1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px; font-size: 14px; font-weight: bold;">Visit Website</a>
                     </div>
                 </div>
             </div>
