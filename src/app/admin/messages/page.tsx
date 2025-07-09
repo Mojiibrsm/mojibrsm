@@ -2,11 +2,11 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { getMessageThreads, addMessageToThread, markThreadAsRead, createMessageThread, IMessage, IMessageThread, addSmsLog } from '@/services/data';
+import { getMessageThreads, addMessageToThread, markThreadAsRead, IMessage, IMessageThread, addSmsLog, addEmailLog } from '@/services/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Send, PlusCircle, Mail, MessageSquareText, Loader2, MessageSquare } from 'lucide-react';
+import { Send, PlusCircle, Mail, MessageSquareText, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,6 +14,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { FormattedTimestamp } from '@/components/formatted-timestamp';
 import { Label } from '@/components/ui/label';
 import { sendSms } from '@/services/sms';
+import { sendEmail } from '@/services/email';
 
 export default function AdminMessagesPage() {
   const [threads, setThreads] = useState<IMessageThread[]>([]);
@@ -21,14 +22,14 @@ export default function AdminMessagesPage() {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [replyText, setReplyText] = useState("");
-  const [newThreadData, setNewThreadData] = useState({
+  const [composeData, setComposeData] = useState({
       clientName: '',
       clientEmail: '',
       clientPhone: '',
       subject: '',
       message: ''
   });
-  const [isSending, setIsSending] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [isSendingSms, setIsSendingSms] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -70,57 +71,56 @@ export default function AdminMessagesPage() {
 
   const handleComposeChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const { name, value } = e.target;
-      setNewThreadData(prev => ({ ...prev, [name]: value }));
+      setComposeData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleCreateThread = async () => {
-      if (!user || !newThreadData.clientEmail || !newThreadData.subject || !newThreadData.message) {
-          toast({ variant: "destructive", title: "Missing Information", description: "Client email, subject, and message are required." });
-          return;
-      }
-      setIsSending(true);
+  const handleSendEmail = async () => {
+    if (!composeData.clientEmail || !composeData.subject || !composeData.message) {
+        toast({ variant: "destructive", title: "Missing Information", description: "Client email, subject, and a message are required." });
+        return;
+    }
+    setIsSendingEmail(true);
 
-      const threadData = {
-          userId: newThreadData.clientEmail, // Using email as a unique user ID for simplicity
-          clientName: newThreadData.clientName || 'N/A',
-          clientEmail: newThreadData.clientEmail,
-          clientAvatar: `https://placehold.co/100x100.png`,
-          clientPhone: newThreadData.clientPhone || 'N/A',
-          subject: newThreadData.subject,
-          unreadByAdmin: false,
-          unreadByUser: true,
-      };
+    const emailHtml = composeData.message.replace(/\n/g, '<br>');
+    const result = await sendEmail({
+        to: composeData.clientEmail,
+        subject: composeData.subject,
+        html: emailHtml
+    });
 
-      const initialMessage: IMessage = {
-          from: 'admin',
-          text: newThreadData.message,
-          timestamp: new Date().toISOString(),
-      };
+    addEmailLog({
+        to: composeData.clientEmail,
+        subject: composeData.subject,
+        html: emailHtml,
+        success: result.success,
+        message: result.message,
+    });
 
-      try {
-          createMessageThread(threadData, initialMessage);
-          toast({ title: "Message Sent", description: `A new conversation has been started with ${newThreadData.clientName || newThreadData.clientEmail}.` });
-          setIsComposeOpen(false);
-          setNewThreadData({ clientName: '', clientEmail: '', clientPhone: '', subject: '', message: '' });
-          loadThreads();
-      } catch (error) {
-          toast({ variant: "destructive", title: "Error", description: "Failed to create new conversation." });
-      } finally {
-          setIsSending(false);
-      }
+    toast({
+        title: result.success ? "Email Sent" : "Email Failed",
+        description: result.message,
+        variant: result.success ? "default" : "destructive",
+    });
+    
+    if (result.success) {
+        setIsComposeOpen(false);
+        setComposeData({ clientName: '', clientEmail: '', clientPhone: '', subject: '', message: '' });
+    }
+    
+    setIsSendingEmail(false);
   };
   
   const handleSendSms = async () => {
-      if (!newThreadData.clientPhone || !newThreadData.message) {
-           toast({ variant: "destructive", title: "Missing Info", description: "Client phone number and a message are required to send an SMS." });
+      if (!composeData.clientPhone || !composeData.message) {
+           toast({ variant: "destructive", title: "Missing Info", description: "Client phone number and a message are required." });
            return;
       }
       setIsSendingSms(true);
-      const result = await sendSms(newThreadData.clientPhone, newThreadData.message);
+      const result = await sendSms(composeData.clientPhone, composeData.message);
       
       addSmsLog({
-        to: newThreadData.clientPhone,
-        message: newThreadData.message,
+        to: composeData.clientPhone,
+        message: composeData.message,
         success: result.success,
         response: result.message,
       });
@@ -130,6 +130,12 @@ export default function AdminMessagesPage() {
           description: result.message,
           variant: result.success ? "default" : "destructive",
       });
+
+      if (result.success) {
+        setIsComposeOpen(false);
+        setComposeData({ clientName: '', clientEmail: '', clientPhone: '', subject: '', message: '' });
+      }
+      
       setIsSendingSms(false);
   }
 
@@ -138,54 +144,52 @@ export default function AdminMessagesPage() {
        <div className="flex items-center justify-between">
             <div>
                 <h1 className="text-2xl font-bold">Manage Messages</h1>
-                <p className="text-muted-foreground">View and respond to all client conversations.</p>
+                <p className="text-muted-foreground">View client conversations and send direct messages.</p>
             </div>
             <Dialog open={isComposeOpen} onOpenChange={setIsComposeOpen}>
                 <DialogTrigger asChild>
                     <Button>
                         <PlusCircle className="mr-2 h-4 w-4" />
-                        New Message
+                        New Direct Message
                     </Button>
                 </DialogTrigger>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Compose New Message</DialogTitle>
-                        <DialogDescription>Manually start a new conversation with a client.</DialogDescription>
+                        <DialogTitle>Send a Direct Message</DialogTitle>
+                        <DialogDescription>Send an email or SMS directly to any recipient. This will be logged in your history.</DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="clientName" className="text-right">Client Name</Label>
-                            <Input id="clientName" name="clientName" value={newThreadData.clientName} onChange={handleComposeChange} className="col-span-3" placeholder="John Doe"/>
+                            <Label htmlFor="clientName" className="text-right">Recipient Name</Label>
+                            <Input id="clientName" name="clientName" value={composeData.clientName} onChange={handleComposeChange} className="col-span-3" placeholder="John Doe"/>
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="clientEmail" className="text-right">Client Email</Label>
-                            <Input id="clientEmail" name="clientEmail" type="email" value={newThreadData.clientEmail} onChange={handleComposeChange} className="col-span-3" placeholder="client@example.com" required/>
+                            <Label htmlFor="clientEmail" className="text-right">Recipient Email</Label>
+                            <Input id="clientEmail" name="clientEmail" type="email" value={composeData.clientEmail} onChange={handleComposeChange} className="col-span-3" placeholder="recipient@example.com" />
                         </div>
                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="clientPhone" className="text-right">Client Phone</Label>
-                            <Input id="clientPhone" name="clientPhone" value={newThreadData.clientPhone} onChange={handleComposeChange} className="col-span-3" placeholder="+1234567890"/>
+                            <Label htmlFor="clientPhone" className="text-right">Recipient Phone</Label>
+                            <Input id="clientPhone" name="clientPhone" value={composeData.clientPhone} onChange={handleComposeChange} className="col-span-3" placeholder="+1234567890"/>
                         </div>
                          <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="subject" className="text-right">Subject</Label>
-                            <Input id="subject" name="subject" value={newThreadData.subject} onChange={handleComposeChange} className="col-span-3" placeholder="Regarding your project..." required/>
+                            <Input id="subject" name="subject" value={composeData.subject} onChange={handleComposeChange} className="col-span-3" placeholder="Message subject..."/>
                         </div>
                         <div className="grid grid-cols-4 items-start gap-4">
                             <Label htmlFor="message" className="text-right pt-2">Message</Label>
-                            <Textarea id="message" name="message" value={newThreadData.message} onChange={handleComposeChange} className="col-span-3" placeholder="Type your message here." required/>
+                            <Textarea id="message" name="message" value={composeData.message} onChange={handleComposeChange} className="col-span-3 min-h-[120px]" placeholder="Type your email or SMS content here." required/>
                         </div>
                     </div>
-                    <DialogFooter className="sm:justify-between">
-                        <Button variant="outline" onClick={handleSendSms} disabled={isSendingSms || !newThreadData.clientPhone || !newThreadData.message}>
-                            {isSendingSms ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <MessageSquare className="mr-2 h-4 w-4"/>}
+                    <DialogFooter className="gap-2 sm:justify-end">
+                        <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
+                        <Button variant="outline" onClick={handleSendSms} disabled={isSendingSms || !composeData.clientPhone || !composeData.message}>
+                            {isSendingSms ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <MessageSquareText className="mr-2 h-4 w-4"/>}
                             Send as SMS
                         </Button>
-                        <div className="flex gap-2">
-                          <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
-                          <Button onClick={handleCreateThread} disabled={isSending}>
-                              {isSending && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                              Send Message
-                          </Button>
-                        </div>
+                        <Button onClick={handleSendEmail} disabled={isSendingEmail || !composeData.clientEmail || !composeData.subject || !composeData.message}>
+                            {isSendingEmail ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Mail className="mr-2 h-4 w-4"/>}
+                            Send as Email
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
