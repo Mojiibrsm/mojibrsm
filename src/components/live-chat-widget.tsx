@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -20,7 +19,7 @@ export default function LiveChatWidget() {
     const [inputText, setInputText] = useState('');
     const { t } = useLanguage();
     const adminAvatar = t.site.adminAvatar;
-    const scrollAreaRef = useRef<HTMLDivElement>(null);
+    const lastMessageRef = useRef<HTMLDivElement>(null);
     
     const [userDetails, setUserDetails] = useState<{ name: string; phone: string } | null>(null);
     const [nameInput, setNameInput] = useState('');
@@ -40,7 +39,7 @@ export default function LiveChatWidget() {
             const currentThread = threads.find(t => t.id === storedThreadId);
             if (currentThread) {
                 setMessages(currentThread.messages);
-                 if (!storedUserDetails) {
+                 if (!storedUserDetails && currentThread.clientName !== 'Anonymous') {
                     const details = { name: currentThread.clientName, phone: currentThread.clientPhone };
                     setUserDetails(details);
                     localStorage.setItem('live_chat_user_details', JSON.stringify(details));
@@ -64,16 +63,16 @@ export default function LiveChatWidget() {
     }, [threadId, messages, isOpen]);
 
     useEffect(() => {
-        if (isOpen && userDetails && scrollAreaRef.current) {
+        if (isOpen && userDetails && lastMessageRef.current) {
             setTimeout(() => {
-                 scrollAreaRef.current?.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
+                lastMessageRef.current?.scrollIntoView({ behavior: 'smooth' });
             }, 100);
         }
     }, [messages, isOpen, userDetails]);
 
-    const handleStartChat = () => {
+    const handleStartChat = (e: React.FormEvent) => {
+        e.preventDefault();
         if (!nameInput.trim() || !phoneInput.trim()) {
-            alert('Please provide your name and phone number.');
             return;
         }
         const details = { name: nameInput.trim(), phone: phoneInput.trim() };
@@ -116,30 +115,29 @@ export default function LiveChatWidget() {
     };
 
     const ChatView = () => (
-         <Card className="flex flex-col h-[28rem] shadow-2xl">
-            <CardHeader className="flex flex-row items-center justify-between p-3 bg-primary text-primary-foreground rounded-t-lg">
+         <Card className="flex flex-col h-[32rem] shadow-2xl">
+            <CardHeader className="flex flex-row items-center justify-between p-3 bg-primary text-primary-foreground rounded-t-lg shrink-0">
                 <CardTitle className="text-lg">{t.chat.title}</CardTitle>
                 <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="h-7 w-7 text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground">
                     <X className="h-5 w-5" />
                 </Button>
             </CardHeader>
-            <CardContent className="p-0 flex-1">
-                <ScrollArea className="h-full p-4" ref={scrollAreaRef}>
-                    <div className="space-y-4">
-                        <div className="text-center text-xs text-muted-foreground">{t.chat.greeting.replace('{adminName}', t.hero.name)}</div>
-                        {messages.map((message, index) => (
-                            <div key={index} className={`flex items-end gap-2 ${message.from === 'client' ? 'justify-end' : 'justify-start'}`}>
-                                {message.from === 'admin' && <Avatar className="h-8 w-8"><AvatarImage src={adminAvatar} /><AvatarFallback>A</AvatarFallback></Avatar>}
-                                <div className={`max-w-xs p-3 rounded-2xl text-sm ${message.from === 'client' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-muted rounded-bl-none'}`}>
-                                    <p style={{ whiteSpace: 'pre-wrap' }}>{message.text}</p>
-                                    <FormattedTimestamp timestamp={message.timestamp} className="text-xs text-right mt-1 opacity-70" />
-                                </div>
+            <ScrollArea className="flex-grow p-4 bg-background">
+                <div className="space-y-4">
+                    <div className="text-center text-xs text-muted-foreground">{t.chat.greeting.replace('{adminName}', t.hero.name)}</div>
+                    {messages.map((message, index) => (
+                        <div key={index} className={`flex items-end gap-2 ${message.from === 'client' ? 'justify-end' : 'justify-start'}`}>
+                            {message.from === 'admin' && <Avatar className="h-8 w-8"><AvatarImage src={adminAvatar} /><AvatarFallback>A</AvatarFallback></Avatar>}
+                            <div className={`max-w-xs p-3 rounded-2xl text-sm ${message.from === 'client' ? 'bg-primary text-primary-foreground rounded-br-none' : 'bg-muted rounded-bl-none'}`}>
+                                <p style={{ whiteSpace: 'pre-wrap' }}>{message.text}</p>
+                                <FormattedTimestamp timestamp={message.timestamp} className="text-xs text-right mt-1 opacity-70" />
                             </div>
-                        ))}
-                    </div>
-                </ScrollArea>
-            </CardContent>
-            <CardFooter className="p-2 border-t">
+                        </div>
+                    ))}
+                    <div ref={lastMessageRef} />
+                </div>
+            </ScrollArea>
+            <CardFooter className="p-2 border-t shrink-0">
                 <div className="flex w-full items-center gap-2">
                     <Input 
                         placeholder={t.chat.placeholder} 
@@ -156,18 +154,20 @@ export default function LiveChatWidget() {
     );
 
     const RegistrationForm = () => (
-        <Card className="flex flex-col h-[28rem] shadow-2xl justify-center">
+        <Card className="flex flex-col h-[32rem] shadow-2xl justify-center">
             <CardHeader className="p-6">
                 <CardTitle>{t.chat.formTitle}</CardTitle>
                 <CardDescription>{t.chat.formDescription}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4 p-6 pt-0">
-                <Input placeholder={t.chat.namePlaceholder} value={nameInput} onChange={(e) => setNameInput(e.target.value)} />
-                <Input type="tel" placeholder={t.chat.phonePlaceholder} value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} />
-            </CardContent>
-            <CardFooter className="p-6">
-                <Button className="w-full" onClick={handleStartChat}>{t.chat.startButton}</Button>
-            </CardFooter>
+            <form onSubmit={handleStartChat}>
+                <CardContent className="space-y-4 p-6 pt-0">
+                    <Input placeholder={t.chat.namePlaceholder} value={nameInput} onChange={(e) => setNameInput(e.target.value)} required />
+                    <Input type="tel" placeholder={t.chat.phonePlaceholder} value={phoneInput} onChange={(e) => setPhoneInput(e.target.value)} required />
+                </CardContent>
+                <CardFooter className="p-6">
+                    <Button type="submit" className="w-full" disabled={!nameInput.trim() || !phoneInput.trim()}>{t.chat.startButton}</Button>
+                </CardFooter>
+            </form>
         </Card>
     );
 

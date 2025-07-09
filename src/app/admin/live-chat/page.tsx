@@ -1,58 +1,23 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { getMessageThreads, addMessageToThread, markThreadAsRead, IMessage, IMessageThread, addSmsLog, addEmailLog } from '@/services/data';
+import { getMessageThreads, addMessageToThread, markThreadAsRead, IMessage, IMessageThread, addSmsLog } from '@/services/data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Send, Mail, MessageSquareText, Loader2, Phone, FileText } from 'lucide-react';
+import { Send, Mail, MessageSquareText, Loader2, Phone, MessageCircle, FileText } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/auth-context';
 import { FormattedTimestamp } from '@/components/formatted-timestamp';
 import { Label } from '@/components/ui/label';
 import { sendSms } from '@/services/sms';
-import { sendEmail } from '@/services/email';
 import { translations } from '@/lib/translations';
+import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 
-
-const generateReplyEmailHtml = (threadSubject: string, clientName: string, replyMessage: string): string => {
-    const t = translations['en']; 
-    const { name: devName } = t.hero;
-    const { phone: devPhone, email: devEmail } = t.contact.details;
-    const siteUrl = t.site.url;
-    const whatsappNumber = devPhone.replace(/[^0-9]/g, '');
-
-    const messageBody = replyMessage.replace(/\n/g, '<br>');
-
-    return `
-        <div style="background-color: #f4f4f7; padding: 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333;">
-            <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-                <div style="background: linear-gradient(to right, #6366f1, #a855f7); color: #ffffff; padding: 24px; text-align: left;">
-                    <h1 style="margin: 0; font-size: 24px; font-weight: bold;">Re: ${threadSubject}</h1>
-                </div>
-                <div style="padding: 24px; line-height: 1.6; font-size: 16px;">
-                    <p>Hello ${clientName},</p>
-                    ${messageBody}
-                </div>
-                <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
-                    <h3 style="margin: 0 0 10px 0; font-size: 18px; font-weight: bold;">${devName}</h3>
-                    <p style="margin: 0 0 15px 0; color: #555555; font-size: 14px;">Email: ${devEmail} | Phone: ${devPhone}</p>
-                    <div style="margin-top: 15px;">
-                        <a href="https://wa.me/${whatsappNumber}" style="display: inline-block; background-color: #25D366; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px; font-size: 14px; font-weight: bold;">WhatsApp</a>
-                        <a href="https://facebook.com/MoJiiB.RsM" style="display: inline-block; background-color: #1877F2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px; font-size: 14px; font-weight: bold;">Facebook</a>
-                        <a href="${siteUrl}" style="display: inline-block; background-color: #6366f1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px; font-size: 14px; font-weight: bold;">Visit Website</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-};
-
-
-export default function AdminMessagesPage() {
+export default function AdminLiveChatPage() {
+  const router = useRouter();
   const [threads, setThreads] = useState<IMessageThread[]>([]);
   const [selectedThread, setSelectedThread] = useState<IMessageThread | null>(null);
   const [replyText, setReplyText] = useState('');
@@ -65,9 +30,10 @@ export default function AdminMessagesPage() {
   const { toast } = useToast();
   const { user } = useAuth();
   const adminAvatar = translations.en.site.adminAvatar;
+  const lastNotifiedTimestamp = useRef<string | null>(null);
 
   const loadThreads = useCallback(() => {
-    const fetchedThreads = getMessageThreads().filter(t => t.type === 'contact');
+    const fetchedThreads = getMessageThreads().filter(t => t.type === 'live');
     setThreads(fetchedThreads);
   }, []);
 
@@ -76,6 +42,36 @@ export default function AdminMessagesPage() {
       loadThreads();
     }
   }, [user, loadThreads]);
+
+  useEffect(() => {
+    if (Notification.permission !== "granted") {
+        Notification.requestPermission();
+    }
+
+    const intervalId = setInterval(() => {
+        const newTimestamp = localStorage.getItem('new_live_chat_message_timestamp');
+        if (newTimestamp && newTimestamp !== lastNotifiedTimestamp.current) {
+            lastNotifiedTimestamp.current = newTimestamp;
+            loadThreads(); 
+            
+            const threads = getMessageThreads();
+            const lastLiveChat = threads.find(t => t.type === 'live' && t.lastMessageTimestamp === newTimestamp);
+
+            if (Notification.permission === "granted" && lastLiveChat) {
+                const notification = new Notification(`New Live Chat from ${lastLiveChat.clientName}`, {
+                    body: lastLiveChat.lastMessage,
+                    icon: translations.en.site.publicLogo,
+                });
+                notification.onclick = () => {
+                    router.push('/admin/live-chat');
+                    window.focus();
+                };
+            }
+        }
+    }, 3000); 
+
+    return () => clearInterval(intervalId);
+  }, [router, loadThreads]);
 
   useEffect(() => {
     if (!selectedThread) return;
@@ -109,39 +105,10 @@ export default function AdminMessagesPage() {
     setIsSending(true);
 
     try {
-        const clientEmail = selectedThread.clientEmail;
-        if (!clientEmail || clientEmail === 'N/A') {
-            toast({ variant: "destructive", title: "Error", description: "This user does not have an email address to reply to." });
-            return;
-        }
-
-        const emailHtml = generateReplyEmailHtml(selectedThread.subject, selectedThread.clientName, replyText);
-        const emailSubject = `Re: ${selectedThread.subject}`;
-
-        const result = await sendEmail({
-            to: clientEmail,
-            subject: emailSubject,
-            html: emailHtml,
-        });
-
-        addEmailLog({
-            to: clientEmail,
-            subject: emailSubject,
-            html: emailHtml,
-            success: result.success,
-            message: result.message
-        });
-
-        if (result.success) {
-            const newMessage: IMessage = { from: 'admin', text: replyText, timestamp: new Date().toISOString() };
-            addMessageToThread(selectedThread.id, newMessage, 'admin');
-            setReplyText("");
-            loadThreads();
-            toast({ title: "Reply Sent", description: "Your email reply has been sent successfully." });
-        } else {
-            throw new Error(result.message);
-        }
-
+        const newMessage: IMessage = { from: 'admin', text: replyText, timestamp: new Date().toISOString() };
+        addMessageToThread(selectedThread.id, newMessage, 'admin');
+        setReplyText("");
+        loadThreads();
     } catch (error: any) {
         toast({ variant: "destructive", title: "Reply Failed", description: error.message || "Could not send the reply." });
     } finally {
@@ -192,19 +159,19 @@ export default function AdminMessagesPage() {
     <div className="space-y-6">
        <div className="flex items-center justify-between">
             <div>
-                <h1 className="text-2xl font-bold">Client Messages</h1>
-                <p className="text-muted-foreground">View conversations from contact form submissions.</p>
+                <h1 className="text-2xl font-bold">Live Chat</h1>
+                <p className="text-muted-foreground">View and respond to live chat conversations from your website.</p>
             </div>
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Inbox</CardTitle>
-           <CardDescription>You have {unreadCount} unread conversations from the contact form.</CardDescription>
+          <CardTitle>Live Chat Inbox</CardTitle>
+           <CardDescription>You have {unreadCount} unread conversations.</CardDescription>
         </CardHeader>
         <CardContent>
             {threads.length === 0 ? (
                 <div className="text-center text-muted-foreground py-12">
-                    <p>No messages from the contact form yet.</p>
+                    <p>No live chats yet.</p>
                 </div>
             ) : (
                 <ul className="space-y-2">
@@ -216,7 +183,7 @@ export default function AdminMessagesPage() {
                             </Avatar>
                             <div className="grid gap-1 flex-1">
                                 <div className="flex items-center justify-between">
-                                    <p className={`font-semibold ${thread.unreadByAdmin ? 'text-primary' : ''}`}>{thread.clientName} - <span className="font-normal text-muted-foreground">{thread.subject}</span></p>
+                                    <p className={`font-semibold ${thread.unreadByAdmin ? 'text-primary' : ''}`}>{thread.clientName}</p>
                                     <FormattedTimestamp timestamp={thread.lastMessageTimestamp} className="text-xs text-muted-foreground" />
                                 </div>
                                 <p className={`text-sm text-muted-foreground line-clamp-2 ${thread.unreadByAdmin ? 'font-medium text-foreground' : ''}`}>{thread.lastMessage}</p>
@@ -234,14 +201,10 @@ export default function AdminMessagesPage() {
             <DialogHeader>
                 <div className="flex justify-between items-start">
                     <div>
-                        <DialogTitle>Conversation with {selectedThread?.clientName}</DialogTitle>
-                        <DialogDescription asChild>
-                             <div className="text-sm text-muted-foreground space-y-1 text-left">
-                                <div>Subject: {selectedThread?.subject}</div>
-                                <div className="text-xs flex flex-wrap items-center gap-x-4 gap-y-1 pt-1">
-                                    {selectedThread?.clientEmail && selectedThread.clientEmail !== 'N/A' && <div className="flex items-center gap-1.5"><Mail className="h-3 w-3" /> {selectedThread?.clientEmail}</div>}
-                                    {selectedThread?.clientPhone && selectedThread.clientPhone !== 'N/A' && <div className="flex items-center gap-1.5"><Phone className="h-3 w-3" /> {selectedThread.clientPhone}</div>}
-                                </div>
+                        <DialogTitle>Chat with {selectedThread?.clientName}</DialogTitle>
+                         <DialogDescription asChild>
+                            <div className="text-sm text-muted-foreground space-y-1 text-left">
+                                <div className="flex items-center gap-1.5"><Phone className="h-3 w-3" /> {selectedThread?.clientPhone || 'N/A'}</div>
                             </div>
                         </DialogDescription>
                     </div>
@@ -286,7 +249,7 @@ export default function AdminMessagesPage() {
             </div>
             <DialogFooter className="mt-auto pt-4 border-t">
                 <div className="relative w-full flex items-center gap-2">
-                    <Textarea placeholder="Type your email reply..." className="pr-12" rows={1} value={replyText} onChange={(e) => setReplyText(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey && !isSending) { e.preventDefault(); handleSendReply(); } }} />
+                    <Textarea placeholder="Type your chat reply..." className="pr-12" rows={1} value={replyText} onChange={(e) => setReplyText(e.target.value)} onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey && !isSending) { e.preventDefault(); handleSendReply(); } }} />
                     <Button size="icon" className="h-9 w-9" onClick={handleSendReply} disabled={!replyText || isSending}>
                         {isSending ? <Loader2 className="h-4 w-4 animate-spin"/> : <Send className="h-4 w-4"/>}
                     </Button>
