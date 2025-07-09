@@ -7,11 +7,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { AlertCircle, Copy, Save } from 'lucide-react';
+import { AlertCircle, Copy } from 'lucide-react';
 import Header from '@/components/sections/header';
 import Footer from '@/components/sections/footer';
 
-const SECRET_KEY = process.env.NEXT_PUBLIC_EDIT_SECRET_KEY || 'change-me-to-something-secret';
+const SECRET_KEY = process.env.NEXT_PUBLIC_EDIT_SECRET_KEY || 'mojibx';
 
 export default function EditPage({ params }: { params: { secret_key: string } }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -72,6 +72,8 @@ export default function EditPage({ params }: { params: { secret_key: string } })
     );
   }
 
+  const sections = Object.keys(editableContent.en);
+
   return (
     <div className="flex flex-col min-h-screen bg-muted/20">
       <Header />
@@ -92,71 +94,54 @@ export default function EditPage({ params }: { params: { secret_key: string } })
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3 text-blue-800">
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200 dark:border-blue-500/30">
                 <AlertCircle className="h-5 w-5 mt-1 shrink-0" />
                 <div>
                     <h3 className="font-semibold">Important Notice</h3>
                     <p className="text-sm">Changes made here are not saved automatically. This page is a tool to help you edit content easily. After editing, click the "Copy Updated Code" button and paste the result into your `src/lib/translations.ts` file to make the changes live.</p>
                 </div>
             </div>
-            <Tabs defaultValue="en" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="en">English</TabsTrigger>
-                <TabsTrigger value="bn">বাংলা (Bengali)</TabsTrigger>
+            <Tabs defaultValue={sections[0]} orientation="vertical" className="flex flex-col md:flex-row gap-6 relative">
+              <TabsList className="w-full md:w-48 shrink-0 flex-col h-auto justify-start">
+                {sections.map(key => (
+                  <TabsTrigger key={key} value={key} className="w-full justify-start">{capitalizeFirstLetter(key)}</TabsTrigger>
+                ))}
               </TabsList>
-              <TabsContent value="en" className="mt-4">
-                <SectionEditor
-                  lang="en"
-                  content={editableContent.en}
-                  onSectionChange={handleSectionChange}
-                  capitalize={capitalizeFirstLetter}
-                />
-              </TabsContent>
-              <TabsContent value="bn" className="mt-4">
-                 <SectionEditor
-                  lang="bn"
-                  content={editableContent.bn}
-                  onSectionChange={handleSectionChange}
-                   capitalize={capitalizeFirstLetter}
-                />
-              </TabsContent>
+              {sections.map(sectionKey => (
+                <TabsContent key={`${sectionKey}-content`} value={sectionKey} className="mt-0 w-full">
+                  <Card className="shadow-inner bg-background/50">
+                    <CardHeader>
+                      <CardTitle>{capitalizeFirstLetter(sectionKey)} Section</CardTitle>
+                      <CardDescription>Edit content for both languages below. Ensure the format remains valid JSON.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid md:grid-cols-2 gap-6">
+                      <div>
+                        <h3 className="font-semibold mb-2 text-lg">English</h3>
+                        <Textarea
+                          defaultValue={JSON.stringify(editableContent.en[sectionKey as keyof typeof editableContent.en], null, 2)}
+                          onBlur={(e) => handleSectionChange('en', sectionKey, e.target.value)}
+                          className="min-h-[60vh] font-mono text-sm bg-background"
+                          spellCheck="false"
+                        />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold mb-2 text-lg">বাংলা (Bengali)</h3>
+                        <Textarea
+                          defaultValue={JSON.stringify(editableContent.bn[sectionKey as keyof typeof editableContent.bn], null, 2)}
+                          onBlur={(e) => handleSectionChange('bn', sectionKey, e.target.value)}
+                          className="min-h-[60vh] font-mono text-sm bg-background"
+                          spellCheck="false"
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              ))}
             </Tabs>
           </CardContent>
         </Card>
       </main>
       <Footer />
     </div>
-  );
-}
-
-function SectionEditor({ lang, content, onSectionChange, capitalize }: { lang: 'en' | 'bn', content: any, onSectionChange: Function, capitalize: Function }) {
-  const sections = Object.keys(content);
-  
-  return (
-    <Tabs defaultValue={sections[0]} orientation="vertical" className="flex flex-col md:flex-row gap-6 relative">
-      <TabsList className="w-full md:w-48 shrink-0 flex-col h-auto justify-start">
-        {sections.map(key => (
-          <TabsTrigger key={`${lang}-${key}`} value={key} className="w-full justify-start">{capitalize(key)}</TabsTrigger>
-        ))}
-      </TabsList>
-      {sections.map(key => (
-        <TabsContent key={`${lang}-${key}-content`} value={key} className="mt-0 w-full">
-          <Card className="shadow-inner">
-             <CardHeader>
-                <CardTitle>{capitalize(key)} Section</CardTitle>
-                <CardDescription>Edit the content for this section below. Ensure the format remains valid JSON.</CardDescription>
-              </CardHeader>
-            <CardContent>
-               <Textarea
-                defaultValue={JSON.stringify(content[key], null, 2)}
-                onBlur={(e) => onSectionChange(lang, key, e.target.value)}
-                className="min-h-[50vh] font-mono text-sm bg-background"
-                spellCheck="false"
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      ))}
-    </Tabs>
   );
 }
