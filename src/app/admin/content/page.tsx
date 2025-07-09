@@ -13,26 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import Image from 'next/image';
-
-// Server Action to update the translations file
-async function updateTranslationsFile(content: string) {
-  'use server';
-  
-  // These imports are scoped to the server action
-  const { promises: fs } = await import('fs');
-  const path = await import('path');
-
-  const filePath = path.join(process.cwd(), 'src', 'lib', 'translations.ts');
-  const newFileContent = `export const translations = ${content};\n\nexport type Translations = typeof translations;`;
-
-  try {
-    await fs.writeFile(filePath, newFileContent, 'utf-8');
-    return { success: true, message: 'Content updated successfully! Changes will be live after a page refresh.' };
-  } catch (error) {
-    console.error('Failed to write to translations.ts:', error);
-    return { success: false, message: 'Failed to update content file on the server.' };
-  }
-}
+import { updateTranslationsFile } from './actions';
 
 // Helper function to capitalize first letter
 const capitalizeFirstLetter = (string: string) => {
@@ -368,4 +349,3 @@ export default function AdminContentPage() {
     </div>
   );
 }
-
