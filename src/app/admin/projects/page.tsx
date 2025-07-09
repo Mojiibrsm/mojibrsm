@@ -16,11 +16,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
-import { addProject, getProjects, updateProject, deleteProject, Project, ProjectStatus, addEmailLog } from '@/services/data';
+import { addProject, getProjects, updateProject, deleteProject, Project, ProjectStatus, addEmailLog, addSmsLog } from '@/services/data';
 import { FormattedTimestamp } from '@/components/formatted-timestamp';
 import { sendEmail } from '@/services/email';
 import { translations } from '@/lib/translations';
 import Image from 'next/image';
+import { useLanguage } from '@/contexts/language-context';
+import { sendSms } from '@/services/sms';
 
 
 const getStatusVariant = (status: string) => {
@@ -34,17 +36,19 @@ const getStatusVariant = (status: string) => {
 
 type ProjectFormData = Omit<Project, 'id' | 'userId' | 'createdAt'>;
 
-const generateProjectEmailHtml = (projectData: ProjectFormData, isNew: boolean): string => {
+const generateProjectEmailHtml = (projectData: ProjectFormData, isNew: boolean, lang: 'en' | 'bn'): string => {
+    const t = translations[lang];
     const { name, client, clientEmail, clientPhone, deadline, notes, notesImage } = projectData;
-    const { name: devName } = translations.en.hero;
-    const { phone: devPhone, email: devEmail } = translations.en.contact.details;
     
-    // Assuming the app is hosted on oftern.com to construct absolute URL for email images.
-    const baseUrl = 'https://www.oftern.com';
-    const absoluteImageUrl = notesImage ? `${baseUrl}${notesImage}` : '';
+    const { name: devName } = t.hero;
+    const { phone: devPhone, email: devEmail } = t.contact.details;
+    
+    // Construct absolute URL for email images.
+    const baseUrl = 'https://www.oftern.com'; // Assuming the app is hosted here for absolute URLs
+    const absoluteImageUrl = notesImage ? (notesImage.startsWith('http') ? notesImage : `${baseUrl}${notesImage}`) : '';
 
-    const title = isNew ? "A New Project Has Been Created For You" : "Update on Your Project";
-    const formattedDeadline = new Date(deadline).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+    const title = isNew ? (lang === 'bn' ? "আপনার জন্য একটি নতুন প্রজেক্ট তৈরি করা হয়েছে" : "A New Project Has Been Created For You") : (lang === 'bn' ? "আপনার প্রজেক্টের আপডেট" : "Update on Your Project");
+    const formattedDeadline = new Date(deadline).toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
     const whatsappNumber = devPhone.replace(/[^0-9]/g, '');
 
     return `
@@ -54,50 +58,27 @@ const generateProjectEmailHtml = (projectData: ProjectFormData, isNew: boolean):
                     <h1 style="margin: 0; font-size: 28px; font-weight: bold;">${title}</h1>
                 </div>
                 <div style="padding: 24px; line-height: 1.6;">
-                    <p style="font-size: 16px;">Hello ${client},</p>
-                    <p style="font-size: 16px;">${isNew ? 'A new project has been created for you. Below are the details:' : 'Your project has been updated. Here are the latest details:'}</p>
+                    <p style="font-size: 16px;">${lang === 'bn' ? `নমস্কার ${client},` : `Hello ${client},`}</p>
+                    <p style="font-size: 16px;">${isNew ? (lang === 'bn' ? 'আপনার জন্য একটি নতুন প্রজেক্ট তৈরি করা হয়েছে। নিচে বিস্তারিত দেওয়া হলো:' : 'A new project has been created for you. Below are the details:') : (lang === 'bn' ? 'আপনার প্রজেক্ট আপডেট করা হয়েছে। সর্বশেষ তথ্য নিচে দেওয়া হলো:' : 'Your project has been updated. Here are the latest details:')}</p>
                     
                     <table style="width: 100%; border-collapse: collapse; margin: 25px 0; font-size: 15px;">
-                        <tr style="background-color: #f9f9f9;">
-                            <td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 600;">Project Name:</td>
-                            <td style="padding: 12px; border: 1px solid #e5e7eb;">${name}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 600;">Deadline:</td>
-                            <td style="padding: 12px; border: 1px solid #e5e7eb;">${formattedDeadline}</td>
-                        </tr>
-                        <tr style="background-color: #f9f9f9;">
-                            <td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 600;">Client Name:</td>
-                            <td style="padding: 12px; border: 1px solid #e5e7eb;">${client}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 600;">Client Email:</td>
-                            <td style="padding: 12px; border: 1px solid #e5e7eb;">${clientEmail}</td>
-                        </tr>
-                        ${clientPhone ? `<tr style="background-color: #f9f9f9;">
-                            <td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 600;">Client Phone:</td>
-                            <td style="padding: 12px; border: 1px solid #e5e7eb;">${clientPhone}</td>
-                        </tr>` : ''}
-                        ${notes ? `<tr>
-                            <td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 600; vertical-align: top;">Notes:</td>
-                            <td style="padding: 12px; border: 1px solid #e5e7eb; white-space: pre-wrap;">${notes.replace(/\n/g, '<br>')}</td>
-                        </tr>` : ''}
-                         ${absoluteImageUrl ? `<tr>
-                            <td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 600; vertical-align: top;">Attached Image:</td>
-                            <td style="padding: 12px; border: 1px solid #e5e7eb;">
-                                <img src="${absoluteImageUrl}" alt="Project Notes Image" style="max-width: 100%; border-radius: 8px;"/>
-                            </td>
-                        </tr>` : ''}
+                        <tr style="background-color: #f9f9f9;"><td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 600;">${lang === 'bn' ? 'প্রজেক্টের নাম' : 'Project Name'}:</td><td style="padding: 12px; border: 1px solid #e5e7eb;">${name}</td></tr>
+                        <tr><td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 600;">${lang === 'bn' ? 'ডেডলাইন' : 'Deadline'}:</td><td style="padding: 12px; border: 1px solid #e5e7eb;">${formattedDeadline}</td></tr>
+                        <tr style="background-color: #f9f9f9;"><td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 600;">${lang === 'bn' ? 'ক্লায়েন্টের নাম' : 'Client Name'}:</td><td style="padding: 12px; border: 1px solid #e5e7eb;">${client}</td></tr>
+                        <tr><td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 600;">${lang === 'bn' ? 'ক্লায়েন্ট ইমেইল' : 'Client Email'}:</td><td style="padding: 12px; border: 1px solid #e5e7eb;">${clientEmail}</td></tr>
+                        ${clientPhone ? `<tr style="background-color: #f9f9f9;"><td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 600;">${lang === 'bn' ? 'ক্লায়েন্ট ফোন' : 'Client Phone'}:</td><td style="padding: 12px; border: 1px solid #e5e7eb;">${clientPhone}</td></tr>` : ''}
+                        ${notes ? `<tr><td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 600; vertical-align: top;">${lang === 'bn' ? 'নোট' : 'Notes'}:</td><td style="padding: 12px; border: 1px solid #e5e7eb; white-space: pre-wrap;">${notes.replace(/\n/g, '<br>')}</td></tr>` : ''}
+                        ${absoluteImageUrl ? `<tr style="background-color: #f9f9f9;"><td style="padding: 12px; border: 1px solid #e5e7eb; font-weight: 600; vertical-align: top;">${lang === 'bn' ? 'সংযুক্ত ছবি' : 'Attached Image'}:</td><td style="padding: 12px; border: 1px solid #e5e7eb;"><img src="${absoluteImageUrl}" alt="Project Notes Image" style="max-width: 100%; border-radius: 8px;"/></td></tr>` : ''}
                     </table>
                     
-                    <p style="font-size: 16px;">If you have any questions or need to discuss the project further, feel free to contact me via WhatsApp, Facebook, or by replying to this email.</p>
+                    <p style="font-size: 16px;">${lang === 'bn' ? 'আপনার যদি কোনো প্রশ্ন থাকে বা প্রকল্পটি নিয়ে আরও আলোচনার প্রয়োজন হয়, তাহলে নির্দ্বিধায় হোয়াটসঅ্যাপ, ফেসবুক বা এই ইমেইলের উত্তরে আমার সাথে যোগাযোগ করুন।' : 'If you have any questions or need to discuss the project further, feel free to contact me via WhatsApp, Facebook, or by replying to this email.'}</p>
                 </div>
                 <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
                     <h3 style="margin: 0 0 10px 0; font-size: 18px; font-weight: bold;">${devName}</h3>
-                    <p style="margin: 0 0 15px 0; color: #555555; font-size: 14px;">Email: ${devEmail} | Phone: ${devPhone}</p>
+                    <p style="margin: 0 0 15px 0; color: #555555; font-size: 14px;">${lang === 'bn' ? 'ইমেইল' : 'Email'}: ${devEmail} | ${lang === 'bn' ? 'ফোন' : 'Phone'}: ${devPhone}</p>
                     <div style="margin-top: 15px;">
                         <a href="https://wa.me/${whatsappNumber}" style="display: inline-block; background-color: #25D366; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px; font-size: 14px; font-weight: bold;">WhatsApp</a>
-                        <a href="https://facebook.com/mojibrsm" style="display: inline-block; background-color: #1877F2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px; font-size: 14px; font-weight: bold;">Facebook</a>
+                        <a href="https://facebook.com/MoJiiB.RsM" style="display: inline-block; background-color: #1877F2; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 5px; font-size: 14px; font-weight: bold;">Facebook</a>
                     </div>
                 </div>
             </div>
@@ -113,6 +94,7 @@ export default function AdminProjectsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const { language } = useLanguage();
 
   const loadProjects = () => {
       const fetchedProjects = getProjects();
@@ -162,18 +144,18 @@ export default function AdminProjectsPage() {
             toast({ title: "Project Updated", description: "The project has been successfully updated." });
         }
         
-        // Close dialog and refresh data immediately
         setIsDialogOpen(false);
         setEditingProject(null);
         loadProjects();
 
-        // Send email in the background
+        // Send Email
         if (formData.clientEmail) {
+            const t = translations[language];
             const emailSubject = isNew
-                ? `New Project Created: ${formData.name}`
-                : `Update on your project: ${formData.name}`;
+                ? `${t.portfolio.title}: ${formData.name}`
+                : `${language === 'bn' ? 'আপনার প্রজেক্টের আপডেট' : 'Update on your project'}: ${formData.name}`;
             
-            const emailHtml = generateProjectEmailHtml(formData, isNew);
+            const emailHtml = generateProjectEmailHtml(formData, isNew, language);
             
             sendEmail({ to: formData.clientEmail, subject: emailSubject, html: emailHtml })
             .then(emailResult => {
@@ -185,9 +167,30 @@ export default function AdminProjectsPage() {
                     message: emailResult.message,
                 });
                 toast({
-                    title: "Email Notification Status",
+                    title: language === 'bn' ? "ইমেইল নোটিফিকেশন" : "Email Notification Status",
                     description: emailResult.message,
                     variant: emailResult.success ? 'default' : 'destructive'
+                });
+            });
+        }
+        
+        // Send SMS
+        if (formData.clientPhone) {
+            const t = translations[language];
+            const smsMessage = `${t.hero.greeting} ${formData.client}, ${isNew ? (language === 'bn' ? 'আপনার নতুন প্রজেক্ট তৈরি হয়েছে' : 'your new project has been created') : (language === 'bn' ? 'আপনার প্রজেক্ট আপডেট হয়েছে' : 'your project has been updated')}: "${formData.name}". ${t.hero.name}`;
+            
+            sendSms(formData.clientPhone, smsMessage)
+            .then(smsResult => {
+                addSmsLog({
+                    to: formData.clientPhone,
+                    message: smsMessage,
+                    success: smsResult.success,
+                    response: smsResult.message,
+                });
+                toast({
+                    title: language === 'bn' ? "এসএমএস নোটিফিকেশন" : "SMS Notification Status",
+                    description: smsResult.message,
+                    variant: smsResult.success ? 'default' : 'destructive'
                 });
             });
         }
