@@ -12,7 +12,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { submitContactForm } from './contact-actions';
+import { sendAdminNotificationEmail } from './contact-actions';
+import { createMessageThread, IMessage, addMessageToThread, getMessageThreads } from '@/services/data';
 
 const ContactFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -44,21 +45,51 @@ export default function Contact() {
   const onSubmit = async (data: ContactFormValues) => {
     setIsSubmitting(true);
     try {
-      const result = await submitContactForm(data);
-      if (result.status === 'success') {
-        toast({
-          title: "Message Sent!",
-          description: result.message,
-        });
-        form.reset();
+      // Step 1: Handle data persistence on the client side using localStorage service
+      const { name, email, subject, message } = data;
+      const threads = getMessageThreads();
+      let thread = threads.find(t => t.clientEmail === email && t.subject === subject);
+
+      const newMessage: IMessage = {
+        from: 'client',
+        text: message,
+        timestamp: new Date().toISOString(),
+      };
+
+      if (thread && thread.id) {
+        addMessageToThread(thread.id, newMessage, 'client');
       } else {
-        throw new Error(result.message);
+        createMessageThread({
+          userId: `contact-${email}`,
+          clientName: name,
+          clientEmail: email,
+          clientAvatar: `https://placehold.co/100x100.png?text=${name.charAt(0)}`,
+          clientPhone: '',
+          subject: subject,
+          unreadByAdmin: true,
+          unreadByUser: false,
+        }, newMessage);
       }
+
+      // Step 2: Call the server action to send the email notification
+      const emailResult = await sendAdminNotificationEmail(data);
+      if (!emailResult.success) {
+        // Log the email failure but don't block the user from seeing success
+        console.warn('Admin notification email failed to send:', emailResult.message);
+      }
+
+      // Step 3: Inform the user of success
+      toast({
+        title: "Message Sent!",
+        description: "Your message has been sent successfully. We will get back to you shortly.",
+      });
+      form.reset();
+
     } catch (error: any) {
       toast({
         variant: 'destructive',
         title: "Submission Failed",
-        description: error.message || "An unknown error occurred.",
+        description: error.message || "Something went wrong. Please try again later.",
       });
     } finally {
       setIsSubmitting(false);

@@ -1,71 +1,38 @@
 'use server';
 
 import { z } from 'zod';
-import { createMessageThread, IMessage, addMessageToThread, getMessageThreads } from '@/services/data';
 import { sendEmail } from '@/services/email';
 import { translations } from '@/lib/translations';
 
 const ContactFormSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters."),
-  email: z.string().email("Please enter a valid email address."),
-  subject: z.string().min(5, "Subject must be at least 5 characters."),
-  message: z.string().min(10, "Message must be at least 10 characters."),
+  name: z.string().min(1),
+  email: z.string().email(),
+  subject: z.string().min(1),
+  message: z.string().min(1),
 });
 
 type ContactFormValues = z.infer<typeof ContactFormSchema>;
 
-type ContactFormState = {
-  message: string;
-  status: 'success' | 'error';
-};
-
-export async function submitContactForm(
+export async function sendAdminNotificationEmail(
   data: ContactFormValues
-): Promise<ContactFormState> {
+): Promise<{ success: boolean; message: string }> {
   const validatedFields = ContactFormSchema.safeParse(data);
 
   if (!validatedFields.success) {
-    // This case should not be hit if client-side validation is working,
-    // but it's good for robustness.
     return {
-      status: 'error',
-      message: 'Invalid form data provided.',
+      success: false,
+      message: 'Invalid form data provided for email.',
     };
   }
-  
+
   const { name, email, subject, message } = validatedFields.data;
 
   try {
-    const threads = getMessageThreads();
-    let thread = threads.find(t => t.clientEmail === email && t.subject === subject);
-
-    const newMessage: IMessage = {
-      from: 'client',
-      text: message,
-      timestamp: new Date().toISOString(),
-    };
-
-    if (thread && thread.id) {
-      // Add to existing thread
-      addMessageToThread(thread.id, newMessage, 'client');
-    } else {
-      // Create new thread
-      createMessageThread({
-        userId: `contact-${email}`, // Create a unique ID for non-logged-in users
-        clientName: name,
-        clientEmail: email,
-        clientAvatar: `https://placehold.co/100x100.png?text=${name.charAt(0)}`,
-        clientPhone: '',
-        subject: subject,
-        unreadByAdmin: true,
-        unreadByUser: false, // User can't see this in a dashboard unless they sign up
-      }, newMessage);
-    }
-    
-    // Optional: Send email notification to admin
     const t = translations.en; // Use english for admin notification
     const adminEmail = t.contact.details.email;
-    await sendEmail({
+    
+    // The sendEmail function already returns a promise with the desired object shape
+    return await sendEmail({
       to: adminEmail,
       subject: `New Contact Form Message: ${subject}`,
       html: `
@@ -80,9 +47,8 @@ export async function submitContactForm(
       `
     });
 
-    return { status: 'success', message: 'Your message has been sent successfully!' };
   } catch (error) {
     console.error('Contact form submission error:', error);
-    return { status: 'error', message: 'Something went wrong. Please try again later.' };
+    return { success: false, message: 'Something went wrong while sending the email. Please try again later.' };
   }
 }
