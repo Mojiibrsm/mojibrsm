@@ -2,7 +2,8 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+// NOTE: Storage is temporarily removed to fix a build issue.
+// import { getStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration
 // For security, use environment variables for your configuration
@@ -19,6 +20,7 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 const db = getFirestore(app);
-const storage = getStorage(app);
+// const storage = getStorage(app);
 
-export { app, auth, db, storage };
+// NOTE: storage export removed
+export { app, auth, db };

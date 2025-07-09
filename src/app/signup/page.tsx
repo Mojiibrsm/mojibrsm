@@ -12,7 +12,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Mail, Lock, User as UserIcon } from 'lucide-react';
 import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { auth, addUserToFirestore } from '@/lib/firebase';
+import { auth } from '@/lib/firebase';
+import { addUserToFirestore } from '@/services/firestore';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Header from '@/components/sections/header';
