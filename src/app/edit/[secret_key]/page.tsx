@@ -1,75 +1,39 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { translations, Translations } from '@/lib/translations';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Copy, Save, Loader2 } from 'lucide-react';
+import { AlertCircle, Copy, Save } from 'lucide-react';
 import Header from '@/components/sections/header';
 import Footer from '@/components/sections/footer';
-import { auth, db } from '@/lib/firebase';
-import { signInAnonymously } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 const SECRET_KEY = process.env.NEXT_PUBLIC_EDIT_SECRET_KEY || 'change-me-to-something-secret';
-const CONTENT_DOC_ID = 'live-content';
 
 export default function EditPage({ params }: { params: { secret_key: string } }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [liveContent, setLiveContent] = useState<Translations | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  const [editableContent, setEditableContent] = useState<Translations>(translations);
   const { toast } = useToast();
 
   useEffect(() => {
-    const authenticateAndFetch = async () => {
-      if (params.secret_key !== SECRET_KEY) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        await signInAnonymously(auth);
-        setIsAuthenticated(true);
-        
-        const docRef = doc(db, "content", CONTENT_DOC_ID);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          setLiveContent(docSnap.data() as Translations);
-        } else {
-          // Seed the database with initial content from translations.ts
-          await setDoc(docRef, translations);
-          setLiveContent(translations);
-          toast({ title: 'Database Seeded', description: 'Initial content has been saved to the database.' });
-        }
-      } catch (error) {
-        console.error("Authentication or fetch error:", error);
-        toast({ variant: 'destructive', title: 'Error', description: 'Could not authenticate or fetch content.' });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    authenticateAndFetch();
-  }, [params.secret_key, toast]);
+    if (params.secret_key === SECRET_KEY) {
+      setIsAuthenticated(true);
+    }
+  }, [params.secret_key]);
 
   const handleSectionChange = (lang: 'en' | 'bn', section: string, value: string) => {
     try {
       const parsedValue = JSON.parse(value);
-      setLiveContent(prev => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          [lang]: {
-            ...prev[lang],
-            [section]: parsedValue
-          }
-        };
-      });
+      setEditableContent(prev => ({
+        ...prev,
+        [lang]: {
+          ...prev[lang],
+          [section]: parsedValue
+        }
+      }));
     } catch (e) {
       toast({
         variant: 'destructive',
@@ -79,43 +43,18 @@ export default function EditPage({ params }: { params: { secret_key: string } })
     }
   };
 
-  const handleSave = async () => {
-    if (!liveContent || !isAuthenticated) return;
-    setIsSaving(true);
-    try {
-      const docRef = doc(db, "content", CONTENT_DOC_ID);
-      await setDoc(docRef, liveContent, { merge: true });
-      toast({
-        title: 'Content Saved!',
-        description: 'Your changes have been saved to the database and are now live.',
-      });
-    } catch (error) {
-      console.error("Error saving content:", error);
-      toast({
-        variant: 'destructive',
-        title: 'Save Failed',
-        description: 'Could not save changes to the database.',
-      });
-    } finally {
-      setIsSaving(false);
-    }
+  const handleCopyToClipboard = () => {
+    const codeToCopy = `export const translations = ${JSON.stringify(editableContent, null, 2)};\n\nexport type Translations = typeof translations;\n`;
+    navigator.clipboard.writeText(codeToCopy);
+    toast({
+      title: 'Code Copied!',
+      description: 'The updated content code has been copied to your clipboard.',
+    });
   };
   
   const capitalizeFirstLetter = (string: string) => {
     if (!string) return '';
     return string.charAt(0).toUpperCase() + string.slice(1);
-  }
-
-  if (isLoading) {
-    return (
-       <div className="flex flex-col min-h-screen">
-            <Header />
-            <main className="flex-grow flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </main>
-            <Footer />
-        </div>
-    )
   }
 
   if (!isAuthenticated) {
@@ -132,10 +71,6 @@ export default function EditPage({ params }: { params: { secret_key: string } })
         </div>
     );
   }
-  
-  if (!liveContent) {
-    return <div>Error loading content.</div>
-  }
 
   return (
     <div className="flex flex-col min-h-screen bg-muted/20">
@@ -145,18 +80,25 @@ export default function EditPage({ params }: { params: { secret_key: string } })
           <CardHeader>
             <div className="flex justify-between items-start">
               <div>
-                <CardTitle>Website Content Editor</CardTitle>
+                <CardTitle>Content Editing Helper</CardTitle>
                 <CardDescription>
-                  Edit your website content using the tabs below. When you're done, click "Save Changes" to make your updates live.
+                  Use the tabs to edit your site content. After making changes, copy the code and replace the content of your `src/lib/translations.ts` file.
                 </CardDescription>
               </div>
-               <Button onClick={handleSave} size="lg" disabled={isSaving}>
-                  {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                  {isSaving ? 'Saving...' : 'Save Changes'}
-               </Button>
+              <Button onClick={handleCopyToClipboard} size="lg">
+                <Copy className="mr-2 h-4 w-4" />
+                Copy Updated Code
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3 text-blue-800">
+                <AlertCircle className="h-5 w-5 mt-1 shrink-0" />
+                <div>
+                    <h3 className="font-semibold">Important Notice</h3>
+                    <p className="text-sm">Changes made here are not saved automatically. This page is a tool to help you edit content easily. After editing, click the "Copy Updated Code" button and paste the result into your `src/lib/translations.ts` file to make the changes live.</p>
+                </div>
+            </div>
             <Tabs defaultValue="en" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="en">English</TabsTrigger>
@@ -165,7 +107,7 @@ export default function EditPage({ params }: { params: { secret_key: string } })
               <TabsContent value="en" className="mt-4">
                 <SectionEditor
                   lang="en"
-                  content={liveContent.en}
+                  content={editableContent.en}
                   onSectionChange={handleSectionChange}
                   capitalize={capitalizeFirstLetter}
                 />
@@ -173,7 +115,7 @@ export default function EditPage({ params }: { params: { secret_key: string } })
               <TabsContent value="bn" className="mt-4">
                  <SectionEditor
                   lang="bn"
-                  content={liveContent.bn}
+                  content={editableContent.bn}
                   onSectionChange={handleSectionChange}
                    capitalize={capitalizeFirstLetter}
                 />
@@ -187,7 +129,6 @@ export default function EditPage({ params }: { params: { secret_key: string } })
   );
 }
 
-// Helper component for section editing
 function SectionEditor({ lang, content, onSectionChange, capitalize }: { lang: 'en' | 'bn', content: any, onSectionChange: Function, capitalize: Function }) {
   const sections = Object.keys(content);
   
@@ -207,7 +148,6 @@ function SectionEditor({ lang, content, onSectionChange, capitalize }: { lang: '
               </CardHeader>
             <CardContent>
                <Textarea
-                key={`${lang}-${key}`} // Add key to force re-render on content change
                 defaultValue={JSON.stringify(content[key], null, 2)}
                 onBlur={(e) => onSectionChange(lang, key, e.target.value)}
                 className="min-h-[50vh] font-mono text-sm bg-background"
