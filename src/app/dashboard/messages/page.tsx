@@ -62,6 +62,7 @@ export default function MessagesPage() {
             clientName: user.displayName || user.phoneNumber || 'Anonymous',
             clientEmail: user.email || 'N/A',
             clientAvatar: user.photoURL || '',
+            clientPhone: user.phoneNumber || 'N/A',
             subject: newMessageSubject,
             unreadByAdmin: true,
             unreadByUser: false,

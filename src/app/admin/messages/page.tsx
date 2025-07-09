@@ -7,7 +7,7 @@ import { Timestamp } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Send, PlusCircle } from 'lucide-react';
+import { Send, PlusCircle, Mail, MessageSquareText } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/auth-context';
@@ -124,8 +124,20 @@ export default function AdminMessagesPage() {
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
         <DialogContent className="sm:max-w-[625px] flex flex-col h-[70vh]">
           <DialogHeader>
-            <DialogTitle>Conversation with {selectedThread?.clientName}</DialogTitle>
-            <DialogDescription>{selectedThread?.subject}</DialogDescription>
+            <div className="flex justify-between items-center">
+                <div>
+                    <DialogTitle>Conversation with {selectedThread?.clientName}</DialogTitle>
+                    <DialogDescription>{selectedThread?.subject}</DialogDescription>
+                </div>
+                <div className="flex gap-2">
+                    <Button asChild variant="outline" size="sm" disabled={!selectedThread?.clientEmail}>
+                        <a href={`mailto:${selectedThread?.clientEmail}`}><Mail className="mr-2 h-4 w-4"/> Email</a>
+                    </Button>
+                    <Button asChild variant="outline" size="sm" disabled={!selectedThread?.clientPhone}>
+                        <a href={`sms:${selectedThread?.clientPhone}`}><MessageSquareText className="mr-2 h-4 w-4"/> SMS</a>
+                    </Button>
+                </div>
+            </div>
           </DialogHeader>
           <div className="py-4 flex-1 overflow-y-auto space-y-4 pr-4">
             {selectedThread?.messages.sort((a, b) => a.timestamp.toMillis() - b.timestamp.toMillis()).map((message, index) => (

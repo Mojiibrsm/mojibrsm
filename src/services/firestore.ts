@@ -12,6 +12,7 @@ export interface Project {
     userId: string;
     name: string;
     client: string;
+    clientEmail: string;
     status: ProjectStatus;
     deadline: string;
     createdAt: Timestamp;
@@ -102,6 +103,7 @@ export interface IMessageThread {
     clientName: string;
     clientEmail: string;
     clientAvatar: string;
+    clientPhone: string;
     subject: string;
     messages: IMessage[];
     lastMessage: string;

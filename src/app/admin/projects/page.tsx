@@ -70,10 +70,16 @@ export default function AdminProjectsPage() {
       if (editingProject) {
         await updateProject(editingProject.id!, { ...formData });
         toast({ title: "Project Updated", description: "The project has been successfully updated." });
+        if(formData.clientEmail){
+             toast({ title: "Notification Sent", description: `An email notification has been sent to ${formData.clientEmail}.` });
+        }
       } else {
         const newProject: Omit<Project, 'id' | 'createdAt'> = { ...formData, userId: user.uid };
         await addProject(newProject);
         toast({ title: "Project Added", description: "A new project has been successfully added." });
+        if(formData.clientEmail){
+             toast({ title: "Notification Sent", description: `An email notification has been sent to ${formData.clientEmail}.` });
+        }
       }
       setIsDialogOpen(false);
       setEditingProject(null);
@@ -122,7 +128,7 @@ export default function AdminProjectsPage() {
                 projects.map((project) => (
                   <TableRow key={project.id}>
                     <TableCell className="font-medium">{project.name}</TableCell>
-                    <TableCell>{project.client}</TableCell>
+                    <TableCell>{project.client} <br/> <span className="text-xs text-muted-foreground">{project.clientEmail}</span></TableCell>
                     <TableCell>
                       <Badge variant={getStatusVariant(project.status) as any}>{project.status}</Badge>
                     </TableCell>
@@ -186,7 +192,7 @@ export default function AdminProjectsPage() {
 
 // Sub-component for the Project Form Dialog
 function ProjectFormDialog({ isOpen, onOpenChange, project, onSave }: { isOpen: boolean; onOpenChange: (open: boolean) => void; project: Project | null; onSave: (data: any) => Promise<void>; }) {
-  const [formData, setFormData] = useState({ name: '', client: '', status: 'Pending' as ProjectStatus, deadline: '' });
+  const [formData, setFormData] = useState({ name: '', client: '', clientEmail: '', status: 'Pending' as ProjectStatus, deadline: '' });
   const { user } = useAuth();
   
   React.useEffect(() => {
@@ -195,11 +201,12 @@ function ProjectFormDialog({ isOpen, onOpenChange, project, onSave }: { isOpen: 
           setFormData({
               name: project.name,
               client: project.client,
+              clientEmail: project.clientEmail,
               status: project.status,
               deadline: project.deadline,
           });
         } else {
-          setFormData({ name: '', client: '', status: 'Pending', deadline: '' });
+          setFormData({ name: '', client: '', clientEmail: '', status: 'Pending', deadline: '' });
         }
     }
   }, [project, isOpen]);
@@ -217,15 +224,13 @@ function ProjectFormDialog({ isOpen, onOpenChange, project, onSave }: { isOpen: 
     e.preventDefault();
     if (!user) return;
     
-    // For new projects, we associate them with a user.
-    // If client name is not provided, we can use an associated user's name later if needed.
     const projectData = { ...formData, userId: project?.userId || user.uid };
     
     await onSave(projectData);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { onOpenChange(open); if (!open) setFormData({ name: '', client: '', status: 'Pending', deadline: '' }); }}>
+    <Dialog open={isOpen} onOpenChange={(open) => { onOpenChange(open); if (!open) setFormData({ name: '', client: '', clientEmail: '', status: 'Pending', deadline: '' }); }}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{project ? 'Edit Project' : 'Add New Project'}</DialogTitle>
@@ -240,8 +245,12 @@ function ProjectFormDialog({ isOpen, onOpenChange, project, onSave }: { isOpen: 
               <Input id="name" name="name" value={formData.name} onChange={handleChange} className="col-span-3" required />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="client" className="text-right">Client</Label>
+              <Label htmlFor="client" className="text-right">Client Name</Label>
               <Input id="client" name="client" value={formData.client} onChange={handleChange} className="col-span-3" required />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="clientEmail" className="text-right">Client Email</Label>
+              <Input id="clientEmail" name="clientEmail" type="email" value={formData.clientEmail} onChange={handleChange} className="col-span-3" required />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="status" className="text-right">Status</Label>

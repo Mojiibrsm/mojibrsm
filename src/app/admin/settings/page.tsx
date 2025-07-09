@@ -1,21 +1,38 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { HardDrive, Bell } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/hooks/use-toast';
+
+type NotificationSettings = {
+    messages: boolean;
+    requests: boolean;
+};
 
 export default function AdminSettingsPage() {
-    const [notifications, setNotifications] = useState({
+    const [notifications, setNotifications] = useState<NotificationSettings>({
         messages: true,
         requests: false,
     });
+    const { toast } = useToast();
 
-    const handleNotificationChange = (key: 'messages' | 'requests') => {
-        setNotifications(prev => ({ ...prev, [key]: !prev[key] }));
+    useEffect(() => {
+        const savedSettings = localStorage.getItem('notificationSettings');
+        if (savedSettings) {
+            setNotifications(JSON.parse(savedSettings));
+        }
+    }, []);
+
+    const handleNotificationChange = (key: keyof NotificationSettings) => {
+        const newSettings = { ...notifications, [key]: !notifications[key] };
+        setNotifications(newSettings);
+        localStorage.setItem('notificationSettings', JSON.stringify(newSettings));
+        toast({ title: 'Settings Saved', description: 'Your notification preferences have been updated.' });
     };
 
     return (
@@ -67,7 +84,7 @@ export default function AdminSettingsPage() {
                        <Bell className="h-5 w-5" />
                        Notification Settings
                     </CardTitle>
-                    <CardDescription>Configure email notifications for important site events. (Feature in development)</CardDescription>
+                    <CardDescription>Configure email notifications for important site events. These settings will apply to future automated notification features.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="flex items-center justify-between p-4 border rounded-lg">
