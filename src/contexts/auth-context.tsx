@@ -24,7 +24,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const LOGIN_PASSWORD = 'mojibx'; // Simple hardcoded password
+// Use an environment variable for the password. The NEXT_PUBLIC_ prefix makes it available on the client-side.
+// Provide a fallback for local development.
+const LOGIN_PASSWORD = process.env.NEXT_PUBLIC_LOGIN_PASSWORD || 'mojibx'; 
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -41,6 +43,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = (password: string): boolean => {
+    if (!LOGIN_PASSWORD) {
+      console.error("Login password is not set in environment variables.");
+      return false;
+    }
     if (password === LOGIN_PASSWORD) {
       localStorage.setItem('isLoggedIn', 'true');
       setIsLoggedIn(true);

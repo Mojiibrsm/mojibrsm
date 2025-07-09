@@ -6,9 +6,15 @@
  * Logging is handled on the client-side after this action completes.
  */
 export async function sendSms(phoneNumber: string, message: string): Promise<{ success: boolean; message: string }> {
-    const apiKey = 'LkcuBmpXSgO77LgytC9w';
+    const apiKey = process.env.SMS_API_KEY;
     const senderId = '8809617614208';
     const apiUrl = 'http://bulksmsbd.net/api/smsapi';
+
+    if (!apiKey) {
+        const errorMessage = "SMS service is not configured. Please set the SMS_API_KEY environment variable.";
+        console.error(errorMessage);
+        return { success: false, message: errorMessage };
+    }
 
     try {
         const urlWithParams = new URL(apiUrl);
