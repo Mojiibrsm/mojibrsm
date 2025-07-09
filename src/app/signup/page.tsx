@@ -130,7 +130,7 @@ export default function SignupPage() {
       toast({ title: 'একাউন্ট তৈরি সফল', description: "আপনাকে ড্যাশবোর্ডে নিয়ে যাওয়া হচ্ছে।" });
       const redirectTo = searchParams.get('redirectTo') || '/dashboard';
       router.push(redirectTo);
-    } catch (error: any)
+    } catch (error: any) {
       console.error("Error verifying OTP:", error);
       let description = 'আপনি ভুল OTP দিয়েছেন। অনুগ্রহ করে আবার চেষ্টা করুন।';
        if (error.code === 'auth/invalid-verification-code') {
