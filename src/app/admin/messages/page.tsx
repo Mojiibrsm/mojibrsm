@@ -63,6 +63,7 @@ export default function AdminMessagesPage() {
   const router = useRouter();
   const [threads, setThreads] = useState<IMessageThread[]>([]);
   const [selectedThread, setSelectedThread] = useState<IMessageThread | null>(null);
+  const [replyText, setReplyText] = useState('');
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [composeData, setComposeData] = useState({
@@ -466,5 +467,3 @@ export default function AdminMessagesPage() {
     </div>
   )
 }
-
-    
