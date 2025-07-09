@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -69,6 +68,7 @@ export default function Header() {
               height={35}
               className="h-8 w-auto object-contain"
               priority
+              unoptimized
             />
           ) : (
             <span className="font-bold text-xl">{t.site.title}</span>
