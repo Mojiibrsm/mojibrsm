@@ -5,7 +5,7 @@ import { useState, useCallback } from 'react';
 import { translations, Translations } from '@/lib/translations';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertCircle, Save, PlusCircle, Trash2, Loader2, FileText, FolderSearch } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import Image from 'next/image';
-import { updateTranslationsFile } from './actions';
+import { updateSectionContent } from './actions';
 import { addMediaItem, IMediaItem } from '@/services/data';
 import { MediaLibraryDialog } from '@/components/media-library-dialog';
 
@@ -190,7 +190,7 @@ const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, hand
 
 export default function AdminContentPage() {
   const [editableContent, setEditableContent] = useState<Translations>(JSON.parse(JSON.stringify(translations)));
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSaving, setIsSaving] = useState<string | null>(null);
   const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
   const [mediaTarget, setMediaTarget] = useState<{ path: (string | number)[], lang: 'en' | 'bn' } | null>(null);
   const { toast } = useToast();
@@ -296,15 +296,19 @@ export default function AdminContentPage() {
     });
   }, []);
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    const result = await updateTranslationsFile(JSON.stringify(editableContent, null, 2));
+  const handleSave = async (sectionKey: string) => {
+    setIsSaving(sectionKey);
+    const enData = editableContent.en[sectionKey as keyof typeof editableContent.en];
+    const bnData = editableContent.bn[sectionKey as keyof typeof editableContent.bn];
+    
+    const result = await updateSectionContent(sectionKey, enData, bnData);
+    
     if (result.success) {
       toast({ title: 'Success!', description: result.message });
     } else {
       toast({ title: 'Error!', description: result.message, variant: 'destructive' });
     }
-    setIsSaving(false);
+    setIsSaving(null);
   };
   
   const sections = Object.keys(editableContent.en).filter(key => key !== 'site' && key !== 'blog');
@@ -316,17 +320,13 @@ export default function AdminContentPage() {
           <h1 className="text-2xl font-bold">Site Content</h1>
           <p className="text-muted-foreground">Edit all textual and image content across your site (excluding blog posts).</p>
         </div>
-        <Button onClick={handleSave} size="lg" disabled={isSaving}>
-          {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-          Save Changes
-        </Button>
       </div>
       
       <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200 dark:border-blue-500/30">
           <AlertCircle className="h-5 w-5 mt-1 shrink-0" />
           <div>
               <h3 className="font-semibold">Important Notice</h3>
-              <p className="text-sm">Changes saved here will directly modify the site's content file. Please be careful. The changes will be visible on your live site after you refresh the page.</p>
+              <p className="text-sm">Changes saved here will directly modify the site's content file. A server restart may be needed for changes to appear on the live site.</p>
           </div>
       </div>
 
@@ -371,6 +371,12 @@ export default function AdminContentPage() {
                   />
                 </div>
               </CardContent>
+              <CardFooter className="border-t bg-muted/30 px-6 py-4">
+                 <Button onClick={() => handleSave(sectionKey)} disabled={isSaving === sectionKey}>
+                    {isSaving === sectionKey ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    Save {capitalizeFirstLetter(sectionKey)}
+                </Button>
+              </CardFooter>
             </Card>
           </TabsContent>
         ))}

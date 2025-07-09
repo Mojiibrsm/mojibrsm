@@ -4,8 +4,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { getAwsSettings, saveAwsSettings, AwsSettings } from '@/config/settings';
-import { translations } from '@/lib/translations';
-import type { Translations } from '@/lib/translations';
+import { site as enSite } from '@/lib/translations/en/site';
 
 // --- AWS Settings ---
 
@@ -23,36 +22,38 @@ export async function getAwsSettingsAction(): Promise<AwsSettings> {
 
 // --- Site Settings ---
 
-export type SiteSettings = Translations['en']['site'];
+export type SiteSettings = typeof enSite;
 
 export async function getSiteSettingsAction(): Promise<SiteSettings> {
     // We can just return the 'en' version as they should be identical for these fields
-    return translations.en.site;
+    return enSite;
 }
 
 export async function updateSiteSettingsAction(newSettings: SiteSettings): Promise<{ success: boolean; message: string }> {
-    const filePath = path.join(process.cwd(), 'src', 'lib', 'translations.ts');
-
+    const enFilePath = path.join(process.cwd(), 'src', 'lib', 'translations', 'en', 'site.ts');
+    const bnFilePath = path.join(process.cwd(), 'src', 'lib', 'translations', 'bn', 'site.ts');
+    
     try {
-        // Create a deep copy to avoid modifying the cached version in memory
-        const updatedTranslations = JSON.parse(JSON.stringify(translations));
-        
-        // Update English site settings
-        updatedTranslations.en.site = newSettings;
-        
-        // Update Bengali site settings to keep them in sync for consistency
-        updatedTranslations.bn.site.title = newSettings.title;
-        updatedTranslations.bn.site.url = newSettings.url;
-        updatedTranslations.bn.site.logo = newSettings.logo;
-        updatedTranslations.bn.site.publicLogo = newSettings.publicLogo;
-        updatedTranslations.bn.site.adminAvatar = newSettings.adminAvatar;
+        const enContent = `export const site = ${JSON.stringify(newSettings, null, 2)};`;
 
-        const newFileContent = `export const translations = ${JSON.stringify(updatedTranslations, null, 2)};\n\nexport type Translations = typeof translations;`;
+        // Keep Bengali site settings in sync for consistency
+        const bnSettings = {
+            title: newSettings.title,
+            url: newSettings.url,
+            logo: newSettings.logo,
+            publicLogo: newSettings.publicLogo,
+            adminAvatar: newSettings.adminAvatar,
+        };
+        const bnContent = `export const site = ${JSON.stringify(bnSettings, null, 2)};`;
 
-        await fs.writeFile(filePath, newFileContent, 'utf-8');
+        await Promise.all([
+            fs.writeFile(enFilePath, enContent, 'utf-8'),
+            fs.writeFile(bnFilePath, bnContent, 'utf-8'),
+        ]);
+
         return { success: true, message: 'Site settings updated successfully! Refresh to see changes.' };
     } catch (error) {
-        console.error('Failed to write to translations.ts:', error);
+        console.error('Failed to write site settings:', error);
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
         return { success: false, message: `Failed to update settings file on the server: ${errorMessage}` };
     }
