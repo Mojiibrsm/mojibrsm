@@ -15,7 +15,7 @@ export const translations = {
     "hero": {
       "greeting": "Hello, I'm",
       "name": "Mojib Rsm",
-      "title": "Full Stack Web & App Developer",
+      "title": "Wordpress Developer & SEO Marketer",
       "tagline": "Transforming ideas into impactful digital experiences.",
       "image": "https://bartanow.com/wp-content/uploads/2025/07/Mojibur-Rahman-sm.png",
       "imageHint": "man portrait",
@@ -196,18 +196,50 @@ export const translations = {
         }
       ]
     },
-     "gallery": {
+    "gallery": {
       "title": "My Gallery",
       "description": "A collection of moments and creations that inspire me.",
       "images": [
-        { "src": "https://placehold.co/400x400.png", "alt": "A beautiful landscape", "imageHint": "landscape scenery" },
-        { "src": "https://placehold.co/400x400.png", "alt": "Modern architecture design", "imageHint": "modern architecture" },
-        { "src": "https://placehold.co/400x400.png", "alt": "Abstract art piece", "imageHint": "abstract art" },
-        { "src": "https://placehold.co/400x400.png", "alt": "A person working on a laptop", "imageHint": "person working" },
-        { "src": "https://placehold.co/400x400.png", "alt": "Close-up of a camera lens", "imageHint": "camera lens" },
-        { "src": "https://placehold.co/400x400.png", "alt": "City skyline at night", "imageHint": "city skyline" },
-        { "src": "https://placehold.co/400x400.png", "alt": "A classic car", "imageHint": "classic car" },
-        { "src": "https://placehold.co/400x400.png", "alt": "Delicious food plating", "imageHint": "food plate" }
+        {
+          "src": "https://placehold.co/400x400.png",
+          "alt": "A beautiful landscape",
+          "imageHint": "landscape scenery"
+        },
+        {
+          "src": "https://placehold.co/400x400.png",
+          "alt": "Modern architecture design",
+          "imageHint": "modern architecture"
+        },
+        {
+          "src": "https://placehold.co/400x400.png",
+          "alt": "Abstract art piece",
+          "imageHint": "abstract art"
+        },
+        {
+          "src": "https://placehold.co/400x400.png",
+          "alt": "A person working on a laptop",
+          "imageHint": "person working"
+        },
+        {
+          "src": "https://placehold.co/400x400.png",
+          "alt": "Close-up of a camera lens",
+          "imageHint": "camera lens"
+        },
+        {
+          "src": "https://placehold.co/400x400.png",
+          "alt": "City skyline at night",
+          "imageHint": "city skyline"
+        },
+        {
+          "src": "https://placehold.co/400x400.png",
+          "alt": "A classic car",
+          "imageHint": "classic car"
+        },
+        {
+          "src": "https://placehold.co/400x400.png",
+          "alt": "Delicious food plating",
+          "imageHint": "food plate"
+        }
       ]
     },
     "blog": {
@@ -523,14 +555,46 @@ export const translations = {
       "title": "আমার গ্যালারি",
       "description": "কিছু মুহূর্ত এবং সৃষ্টির সংগ্রহ যা আমাকে অনুপ্রাণিত করে।",
       "images": [
-        { "src": "https://placehold.co/400x400.png", "alt": "একটি সুন্দর প্রাকৃতিক দৃশ্য", "imageHint": "landscape scenery" },
-        { "src": "https://placehold.co/400x400.png", "alt": "আধুনিক স্থাপত্য ডিজাইন", "imageHint": "modern architecture" },
-        { "src": "https://placehold.co/400x400.png", "alt": "বিমূর্ত শিল্পকর্ম", "imageHint": "abstract art" },
-        { "src": "https://placehold.co/400x400.png", "alt": "ল্যাপটপে কাজ করা একজন ব্যক্তি", "imageHint": "person working" },
-        { "src": "https://placehold.co/400x400.png", "alt": "ক্যামেরার লেন্সের ক্লোজ-আপ", "imageHint": "camera lens" },
-        { "src": "https://placehold.co/400x400.png", "alt": "রাতের শহরের স্কাইলাইন", "imageHint": "city skyline" },
-        { "src": "https://placehold.co/400x400.png", "alt": "একটি ক্লাসিক গাড়ি", "imageHint": "classic car" },
-        { "src": "https://placehold.co/400x400.png", "alt": "সুস্বাদু খাবারের প্লেটিং", "imageHint": "food plate" }
+        {
+          "src": "https://placehold.co/400x400.png",
+          "alt": "একটি সুন্দর প্রাকৃতিক দৃশ্য",
+          "imageHint": "landscape scenery"
+        },
+        {
+          "src": "https://placehold.co/400x400.png",
+          "alt": "আধুনিক স্থাপত্য ডিজাইন",
+          "imageHint": "modern architecture"
+        },
+        {
+          "src": "https://placehold.co/400x400.png",
+          "alt": "বিমূর্ত শিল্পকর্ম",
+          "imageHint": "abstract art"
+        },
+        {
+          "src": "https://placehold.co/400x400.png",
+          "alt": "ল্যাপটপে কাজ করা একজন ব্যক্তি",
+          "imageHint": "person working"
+        },
+        {
+          "src": "https://placehold.co/400x400.png",
+          "alt": "ক্যামেরার লেন্সের ক্লোজ-আপ",
+          "imageHint": "camera lens"
+        },
+        {
+          "src": "https://placehold.co/400x400.png",
+          "alt": "রাতের শহরের স্কাইলাইন",
+          "imageHint": "city skyline"
+        },
+        {
+          "src": "https://placehold.co/400x400.png",
+          "alt": "একটি ক্লাসিক গাড়ি",
+          "imageHint": "classic car"
+        },
+        {
+          "src": "https://placehold.co/400x400.png",
+          "alt": "সুস্বাদু খাবারের প্লেটিং",
+          "imageHint": "food plate"
+        }
       ]
     },
     "blog": {
