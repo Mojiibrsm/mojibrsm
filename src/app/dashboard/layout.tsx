@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { Button } from '@/components/ui/button';
 
 const dashboardNavItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
