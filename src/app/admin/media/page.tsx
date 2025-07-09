@@ -1,18 +1,22 @@
 
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { getMediaItems, addMediaItem, deleteMediaItem, updateMediaItem, IMediaItem } from '@/services/data';
 import Image from 'next/image';
-import { Upload, Trash2, Copy, Loader2, ImageOff, Pencil } from 'lucide-react';
+import { Upload, Trash2, Copy, Loader2, ImageOff, Pencil, Crop as CropIcon } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { FormattedTimestamp } from '@/components/formatted-timestamp';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+
+import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
+
 
 export default function AdminMediaPage() {
     const [mediaItems, setMediaItems] = useState<IMediaItem[]>([]);
@@ -21,6 +25,7 @@ export default function AdminMediaPage() {
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const [editingItem, setEditingItem] = useState<IMediaItem | null>(null);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    const [croppingItem, setCroppingItem] = useState<IMediaItem | null>(null);
 
     const loadMedia = useCallback(() => {
         setMediaItems(getMediaItems());
@@ -76,6 +81,10 @@ export default function AdminMediaPage() {
         setIsEditDialogOpen(true);
     };
 
+    const handleCrop = (item: IMediaItem) => {
+        setCroppingItem(item);
+    };
+
     const handleSaveEdit = () => {
         if (!editingItem) return;
 
@@ -118,12 +127,15 @@ export default function AdminMediaPage() {
                         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
                             {mediaItems.map(item => (
                                 <Card key={item.id} className="group relative overflow-hidden">
-                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center justify-center gap-2">
+                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center justify-center gap-1">
                                          <Button size="icon" variant="secondary" onClick={() => handleCopyUrl(item.url)}>
                                             <Copy className="h-4 w-4" />
                                         </Button>
                                          <Button size="icon" variant="secondary" onClick={() => handleEdit(item)}>
                                             <Pencil className="h-4 w-4" />
+                                        </Button>
+                                        <Button size="icon" variant="secondary" onClick={() => handleCrop(item)}>
+                                            <CropIcon className="h-4 w-4" />
                                         </Button>
                                          <AlertDialog>
                                             <AlertDialogTrigger asChild>
@@ -162,7 +174,7 @@ export default function AdminMediaPage() {
                     <DialogHeader>
                         <DialogTitle>Edit Media</DialogTitle>
                         <DialogDescription>
-                           Change the details for this media item. A full image editor with crop/resize is coming soon!
+                           Change the details for this media item.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
@@ -185,6 +197,134 @@ export default function AdminMediaPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {croppingItem && (
+                <CropImageDialog
+                    item={croppingItem}
+                    onClose={() => setCroppingItem(null)}
+                    onSaveSuccess={() => {
+                        loadMedia();
+                        setCroppingItem(null);
+                    }}
+                />
+            )}
         </div>
+    );
+}
+
+function CropImageDialog({
+    item,
+    onClose,
+    onSaveSuccess,
+}: {
+    item: IMediaItem;
+    onClose: () => void;
+    onSaveSuccess: (newItem: IMediaItem) => void;
+}) {
+    const [crop, setCrop] = useState<Crop>();
+    const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
+    const [isSaving, setIsSaving] = useState(false);
+    const imgRef = useRef<HTMLImageElement>(null);
+    const { toast } = useToast();
+
+    const getCroppedBlob = (image: HTMLImageElement, crop: PixelCrop): Promise<Blob | null> => {
+        const canvas = document.createElement('canvas');
+        canvas.width = crop.width;
+        canvas.height = crop.height;
+        const ctx = canvas.getContext('2d');
+
+        if (!ctx) {
+            return Promise.resolve(null);
+        }
+        
+        const scaleX = image.naturalWidth / image.width;
+        const scaleY = image.naturalHeight / image.height;
+
+        ctx.drawImage(
+            image,
+            crop.x * scaleX,
+            crop.y * scaleY,
+            crop.width * scaleX,
+            crop.height * scaleY,
+            0,
+            0,
+            crop.width,
+            crop.height
+        );
+        
+        return new Promise((resolve) => {
+            canvas.toBlob(resolve, 'image/png');
+        });
+    }
+
+    const handleSaveCrop = async () => {
+        if (!completedCrop || !imgRef.current || completedCrop.width === 0) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Please select an area to crop.' });
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            const blob = await getCroppedBlob(imgRef.current, completedCrop);
+            if (!blob) throw new Error('Could not create cropped image.');
+
+            const croppedFile = new File([blob], `cropped_${item.name.replace(/\.[^/.]+$/, "")}.png`, { type: 'image/png' });
+            
+            const formData = new FormData();
+            formData.append('file', croppedFile);
+            formData.append('destination', 's3');
+
+            const response = await fetch('/api/upload', { method: 'POST', body: formData });
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || 'Upload failed');
+            }
+
+            const newItem = addMediaItem({ url: result.url, name: croppedFile.name });
+            toast({ title: 'Success', description: 'Cropped image saved to library.' });
+            onSaveSuccess(newItem);
+            onClose();
+
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Save Error', description: error.message });
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
+    return (
+        <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent className="sm:max-w-3xl">
+                <DialogHeader>
+                    <DialogTitle>Crop Image</DialogTitle>
+                    <DialogDescription>Select the area you want to keep. Then click save.</DialogDescription>
+                </DialogHeader>
+                <div className="flex justify-center items-center p-4 bg-muted rounded-md min-h-[400px]">
+                     <ReactCrop
+                        crop={crop}
+                        onChange={(_, percentCrop) => setCrop(percentCrop)}
+                        onComplete={(c) => setCompletedCrop(c)}
+                    >
+                        <Image
+                            ref={imgRef}
+                            src={item.url}
+                            alt="Image to crop"
+                            width={800}
+                            height={600}
+                            className="max-h-[60vh] w-auto object-contain"
+                            crossOrigin="anonymous" 
+                            unoptimized
+                        />
+                    </ReactCrop>
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={onClose} disabled={isSaving}>Cancel</Button>
+                    <Button onClick={handleSaveCrop} disabled={isSaving}>
+                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Save Cropped Image'}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }
