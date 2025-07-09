@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
@@ -34,15 +35,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (snapshot.exists()) {
             const firestoreData = snapshot.data() as FirestoreUser;
             setUser({ ...firebaseUser, ...firestoreData });
+            setLoading(false);
           } else {
-            // User is authenticated, but the Firestore document (with role) doesn't exist yet.
-            // This happens right after signup before the doc is created.
-            // We set the user from auth data and can assume a 'Client' role for now.
-            // The onSnapshot listener will update the role automatically when the doc is created.
-            setUser({ ...firebaseUser, role: 'Client' });
+            // This is a transient state during signup where the user is created in Auth
+            // but the corresponding Firestore document isn't yet.
+            // We keep loading as true and wait for the document to be created,
+            // which will trigger this onSnapshot listener again.
           }
-          // In either case, auth state is determined, so we can stop loading.
-          setLoading(false);
         }, (error) => {
             console.error("Auth context Firestore error:", error);
             setUser(null);
