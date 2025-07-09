@@ -66,7 +66,7 @@ export default function Contact() {
           userId: `contact-${email}`,
           clientName: name,
           clientEmail: email,
-          clientAvatar: `https://placehold.co/100x100.png?text=${name.charAt(0)}`,
+          clientAvatar: 'https://i.postimg.cc/8P04g40T/man.png',
           clientPhone: phone || '',
           subject: subject,
           unreadByAdmin: true,

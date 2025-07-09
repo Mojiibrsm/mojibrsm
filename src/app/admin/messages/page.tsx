@@ -123,6 +123,7 @@ export default function AdminMessagesPage() {
   const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const adminAvatar = translations.en.site.adminAvatar;
 
   const loadThreads = useCallback(() => {
     const fetchedThreads = getMessageThreads();
@@ -597,7 +598,7 @@ export default function AdminMessagesPage() {
                             <p className="text-sm" style={{ whiteSpace: 'pre-wrap' }}>{message.text}</p>
                             <FormattedTimestamp timestamp={message.timestamp} className="text-xs text-right mt-1 opacity-70" />
                     </div>
-                    {message.from === 'admin' && user && <Avatar className="h-8 w-8"><AvatarImage src={user.photoURL || ''} alt={user.displayName || 'Admin'} /><AvatarFallback>{user.displayName?.charAt(0) || 'A'}</AvatarFallback></Avatar>}
+                    {message.from === 'admin' && user && <Avatar className="h-8 w-8"><AvatarImage src={adminAvatar} alt={user.displayName || 'Admin'} /><AvatarFallback>{user.displayName?.charAt(0) || 'A'}</AvatarFallback></Avatar>}
                     </div>
                 ))}
             </div>
