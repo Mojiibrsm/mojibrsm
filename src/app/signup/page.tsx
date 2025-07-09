@@ -69,12 +69,17 @@ export default function SignupPage() {
       });
     } catch (error: any) {
       console.error("Error sending OTP:", error);
+      let description = 'একটি সমস্যা হয়েছে। অনুগ্রহ করে আপনার নম্বরটি পরীক্ষা করুন।';
+      if (error.code === 'auth/too-many-requests') {
+        description = 'অনেকবার চেষ্টা করা হয়েছে। অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন।';
+      } else if (error.code === 'auth/network-request-failed') {
+        description = 'নেটওয়ার্ক অনুরোধ ব্যর্থ হয়েছে। এটি সাধারণত ফায়ারবেস কনফিগারেশন সমস্যার কারণে হয়।';
+      }
+      
       toast({
         variant: 'destructive',
         title: 'OTP পাঠাতে ব্যর্থ',
-        description: error.code === 'auth/too-many-requests' 
-          ? 'অনেকবার চেষ্টা করা হয়েছে। অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন।'
-          : 'একটি সমস্যা হয়েছে। অনুগ্রহ করে আপনার নম্বরটি পরীক্ষা করুন।',
+        description: description,
       });
     } finally {
       setLoading(false);
