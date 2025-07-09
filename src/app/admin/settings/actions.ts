@@ -5,6 +5,8 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { getAwsSettings, saveAwsSettings, AwsSettings } from '@/config/settings';
 import { site as enSite } from '@/lib/translations/en/site';
+import { contact as enContactData } from '@/lib/translations/en/contact';
+import { contact as bnContactData } from '@/lib/translations/bn/contact';
 
 // --- AWS Settings ---
 
@@ -57,4 +59,39 @@ export async function updateSiteSettingsAction(newSettings: SiteSettings): Promi
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
         return { success: false, message: `Failed to update settings file on the server: ${errorMessage}` };
     }
+}
+
+
+// --- Contact Settings ---
+
+export type ContactSettings = typeof enContactData;
+
+export async function getContactSettingsAction(): Promise<ContactSettings> {
+    return enContactData;
+}
+
+async function writeContactFile(lang: 'en' | 'bn', data: ContactSettings): Promise<void> {
+    const filePath = path.join(process.cwd(), 'src', 'lib', 'translations', lang, `contact.ts`);
+    const newFileContent = `export const contact = ${JSON.stringify(data, null, 2)};`;
+    await fs.writeFile(filePath, newFileContent, 'utf-8');
+}
+
+export async function updateContactSettingsAction(newEnData: ContactSettings): Promise<{ success: boolean; message: string }> {
+  try {
+    // Create the new BN data by merging new details with existing BN text
+    const newBnData: ContactSettings = {
+        ...bnContactData, // preserves title, description, form fields in Bengali
+        details: newEnData.details // syncs the contact details from the EN form
+    };
+    
+    await Promise.all([
+        writeContactFile('en', newEnData),
+        writeContactFile('bn', newBnData),
+    ]);
+    return { success: true, message: 'Contact settings updated successfully!' };
+  } catch (error) {
+    console.error('Failed to write contact settings:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    return { success: false, message: `Failed to update settings file on the server: ${errorMessage}` };
+  }
 }

@@ -13,6 +13,11 @@ export const contact = {
   "details": {
     "email": "mojibrsm@gmail.com",
     "phone": "+8801601519007",
-    "location": "Cox's Bazar, Bangladesh"
+    "location": "Cox's Bazar, Bangladesh",
+    "socials": {
+      "github": "https://github.com/mojibrsm",
+      "facebook": "https://facebook.com/mojibrsm",
+      "linkedin": "https://linkedin.com/in/mojibrsm"
+    }
   }
 };

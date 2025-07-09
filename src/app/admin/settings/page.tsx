@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { HardDrive, Bell, Loader2, Save, Info, FolderSearch } from 'lucide-react';
+import { HardDrive, Bell, Loader2, Save, Info, FolderSearch, Contact2, Github, Facebook, Linkedin, Mail, Phone, MapPin } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -11,8 +11,9 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { getAwsSettingsAction, updateAwsSettingsAction } from './actions';
 import { getSiteSettingsAction, updateSiteSettingsAction } from './actions';
+import { getContactSettingsAction, updateContactSettingsAction } from './actions';
 import type { AwsSettings } from '@/config/settings';
-import type { SiteSettings } from './actions';
+import type { SiteSettings, ContactSettings } from './actions';
 import Image from 'next/image';
 import { MediaLibraryDialog } from '@/components/media-library-dialog';
 import { IMediaItem } from '@/services/data';
@@ -20,6 +21,13 @@ import { IMediaItem } from '@/services/data';
 
 const initialAwsSettings: AwsSettings = { accessKeyId: '', secretAccessKey: '', bucketName: '', region: '' };
 const initialSiteSettings: SiteSettings = { title: '', url: '', logo: '', publicLogo: '', adminAvatar: '' };
+const initialContactSettings: ContactSettings = {
+    title: '',
+    description: '',
+    form: { name: '', email: '', phone: '', subject: '', message: '', submit: '' },
+    details: { email: '', phone: '', location: '', socials: { github: '', facebook: '', linkedin: '' } },
+};
+
 
 type NotificationSettings = { messages: boolean; requests: boolean };
 
@@ -32,6 +40,10 @@ export default function AdminSettingsPage() {
     const [isSiteLoading, setIsSiteLoading] = useState(true);
     const [isSiteSaving, setIsSiteSaving] = useState(false);
     
+    const [contactSettings, setContactSettings] = useState<ContactSettings>(initialContactSettings);
+    const [isContactLoading, setIsContactLoading] = useState(true);
+    const [isContactSaving, setIsContactSaving] = useState(false);
+    
     const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
     const [mediaTargetField, setMediaTargetField] = useState<keyof SiteSettings | null>(null);
 
@@ -43,6 +55,7 @@ export default function AdminSettingsPage() {
         const loadAllSettings = async () => {
             setIsAwsLoading(true);
             setIsSiteLoading(true);
+            setIsContactLoading(true);
 
             const awsData = await getAwsSettingsAction();
             setAwsSettings(awsData);
@@ -51,6 +64,10 @@ export default function AdminSettingsPage() {
             const siteData = await getSiteSettingsAction();
             setSiteSettings(siteData);
             setIsSiteLoading(false);
+
+            const contactData = await getContactSettingsAction();
+            setContactSettings(contactData);
+            setIsContactLoading(false);
         };
         loadAllSettings();
 
@@ -95,6 +112,29 @@ export default function AdminSettingsPage() {
         toast({ title: result.success ? 'Success!' : 'Error!', description: result.message, variant: result.success ? 'default' : 'destructive' });
         setIsSiteSaving(false);
     };
+    
+    const handleContactChange = (fieldPath: string, value: string) => {
+        setContactSettings(prev => {
+            if (!prev) return prev;
+            const keys = fieldPath.split('.');
+            const newSettings = JSON.parse(JSON.stringify(prev)); // Deep copy to handle nested objects
+            let current = newSettings;
+            for (let i = 0; i < keys.length - 1; i++) {
+                current = current[keys[i]];
+            }
+            current[keys[keys.length - 1]] = value;
+            return newSettings;
+        });
+    };
+
+    const handleSaveContact = async () => {
+        if (!contactSettings) return;
+        setIsContactSaving(true);
+        const result = await updateContactSettingsAction(contactSettings);
+        toast({ title: result.success ? 'Success!' : 'Error!', description: result.message, variant: result.success ? 'default' : 'destructive' });
+        setIsContactSaving(false);
+    };
+
 
     const handleNotificationChange = (key: keyof NotificationSettings) => {
         const newSettings = { ...notifications, [key]: !notifications[key] };
@@ -169,6 +209,60 @@ export default function AdminSettingsPage() {
                     <Button onClick={handleSaveSiteSettings} disabled={isSiteSaving || isSiteLoading}>
                         {isSiteSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                         Save Site Information
+                    </Button>
+                </CardFooter>
+            </Card>
+            
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Contact2 className="h-5 w-5" />
+                        Contact & Socials
+                    </CardTitle>
+                    <CardDescription>
+                        Update the contact details and social media links displayed on your site.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {isContactLoading ? (
+                        <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-4">
+                                 <div className="grid gap-2">
+                                    <Label htmlFor="email"><Mail className="inline-block mr-2 h-4 w-4"/>Email</Label>
+                                    <Input id="email" value={contactSettings.details.email} onChange={(e) => handleContactChange('details.email', e.target.value)} />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="phone"><Phone className="inline-block mr-2 h-4 w-4"/>Phone</Label>
+                                    <Input id="phone" value={contactSettings.details.phone} onChange={(e) => handleContactChange('details.phone', e.target.value)} />
+                                </div>
+                                 <div className="grid gap-2">
+                                    <Label htmlFor="location"><MapPin className="inline-block mr-2 h-4 w-4"/>Location</Label>
+                                    <Input id="location" value={contactSettings.details.location} onChange={(e) => handleContactChange('details.location', e.target.value)} />
+                                </div>
+                            </div>
+                             <div className="space-y-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="github"><Github className="inline-block mr-2 h-4 w-4"/>GitHub URL</Label>
+                                    <Input id="github" value={contactSettings.details.socials.github} onChange={(e) => handleContactChange('details.socials.github', e.target.value)} />
+                                </div>
+                                 <div className="grid gap-2">
+                                    <Label htmlFor="facebook"><Facebook className="inline-block mr-2 h-4 w-4"/>Facebook URL</Label>
+                                    <Input id="facebook" value={contactSettings.details.socials.facebook} onChange={(e) => handleContactChange('details.socials.facebook', e.target.value)} />
+                                </div>
+                                 <div className="grid gap-2">
+                                    <Label htmlFor="linkedin"><Linkedin className="inline-block mr-2 h-4 w-4"/>LinkedIn URL</Label>
+                                    <Input id="linkedin" value={contactSettings.details.socials.linkedin} onChange={(e) => handleContactChange('details.socials.linkedin', e.target.value)} />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </CardContent>
+                 <CardFooter className="border-t px-6 py-4">
+                    <Button onClick={handleSaveContact} disabled={isContactSaving || isContactLoading}>
+                        {isContactSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                        Save Contact Details
                     </Button>
                 </CardFooter>
             </Card>

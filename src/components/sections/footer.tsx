@@ -1,7 +1,9 @@
+
 'use client';
 import { useLanguage } from '@/contexts/language-context';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Footer() {
   const { t } = useLanguage();
@@ -10,7 +12,19 @@ export default function Footer() {
     <footer className="w-full bg-card border-t" suppressHydrationWarning>
       <div className="container py-6">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <span className="font-bold text-lg">Mojib Rsm</span>
+            {t.site.publicLogo ? (
+              <Image
+                src={t.site.publicLogo}
+                alt={t.site.title}
+                width={140}
+                height={35}
+                className="h-8 w-auto object-contain"
+                priority
+                unoptimized
+              />
+            ) : (
+              <span className="font-bold text-lg">{t.site.title}</span>
+            )}
             <div className="flex items-center gap-1 md:gap-2 flex-wrap justify-center">
                <Button variant="link" asChild>
                   <Link href="#home" className="text-muted-foreground hover:text-primary">{t.footer.nav.home}</Link>

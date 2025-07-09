@@ -1,3 +1,4 @@
+
 'use client';
 import { useLanguage } from '@/contexts/language-context';
 import { Button } from '@/components/ui/button';
@@ -101,9 +102,9 @@ export default function Contact() {
 
 
   const socialLinks = [
-    { icon: Github, href: "https://github.com/mojibrsm" },
-    { icon: Facebook, href: "https://facebook.com/mojibrsm" },
-    { icon: Linkedin, href: "https://linkedin.com/in/mojibrsm" },
+    { icon: Github, href: t.contact.details.socials.github },
+    { icon: Facebook, href: t.contact.details.socials.facebook },
+    { icon: Linkedin, href: t.contact.details.socials.linkedin },
   ];
 
   const containerVariants = {
@@ -231,7 +232,7 @@ export default function Contact() {
             </Card>
             <div className="flex justify-center md:justify-start gap-4 mt-6">
               {socialLinks.map((social, index) => (
-                 <Button key={index} variant="outline" size="icon" asChild>
+                 social.href && <Button key={index} variant="outline" size="icon" asChild>
                     <a href={social.href} target="_blank" rel="noopener noreferrer">
                         <social.icon className="h-5 w-5" />
                     </a>

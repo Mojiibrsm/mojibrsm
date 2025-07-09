@@ -13,6 +13,11 @@ export const contact = {
   "details": {
     "email": "mojibrsm@gmail.com",
     "phone": "+৮৮০১৬০১৫১৯০২৭",
-    "location": "কক্সবাজার, বাংলাদেশ"
+    "location": "কক্সবাজার, বাংলাদেশ",
+    "socials": {
+      "github": "https://github.com/mojibrsm",
+      "facebook": "https://facebook.com/mojibrsm",
+      "linkedin": "https://linkedin.com/in/mojibrsm"
+    }
   }
 };

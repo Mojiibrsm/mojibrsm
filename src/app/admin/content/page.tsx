@@ -311,7 +311,7 @@ export default function AdminContentPage() {
     setIsSaving(null);
   };
   
-  const sections = Object.keys(editableContent.en).filter(key => key !== 'site' && key !== 'blog');
+  const sections = Object.keys(editableContent.en).filter(key => !['site', 'blog', 'contact', 'whatsapp'].includes(key));
 
   return (
     <div className="space-y-6">
