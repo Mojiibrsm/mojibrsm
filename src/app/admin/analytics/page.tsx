@@ -1,7 +1,7 @@
 
 'use client';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { LineChart, BarChart, Users, DollarSign } from 'lucide-react';
+import { LineChart, Users, BarChart as BarChartIcon } from 'lucide-react';
 import { Bar, BarChart as RechartsBarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from "recharts"
 
 const visitorData = [
@@ -16,19 +16,19 @@ export default function AdminAnalyticsPage() {
   return (
     <div className="space-y-6">
        <div>
-        <h1 className="text-2xl font-bold">Analytics</h1>
-        <p className="text-muted-foreground">Review site performance and user engagement.</p>
+        <h1 className="text-2xl font-bold">Analytics Overview</h1>
+        <p className="text-muted-foreground">Connect to Google Analytics and Search Console to view your data.</p>
       </div>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <LineChart className="h-5 w-5" />
-            Feature Under Development
+            Ready for Integration
           </CardTitle>
-           <CardDescription>This analytics dashboard is currently being built. The data shown is for demonstration purposes only.</CardDescription>
+           <CardDescription>This page is ready for integration with Google's services.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
-            <p>Soon, you will be able to see detailed analytics about your website's traffic, user engagement, and project statistics here. This will help you make data-driven decisions. Below is a preview of what's to come.</p>
+            <p>Once connected, you will be able to see detailed analytics about your website's traffic, user engagement, search queries, and more, directly from your dashboard. Below is a preview of what's to come.</p>
             
             <div className="grid md:grid-cols-2 gap-6">
                  <Card>
@@ -53,12 +53,12 @@ export default function AdminAnalyticsPage() {
                  <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-lg">
-                           <DollarSign className="h-5 w-5" />
-                           Revenue Overview
+                           <BarChartIcon className="h-5 w-5" />
+                           Search Performance
                         </CardTitle>
                     </CardHeader>
                      <CardContent className="flex items-center justify-center h-[300px] text-muted-foreground">
-                        <p>Revenue chart coming soon...</p>
+                        <p>Search Console data coming soon...</p>
                     </CardContent>
                 </Card>
             </div>

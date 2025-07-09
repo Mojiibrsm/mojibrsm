@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarFooter, SidebarTrigger, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { FileText, FolderKanban, ClipboardList, LayoutDashboard, LogOut, MessageSquare, History, Settings } from 'lucide-react';
+import { FileText, FolderKanban, ClipboardList, LayoutDashboard, LogOut, MessageSquare, History, Settings, LineChart } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ import { LanguageSwitcher } from '@/components/language-switcher';
 
 const adminNavItems = [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/admin/analytics", label: "Analytics", icon: LineChart },
     { href: "/admin/content", label: "Content", icon: FileText },
     { href: "/admin/projects", label: "Projects", icon: FolderKanban },
     { href: "/admin/requests", label: "Requests", icon: ClipboardList },

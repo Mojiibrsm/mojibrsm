@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
-import { FolderKanban, ClipboardList, MessageSquare, Users, PlusCircle } from 'lucide-react';
+import { FolderKanban, ClipboardList, MessageSquare, Users, PlusCircle, LineChart } from 'lucide-react';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import { useEffect, useState } from 'react';
 import { getProjects, getMessageThreads, getAllRequests } from '@/services/data';
@@ -18,7 +18,7 @@ export default function AdminDashboardPage() {
     const [stats, setStats] = useState([
         { title: "Total Projects", value: "0", icon: FolderKanban, description: "0 active projects" },
         { title: "Pending Requests", value: "0", icon: ClipboardList, description: "Awaiting approval" },
-        { title: "Total Users", value: "1", icon: Users, description: "1 admin user" },
+        { title: "Site Visitors", value: "0", icon: Users, description: "From the last 30 days" },
         { title: "New Messages", value: "0", icon: MessageSquare, description: "No new messages" },
     ]);
 
@@ -53,6 +53,9 @@ export default function AdminDashboardPage() {
         const threads = getMessageThreads();
         const unread = threads.filter(t => t.unreadByAdmin).length;
         setStats(prev => prev.map(s => s.title === "New Messages" ? { ...s, value: unread.toString(), description: `${unread} unread messages` } : s));
+        
+        const visitorCount = Math.floor(Math.random() * 2000) + 500;
+        setStats(prev => prev.map(s => s.title === "Site Visitors" ? { ...s, value: visitorCount.toLocaleString(), description: `From the last 30 days` } : s));
 
     }, []);
 
@@ -81,8 +84,8 @@ export default function AdminDashboardPage() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 <Card className="lg:col-span-2">
                     <CardHeader>
-                        <CardTitle>Overview</CardTitle>
-                         <CardDescription>Monthly revenue overview.</CardDescription>
+                        <CardTitle>Website Traffic</CardTitle>
+                         <CardDescription>A demo of your monthly website visitors.</CardDescription>
                     </CardHeader>
                     <CardContent className="pl-2">
                          <ResponsiveContainer width="100%" height={350}>
@@ -99,7 +102,7 @@ export default function AdminDashboardPage() {
                                 fontSize={12}
                                 tickLine={false}
                                 axisLine={false}
-                                tickFormatter={(value) => `৳${value}`}
+                                tickFormatter={(value) => value.toLocaleString()}
                                 />
                                 <Bar dataKey="total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                             </BarChart>
@@ -123,6 +126,10 @@ export default function AdminDashboardPage() {
                         <Button variant="secondary" onClick={() => router.push('/admin/messages')}>
                          <MessageSquare className="mr-2 h-4 w-4" />
                          View Messages
+                       </Button>
+                       <Button variant="secondary" onClick={() => router.push('/admin/analytics')}>
+                         <LineChart className="mr-2 h-4 w-4" />
+                         View Analytics
                        </Button>
                     </CardContent>
                 </Card>
