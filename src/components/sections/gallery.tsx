@@ -32,6 +32,7 @@ export default function Gallery() {
           className="text-center mb-12"
         >
           <h2 className="text-4xl font-bold font-headline">{t.gallery.title}</h2>
+          <div className="mt-4 h-1.5 w-24 bg-gradient-to-r from-primary via-accent to-secondary mx-auto rounded-full"></div>
           <p className="max-w-2xl mx-auto text-muted-foreground mt-4">{t.gallery.description}</p>
         </motion.div>
         <motion.div

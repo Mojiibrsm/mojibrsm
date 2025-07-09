@@ -93,6 +93,37 @@
   body {
     @apply bg-background text-foreground;
   }
+   /* Basic prose styles for blog content */
+  .prose {
+    @apply text-foreground;
+  }
+  .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+    @apply text-foreground font-bold;
+  }
+  .prose a {
+    @apply text-primary hover:underline;
+  }
+  .prose blockquote {
+    @apply border-l-4 border-primary pl-4 italic text-muted-foreground;
+  }
+  .prose code {
+    @apply bg-muted text-muted-foreground rounded px-1 py-0.5 font-code;
+  }
+  .prose pre {
+    @apply bg-muted p-4 rounded-lg overflow-x-auto;
+  }
+  .dark .prose {
+     @apply text-foreground;
+  }
+   .dark .prose h1, .dark .prose h2, .dark .prose h3, .dark .prose h4, .dark .prose h5, .dark .prose h6 {
+    @apply text-foreground;
+  }
+  .dark .prose a {
+    @apply text-primary;
+  }
+  .dark .prose blockquote {
+    @apply border-primary text-muted-foreground;
+  }
 }
 
 @layer components {

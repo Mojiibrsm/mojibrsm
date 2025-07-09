@@ -45,30 +45,30 @@ export default function BlogPage() {
                         >
                             {t.blog.posts.map((post) => (
                                 <motion.div key={post.title} variants={itemVariants} className="h-full">
-                                    <Card className="relative overflow-hidden shadow-lg hover:shadow-primary/20 transition-all duration-300 rounded-2xl flex flex-col bg-card h-full">
-                                        <div className="relative overflow-hidden rounded-t-2xl">
-                                          <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.3 }}>
-                                            <Image
-                                                src={post.image}
-                                                alt={post.title}
-                                                width={600}
-                                                height={400}
-                                                className="w-full h-auto object-cover"
-                                                data-ai-hint={post.imageHint}
-                                            />
-                                          </motion.div>
-                                        </div>
-                                        <div className='relative bg-card rounded-b-2xl flex flex-col flex-grow p-6'>
-                                            <p className="text-sm text-muted-foreground mb-2">{post.date}</p>
-                                            <CardTitle className="mb-2 text-xl">{post.title}</CardTitle>
-                                            <CardDescription className="flex-grow mb-4">{post.excerpt}</CardDescription>
-                                            <Button asChild className="w-full mt-auto">
-                                                <Link href={post.link}>
-                                                    {t.blog.readMore}
-                                                </Link>
-                                            </Button>
-                                        </div>
-                                    </Card>
+                                    <Link href={`/blog/${post.slug}`} className="block h-full group">
+                                        <Card className="relative overflow-hidden shadow-lg group-hover:shadow-primary/20 transition-all duration-300 rounded-2xl flex flex-col bg-card h-full">
+                                            <div className="relative overflow-hidden rounded-t-2xl">
+                                            <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.3 }}>
+                                                <Image
+                                                    src={post.image}
+                                                    alt={post.title}
+                                                    width={600}
+                                                    height={400}
+                                                    className="w-full h-auto object-cover"
+                                                    data-ai-hint={post.imageHint}
+                                                />
+                                            </motion.div>
+                                            </div>
+                                            <div className='relative bg-card rounded-b-2xl flex flex-col flex-grow p-6'>
+                                                <p className="text-sm text-muted-foreground mb-2">{post.date}</p>
+                                                <CardTitle className="mb-2 text-xl">{post.title}</CardTitle>
+                                                <CardDescription className="flex-grow mb-4">{post.excerpt}</CardDescription>
+                                                <Button asChild className="w-full mt-auto">
+                                                    <span>{t.blog.readMore}</span>
+                                                </Button>
+                                            </div>
+                                        </Card>
+                                    </Link>
                                 </motion.div>
                             ))}
                         </motion.div>

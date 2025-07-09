@@ -34,6 +34,7 @@ export default function Pricing() {
                     className="text-center mb-12"
                 >
                     <h2 className="text-4xl font-bold font-headline">{t.pricing.title}</h2>
+                    <div className="mt-4 h-1.5 w-24 bg-gradient-to-r from-primary via-accent to-secondary mx-auto rounded-full"></div>
                     <p className="text-muted-foreground mt-4 max-w-2xl mx-auto">{t.pricing.description}</p>
                 </motion.div>
                 <motion.div
@@ -77,13 +78,6 @@ export default function Pricing() {
                         );
                     })}
                 </motion.div>
-                 <div className="text-center mt-12 text-muted-foreground">
-                    <p>{t.pricing.paymentMethods.title}</p>
-                    <div className="flex justify-center items-center gap-4 mt-2">
-                       <span>{t.pricing.paymentMethods.bkash}</span>
-                       <span>{t.pricing.paymentMethods.nagad}</span>
-                    </div>
-                </div>
             </div>
         </section>
     );

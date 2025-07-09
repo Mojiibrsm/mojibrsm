@@ -40,6 +40,7 @@ export default function Contact() {
       >
         <motion.div variants={itemVariants} className="text-center mb-12">
           <h2 className="text-4xl font-bold font-headline">{t.contact.title}</h2>
+          <div className="mt-4 h-1.5 w-24 bg-gradient-to-r from-primary via-accent to-secondary mx-auto rounded-full"></div>
           <p className="max-w-2xl mx-auto text-muted-foreground mt-4">{t.contact.description}</p>
         </motion.div>
         <div className="grid md:grid-cols-2 gap-12">

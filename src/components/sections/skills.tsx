@@ -32,15 +32,16 @@ export default function Skills() {
   return (
     <section id="skills" className="w-full py-16 md:py-24 bg-card">
       <div className="container">
-        <motion.h2
-          ref={ref}
-          initial="hidden"
-          animate={isInView ? 'visible' : 'hidden'}
-          variants={{
-            hidden: { opacity: 0, y: -20 },
-            visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
-          }}
-          className="text-3xl font-bold text-center mb-12 font-headline">{t.skills.title}</motion.h2>
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-12"
+        >
+          <h2 className="text-3xl font-bold font-headline">{t.skills.title}</h2>
+          <div className="mt-4 h-1.5 w-24 bg-gradient-to-r from-primary via-accent to-secondary mx-auto rounded-full"></div>
+        </motion.div>
         <motion.div
           ref={ref}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"

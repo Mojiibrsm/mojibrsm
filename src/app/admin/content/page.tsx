@@ -36,7 +36,7 @@ const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, hand
   // Case 1: Data is a string (used for items in a string array)
   if (typeof data === 'string') {
     const elementId = `${lang}-${path.join('-')}`;
-    const isTextarea = data.length > 80 || path.some(p => typeof p === 'string' && ['description', 'bio', 'mission', 'excerpt', 'details'].includes(p));
+    const isTextarea = data.length > 80 || path.some(p => typeof p === 'string' && ['description', 'bio', 'mission', 'excerpt', 'details', 'content'].includes(p));
     return (
       <div key={elementId} className="w-full">
         {isTextarea ? (
@@ -44,7 +44,7 @@ const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, hand
                 id={elementId}
                 value={data}
                 onChange={(e) => handleFieldChange(lang, path, e.target.value)}
-                className="w-full min-h-[80px]"
+                className="w-full min-h-[120px]"
             />
         ) : (
             <Input
@@ -114,7 +114,7 @@ const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, hand
     }
 
     if (typeof value === 'string') {
-      const isTextarea = value.length > 80 || ['description', 'bio', 'mission', 'excerpt', 'details'].some(k => key.toLowerCase().includes(k));
+      const isTextarea = value.length > 80 || ['description', 'bio', 'mission', 'excerpt', 'details', 'content', 'metaDescription'].some(k => key.toLowerCase().includes(k));
       const isFileField = key.toLowerCase().includes('image') || key.toLowerCase().includes('logo') || key.toLowerCase().includes('avatar') || key.toLowerCase() === 'src' || key.toLowerCase() === 'cv_url';
       
       if (isFileField) {
@@ -284,7 +284,7 @@ export default function AdminContentPage() {
               }
           } else {
               const arrayName = arrayPath[arrayPath.length - 1];
-              if (['responsibilities', 'skills', 'tech', 'features'].includes(arrayName as string)) {
+              if (['responsibilities', 'skills', 'tech', 'features', 'tags'].includes(arrayName as string)) {
                   newItem = "New Item";
               } else if (arrayName === 'jobs') {
                   newItem = { role: 'New Role', company: 'Company', period: 'Year - Year', responsibilities: [] };
@@ -295,7 +295,7 @@ export default function AdminContentPage() {
               } else if (arrayName === 'images' && arrayPath.includes('gallery')) {
                    newItem = { src: 'https://placehold.co/400x400.png', alt: 'New Image', imageHint: 'gallery image' };
               } else if (arrayName === 'posts') {
-                  newItem = { title: 'New Blog Post', excerpt: 'A short excerpt.', image: 'https://placehold.co/600x400.png', imageHint: 'blog post', link: '#', date: 'Month Day, Year' };
+                  newItem = { slug: 'new-blog-post', title: 'New Blog Post', excerpt: 'A short excerpt.', content: '<p>Start writing your full blog content here. You can use HTML tags like &lt;h2&gt;, &lt;p&gt;, &lt;ul&gt;, etc.</p>', image: 'https://placehold.co/800x400.png', imageHint: 'blog post', date: 'Month Day, Year', tags: ['New Tag'], metaTitle: 'New Blog Post Meta Title', metaDescription: 'A short meta description for SEO.' };
               } else if (arrayName === 'packages') {
                   newItem = { name: 'New Package', price: '৳0', billing: 'one-time', popular: false, features: [] };
               } else {
