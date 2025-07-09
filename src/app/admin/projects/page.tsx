@@ -72,49 +72,43 @@ export default function AdminProjectsPage() {
         return;
     }
     setIsSaving(true);
+    const isNew = !editingProject;
 
     try {
-      const isNew = !editingProject;
+        if (isNew) {
+            const newProject: Omit<Project, 'id' | 'createdAt'> = { ...formData, userId: user.uid };
+            await addProject(newProject);
+            toast({ title: "Project Added", description: "A new project has been successfully added." });
+        } else {
+            await updateProject(editingProject!.id!, formData);
+            toast({ title: "Project Updated", description: "The project has been successfully updated." });
+        }
 
-      if (isNew) {
-        const newProject: Omit<Project, 'id' | 'createdAt'> = { ...formData, userId: user.uid };
-        await addProject(newProject);
-        toast({ title: "Project Added", description: "A new project has been successfully added." });
-      } else {
-        await updateProject(editingProject!.id!, formData);
-        toast({ title: "Project Updated", description: "The project has been successfully updated." });
-      }
+        setIsDialogOpen(false);
+        setEditingProject(null);
 
-      // Close dialog and reset state immediately after successful DB operation
-      setIsDialogOpen(false);
-      setEditingProject(null);
-      setIsSaving(false);
-
-      // Send email notification in the background (fire-and-forget from UI perspective)
-      if (formData.clientEmail) {
-        const emailSubject = isNew
-          ? `New Project Created: ${formData.name}`
-          : `Update on your project: ${formData.name}`;
-
-        const emailHtml = isNew
-          ? `<h1>New Project Started</h1><p>A new project, <strong>${formData.name}</strong>, has been created for you.</p><p>The current status is: <strong>${formData.status}</strong>.</p><p>You can track its progress in your dashboard.</p>`
-          : `<h1>Project Updated</h1><p>The status of your project, <strong>${formData.name}</strong>, has been updated to: <strong>${formData.status}</strong>.</p><p>You can view details in your dashboard.</p>`;
-        
-        sendEmail({ to: formData.clientEmail, subject: emailSubject, html: emailHtml })
-          .then(emailResult => {
-            // This toast will appear when the email promise resolves
-            toast({ 
-              title: "Email Notification", 
-              description: emailResult.message, 
-              variant: emailResult.success ? 'default' : 'destructive' 
-            });
-          });
-      }
-
+        if (formData.clientEmail) {
+            const emailSubject = isNew
+                ? `New Project Created: ${formData.name}`
+                : `Update on your project: ${formData.name}`;
+            const emailHtml = isNew
+                ? `<h1>New Project Started</h1><p>A new project, <strong>${formData.name}</strong>, has been created for you.</p><p>The current status is: <strong>${formData.status}</strong>.</p><p>You can track its progress in your dashboard.</p>`
+                : `<h1>Project Updated</h1><p>The status of your project, <strong>${formData.name}</strong>, has been updated to: <strong>${formData.status}</strong>.</p><p>You can view details in your dashboard.</p>`;
+            
+            sendEmail({ to: formData.clientEmail, subject: emailSubject, html: emailHtml })
+                .then(emailResult => {
+                    toast({
+                        title: "Email Notification",
+                        description: emailResult.message,
+                        variant: emailResult.success ? 'default' : 'destructive'
+                    });
+                });
+        }
     } catch (error) {
-      console.error("Save Error:", error);
-      toast({ title: "Save Error", description: "Could not save the project. Check console for details.", variant: "destructive" });
-      setIsSaving(false); // Stop spinner on error
+        console.error("Save Error:", error);
+        toast({ title: "Save Error", description: "Could not save the project. This might be a database permissions issue.", variant: "destructive" });
+    } finally {
+        setIsSaving(false);
     }
   };
 
