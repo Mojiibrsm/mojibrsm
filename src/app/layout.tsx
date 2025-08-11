@@ -19,6 +19,7 @@ const siteConfig = {
   description: translations.en.hero.tagline,
   url: translations.en.site.url,
   ogImage: translations.en.site.adminAvatar,
+  favicon: translations.en.site.favicon,
 }
 
 export const metadata: Metadata = {
@@ -30,7 +31,7 @@ export const metadata: Metadata = {
   description: siteConfig.description,
   
   icons: {
-    icon: '/favicon.ico',
+    icon: siteConfig.favicon || '/favicon.ico',
   },
   
   robots: {

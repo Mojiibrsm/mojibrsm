@@ -20,7 +20,7 @@ import { IMediaItem } from '@/services/data';
 
 
 const initialAwsSettings: AwsSettings = { accessKeyId: '', secretAccessKey: '', bucketName: '', region: '' };
-const initialSiteSettings: SiteSettings = { title: '', url: '', logo: '', publicLogo: '', adminAvatar: '' };
+const initialSiteSettings: SiteSettings = { title: '', url: '', logo: '', publicLogo: '', adminAvatar: '', favicon: '' };
 const initialContactSettings: ContactSettings = {
     title: '',
     description: '',
@@ -202,6 +202,8 @@ export default function AdminSettingsPage() {
                                 <ImageField fieldName="logo" label="Admin Panel Logo" dimensions="Square" isSquare />
                                 <ImageField fieldName="adminAvatar" label="Admin Avatar" dimensions="Square" isSquare />
                             </div>
+
+                             <ImageField fieldName="favicon" label="Favicon" dimensions="Square" isSquare />
                         </div>
                     )}
                 </CardContent>
