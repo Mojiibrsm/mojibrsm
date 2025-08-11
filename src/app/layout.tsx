@@ -18,7 +18,7 @@ const siteConfig = {
   name: translations.en.site.title,
   description: translations.en.hero.tagline,
   url: translations.en.site.url,
-  ogImage: translations.en.site.adminAvatar,
+  ogImage: translations.en.site.adminAvatar, // Using adminAvatar for og:image
   favicon: translations.en.site.favicon,
 }
 
