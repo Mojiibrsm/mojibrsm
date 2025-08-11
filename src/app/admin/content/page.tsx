@@ -189,7 +189,7 @@ const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, hand
 };
 
 export default function AdminContentPage() {
-  const [editableContent, setEditableContent] = useState<Translations>(JSON.parse(JSON.stringify(translations)));
+  const [editableContent, setEditableContent] = useState<Translations>(() => JSON.parse(JSON.stringify(translations)));
   const [isSaving, setIsSaving] = useState<string | null>(null);
   const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
   const [mediaTarget, setMediaTarget] = useState<{ path: (string | number)[], lang: 'en' | 'bn' } | null>(null);
@@ -224,32 +224,35 @@ export default function AdminContentPage() {
       }
   };
 
-
   const handleAddItem = useCallback((lang: 'en' | 'bn', arrayPath: (string | number)[]) => {
-      setEditableContent(prev => {
-          const newContent = JSON.parse(JSON.stringify(prev));
-          let arrayToModify = newContent[lang];
-          for (const segment of arrayPath) {
-              arrayToModify = arrayToModify[segment];
-          }
+    const isGalleryImages = arrayPath.length === 2 && arrayPath[0] === 'gallery' && arrayPath[1] === 'images';
 
-          if (!Array.isArray(arrayToModify)) return prev;
+    setEditableContent(prev => {
+        const newContent = JSON.parse(JSON.stringify(prev));
+        
+        const processLanguage = (currentLang: 'en' | 'bn') => {
+            let arrayToModify = newContent[currentLang];
+            for (const segment of arrayPath) {
+                arrayToModify = arrayToModify[segment];
+            }
 
-          let newItem;
-          if (arrayToModify.length > 0) {
-              const template = JSON.parse(JSON.stringify(arrayToModify[0]));
-              if (typeof template === 'object' && template !== null) {
-                  Object.keys(template).forEach(key => {
-                      if (Array.isArray(template[key])) template[key] = [];
-                      else if (typeof template[key] === 'boolean') template[key] = false;
-                      else if (key === 'image' || key === 'src') template[key] = 'https://placehold.co/600x400.png';
-                      else template[key] = `New ${capitalizeFirstLetter(key)}`;
-                  });
-                  newItem = template;
-              } else {
-                  newItem = "New Item";
-              }
-          } else {
+            if (!Array.isArray(arrayToModify)) return;
+
+            let newItem;
+            if (arrayToModify.length > 0) {
+                const template = JSON.parse(JSON.stringify(arrayToModify[0]));
+                if (typeof template === 'object' && template !== null) {
+                    Object.keys(template).forEach(key => {
+                        if (Array.isArray(template[key])) template[key] = [];
+                        else if (typeof template[key] === 'boolean') template[key] = false;
+                        else if (key === 'image' || key === 'src') template[key] = 'https://placehold.co/600x400.png';
+                        else template[key] = `New ${capitalizeFirstLetter(key)}`;
+                    });
+                    newItem = template;
+                } else {
+                    newItem = "New Item";
+                }
+            } else {
               const arrayName = arrayPath[arrayPath.length - 1];
               if (['responsibilities', 'skills', 'tech', 'features', 'tags'].includes(arrayName as string)) {
                   newItem = "New Item";
@@ -266,14 +269,27 @@ export default function AdminContentPage() {
               } else if (arrayName === 'packages') {
                   newItem = { name: 'New Package', price: '৳0', billing: 'one-time', popular: false, features: [] };
               } else {
-                  toast({ variant: "destructive", title: "Cannot Add", description: "Cannot add an item to an empty list of this type." });
-                  return prev;
+                  // If we can't determine the structure, don't add anything.
+                  // We only return here for the specific language being processed.
+                  // The original `prev` will be returned later if both fail.
+                  return; 
               }
-          }
-          arrayToModify.push(newItem);
-          return newContent;
-      });
-  }, [toast]);
+            }
+            if (newItem) {
+              arrayToModify.push(newItem);
+            }
+        };
+
+        if (isGalleryImages) {
+            processLanguage('en');
+            processLanguage('bn');
+        } else {
+            processLanguage(lang);
+        }
+
+        return newContent;
+    });
+  }, []);
   
   const handleDeleteItem = useCallback((lang: 'en' | 'bn', path: (string | number)[]) => {
     setEditableContent(prev => {
@@ -326,7 +342,7 @@ export default function AdminContentPage() {
           <AlertCircle className="h-5 w-5 mt-1 shrink-0" />
           <div>
               <h3 className="font-semibold">Important Notice</h3>
-              <p className="text-sm">Changes saved here will directly modify the site's content file. A server restart may be needed for changes to appear on the live site.</p>
+              <p className="text-sm">Changes saved here directly update the application's state. These changes are temporary and will be reset on page reload. To make permanent changes, modify the files in `src/lib/translations`.</p>
           </div>
       </div>
 
