@@ -4,7 +4,7 @@ import { useLanguage } from '@/contexts/language-context';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 import { Card } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 export default function Gallery() {
   const { t } = useLanguage();
@@ -64,6 +64,9 @@ export default function Gallery() {
                 </motion.div>
               </DialogTrigger>
               <DialogContent className="sm:max-w-3xl p-2">
+                 <DialogHeader className="sr-only">
+                    <DialogTitle>{image.alt}</DialogTitle>
+                 </DialogHeader>
                  <Image
                     src={image.src}
                     alt={image.alt}
