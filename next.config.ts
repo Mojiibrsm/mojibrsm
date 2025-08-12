@@ -48,6 +48,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'mojibrsm-nodejs.s3.us-east-1.amazonaws.com',
+        port: '',
+        pathname: '/**',
+      }
     ],
   },
 };
