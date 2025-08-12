@@ -23,6 +23,7 @@ import 'react-image-crop/dist/ReactCrop.css';
 export default function AdminMediaPage() {
     const [mediaItems, setMediaItems] = useState<IMediaItem[]>([]);
     const [isUploading, setIsUploading] = useState(false);
+    const [isDeleting, setIsDeleting] = useState<string | null>(null);
     const { toast } = useToast();
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const [editingItem, setEditingItem] = useState<IMediaItem | null>(null);
@@ -65,10 +66,17 @@ export default function AdminMediaPage() {
         }
     };
     
-    const handleDelete = (id: string) => {
-        deleteMediaItem(id);
-        toast({ title: "Media Deleted", description: "The item has been removed from the library." });
-        loadMedia();
+    const handleDelete = async (id: string) => {
+        setIsDeleting(id);
+        try {
+            await deleteMediaItem(id);
+            toast({ title: "Media Deleted", description: "The item has been removed from the library and the server." });
+            loadMedia();
+        } catch (error: any) {
+             toast({ title: "Delete Error", description: error.message, variant: "destructive" });
+        } finally {
+            setIsDeleting(null);
+        }
     };
 
     const handleCopyUrl = (url: string) => {
@@ -103,7 +111,7 @@ export default function AdminMediaPage() {
                 <CardHeader>
                     <CardTitle>All Media</CardTitle>
                     <CardDescription>
-                        {mediaItems.length} items in the library. Deleting from here does not remove the file from the server.
+                        {mediaItems.length} items in the library. These files are stored on your S3 bucket. Deleting them here will also remove them from the server.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -117,31 +125,38 @@ export default function AdminMediaPage() {
                         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
                             {mediaItems.map(item => (
                                 <Card key={item.id} className="group relative overflow-hidden">
-                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center justify-center gap-2 p-2">
-                                         <Button size="icon" variant="secondary" onClick={() => handleCopyUrl(item.url)} title="Copy URL">
-                                            <Copy className="h-4 w-4" />
-                                        </Button>
-                                         <Button size="icon" variant="secondary" onClick={() => handleEdit(item)} title="Edit Image">
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
-                                         <AlertDialog>
-                                            <AlertDialogTrigger asChild>
-                                                <Button size="icon" variant="destructive" title="Delete Image">
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </AlertDialogTrigger>
-                                            <AlertDialogContent>
-                                                <AlertDialogHeader>
-                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                    <AlertDialogDescription>This removes the item from your library, but the file remains on the server. This action cannot be undone.</AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                <AlertDialogFooter>
-                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleDelete(item.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
-                                                </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
-                                    </div>
+                                    {isDeleting === item.id ? (
+                                        <div className="absolute inset-0 bg-black/80 z-20 flex flex-col items-center justify-center gap-2 p-2">
+                                            <Loader2 className="h-8 w-8 animate-spin text-white" />
+                                            <p className="text-white text-xs">Deleting...</p>
+                                        </div>
+                                    ) : (
+                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center justify-center gap-2 p-2">
+                                            <Button size="icon" variant="secondary" onClick={() => handleCopyUrl(item.url)} title="Copy URL">
+                                                <Copy className="h-4 w-4" />
+                                            </Button>
+                                            <Button size="icon" variant="secondary" onClick={() => handleEdit(item)} title="Edit Image">
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button size="icon" variant="destructive" title="Delete Image">
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                        <AlertDialogDescription>This will permanently delete the file from your S3 bucket and media library. This action cannot be undone.</AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => handleDelete(item.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        </div>
+                                    )}
                                     <Image src={item.url} alt={item.name} width={200} height={200} className="w-full h-full object-cover aspect-square bg-muted" unoptimized/>
                                     <CardFooter className="p-2 text-xs absolute bottom-0 w-full bg-background/80">
                                         <div className="truncate">
@@ -455,6 +470,8 @@ function EditMediaDialog({
     );
 }
 
+
+    
 
     
 

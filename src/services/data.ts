@@ -1,3 +1,4 @@
+
 'use client';
 
 // --- STORAGE SERVICE ---
@@ -289,8 +290,34 @@ export const getMediaItems = (): IMediaItem[] => {
     return getCollection<IMediaItem>('mediaLibrary');
 };
 
-export const deleteMediaItem = (id: string) => {
+export const deleteMediaItem = async (id: string): Promise<void> => {
     let media = getCollection<IMediaItem>('mediaLibrary');
+    const itemToDelete = media.find(item => item.id === id);
+
+    if (!itemToDelete) {
+        throw new Error('Media item not found in the library.');
+    }
+    
+    // Extract file key from URL
+    const fileKey = itemToDelete.url.split('/').pop();
+    if (!fileKey) {
+        throw new Error('Could not determine file key from URL.');
+    }
+
+    // Call the server action to delete the file from S3
+    const response = await fetch('/api/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileKey }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Failed to delete file from the server.');
+    }
+
+    // If server deletion was successful, remove from local storage
     media = media.filter(item => item.id !== id);
     saveCollection('mediaLibrary', media);
 };
@@ -305,3 +332,5 @@ export const updateMediaItem = (id: string, data: Partial<Omit<IMediaItem, 'id' 
     }
     return undefined;
 };
+
+    
