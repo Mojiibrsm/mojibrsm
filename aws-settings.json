@@ -1,7 +1,6 @@
-
 {
-  "accessKeyId": "",
-  "secretAccessKey": "",
-  "bucketName": "",
-  "region": ""
+  "accessKeyId": "AKIAZQ3DUMTSDMM6LPL3",
+  "secretAccessKey": "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",
+  "bucketName": "mojibrsm-nodejs",
+  "region": "us-east-1"
 }
