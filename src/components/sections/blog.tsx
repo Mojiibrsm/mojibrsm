@@ -1,16 +1,58 @@
+
 'use client';
 import Image from 'next/image';
 import { useLanguage } from '@/contexts/language-context';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { motion, useInView } from 'framer-motion';
-import { useRef } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { getBlogPosts } from '@/app/admin/blog/actions';
+import { Loader2 } from 'lucide-react';
+
+type Post = {
+    slug: string;
+    title: string;
+    excerpt: string;
+    content: string;
+    image: string;
+    imageHint: string;
+    date: string;
+    tags: string[];
+    metaTitle: string;
+    metaDescription: string;
+};
+
+interface BlogContent {
+  title: string;
+  description: string;
+  viewAll: string;
+  readMore: string;
+  posts: Post[];
+}
 
 export default function Blog() {
-  const { t } = useLanguage();
+  const { language } = useLanguage();
+  const [blogContent, setBlogContent] = useState<BlogContent | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.1 });
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+        try {
+            setIsLoading(true);
+            const data = await getBlogPosts();
+            setBlogContent(data[language]);
+        } catch (error) {
+            console.error("Failed to fetch blog posts:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    fetchPosts();
+  }, [language]);
+
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -22,7 +64,21 @@ export default function Blog() {
     visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } },
   };
 
-  const blogPosts = t.blog.posts.slice(0, 3);
+  if (isLoading) {
+    return (
+        <section id="blog" className="w-full py-16 md:py-24 bg-card" suppressHydrationWarning>
+            <div className="container flex items-center justify-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+        </section>
+    );
+  }
+
+  if (!blogContent || blogContent.posts.length === 0) {
+    return null; // Don't render the section if there are no posts or data
+  }
+
+  const blogPosts = blogContent.posts.slice(0, 3);
 
   return (
     <section id="blog" className="w-full py-16 md:py-24 bg-card" suppressHydrationWarning>
@@ -33,7 +89,7 @@ export default function Blog() {
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.5 }}
           className="text-center mb-12">
-          <h2 className="text-4xl font-bold font-headline">{t.blog.title}</h2>
+          <h2 className="text-4xl font-bold font-headline">{blogContent.title}</h2>
           <div className="mt-4 h-1.5 w-24 bg-gradient-to-r from-primary via-accent to-secondary mx-auto rounded-full"></div>
         </motion.div>
         <motion.div
@@ -44,7 +100,7 @@ export default function Blog() {
           animate={isInView ? 'visible' : 'hidden'}
         >
           {blogPosts.map((post) => (
-            <motion.div key={post.title} variants={itemVariants} className="relative group h-full">
+            <motion.div key={post.slug} variants={itemVariants} className="relative group h-full">
               <Link href={`/blog/${post.slug}`} className="block h-full">
                 <div className="absolute -inset-0.5 bg-gradient-to-r from-primary via-accent to-secondary rounded-xl blur opacity-0 group-hover:opacity-75 transition duration-500"></div>
                 <Card className="relative overflow-hidden shadow-md transition-all duration-300 rounded-2xl flex flex-col bg-card h-full">
@@ -57,6 +113,7 @@ export default function Blog() {
                         height={400}
                         className="w-full h-auto object-cover"
                         data-ai-hint={post.imageHint}
+                        unoptimized
                       />
                     </motion.div>
                   </div>
@@ -65,7 +122,7 @@ export default function Blog() {
                     <CardTitle className="mb-2 text-xl flex-grow">{post.title}</CardTitle>
                     <div className="mt-auto pt-4">
                       <Button asChild className="w-full">
-                        <span>{t.blog.readMore}</span>
+                        <span>{blogContent.readMore}</span>
                       </Button>
                     </div>
                   </div>
@@ -81,7 +138,7 @@ export default function Blog() {
           transition={{ delay: 0.5, duration: 0.5 }}
         >
           <Button size="lg" variant="outline" asChild>
-            <Link href="/blog">{t.blog.viewAll}</Link>
+            <Link href="/blog">{blogContent.viewAll}</Link>
           </Button>
         </motion.div>
       </div>

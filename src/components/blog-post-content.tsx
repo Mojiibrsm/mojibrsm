@@ -1,12 +1,25 @@
+
 'use client';
 
-import { translations } from '@/lib/translations';
 import { useLanguage } from '@/contexts/language-context';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import { getBlogPosts } from '@/app/admin/blog/actions';
+import { Loader2 } from 'lucide-react';
 
-type Post = (typeof translations.en.blog.posts)[0];
+type Post = {
+    slug: string;
+    title: string;
+    excerpt: string;
+    content: string;
+    image: string;
+    imageHint: string;
+    date: string;
+    tags: string[];
+    metaTitle: string;
+    metaDescription: string;
+};
 
 export default function BlogPostContent({ slug }: { slug: string }) {
     const { language } = useLanguage();
@@ -14,20 +27,29 @@ export default function BlogPostContent({ slug }: { slug: string }) {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const currentPost = translations[language].blog.posts.find((p) => p.slug === slug);
-        // Fallback to English if not found in current language, as the server component
-        // has already verified that the slug exists in at least one language.
-        const fallbackPost = translations.en.blog.posts.find((p) => p.slug === slug);
-        const finalPost = currentPost || fallbackPost;
-        
-        setPost(finalPost);
-        setIsLoading(false);
+        const fetchPost = async () => {
+            try {
+                setIsLoading(true);
+                const blogData = await getBlogPosts();
+                const currentPost = blogData[language].posts.find((p) => p.slug === slug);
+                // Fallback to English if not found in current language
+                const fallbackPost = blogData.en.posts.find((p) => p.slug === slug);
+                const finalPost = currentPost || fallbackPost;
+                setPost(finalPost);
+            } catch (error) {
+                console.error("Failed to fetch post", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchPost();
     }, [slug, language]);
 
     if (isLoading || !post) {
         return (
             <div className="flex justify-center items-center h-[50vh]">
-                <p>Loading post...</p>
+                <Loader2 className="h-8 w-8 animate-spin" />
             </div>
         );
     }
@@ -51,6 +73,7 @@ export default function BlogPostContent({ slug }: { slug: string }) {
                     className="w-full h-auto object-cover rounded-2xl shadow-lg mb-8"
                     data-ai-hint={post.imageHint}
                     priority
+                    unoptimized
                 />
 
                 <div className="prose prose-lg dark:prose-invert max-w-full mx-auto"

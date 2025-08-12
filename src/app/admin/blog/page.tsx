@@ -14,8 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { translations } from '@/lib/translations';
-import { updateBlogPosts } from './actions';
+import { updateBlogPosts, getBlogPosts } from './actions';
 import { addMediaItem, IMediaItem } from '@/services/data';
 import Image from 'next/image';
 import { useEditor, EditorContent, Editor } from '@tiptap/react';
@@ -27,22 +26,60 @@ import TiptapImage from '@tiptap/extension-image';
 import TiptapLink from '@tiptap/extension-link';
 import { MediaLibraryDialog } from '@/components/media-library-dialog';
 
-type Post = (typeof translations.en.blog.posts)[0];
+type Post = {
+    slug: string;
+    title: string;
+    excerpt: string;
+    content: string;
+    image: string;
+    imageHint: string;
+    date: string;
+    tags: string[];
+    metaTitle: string;
+    metaDescription: string;
+};
+
+interface BlogContent {
+  title: string;
+  description: string;
+  viewAll: string;
+  readMore: string;
+  posts: Post[];
+}
+
+interface BlogData {
+  en: BlogContent;
+  bn: BlogContent;
+}
+
 type EditablePost = { post: Post; index: number };
 
 export default function AdminBlogPage() {
-    const [posts, setPosts] = useState<{ en: Post[], bn: Post[] }>({ en: [], bn: [] });
+    const [blogData, setBlogData] = useState<BlogData | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingPost, setEditingPost] = useState<EditablePost | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const { toast } = useToast();
 
     useEffect(() => {
-        setPosts({
-            en: JSON.parse(JSON.stringify(translations.en.blog.posts)),
-            bn: JSON.parse(JSON.stringify(translations.bn.blog.posts)),
-        });
-    }, []);
+        const fetchBlogData = async () => {
+            try {
+                setIsLoading(true);
+                const data = await getBlogPosts();
+                setBlogData(data);
+            } catch (error: any) {
+                toast({
+                    title: 'Error fetching posts',
+                    description: error.message || 'Could not load blog posts from S3.',
+                    variant: 'destructive',
+                });
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchBlogData();
+    }, [toast]);
 
     const handleAddNew = () => {
         const newPost: Post = { 
@@ -66,55 +103,53 @@ export default function AdminBlogPage() {
     };
 
     const handleEdit = (index: number) => {
+        if (!blogData) return;
         setEditingPost({
-            post: posts.en[index],
+            post: blogData.en.posts[index],
             index,
         });
         setIsDialogOpen(true);
     };
     
     const handleDelete = async (indexToDelete: number) => {
+        if (!blogData) return;
         setIsSaving(true);
-        const newPosts = {
-            en: posts.en.filter((_, index) => index !== indexToDelete),
-            bn: posts.bn.filter((_, index) => index !== indexToDelete),
-        };
-        const result = await updateBlogPosts(newPosts);
+        const newBlogData = JSON.parse(JSON.stringify(blogData)); // Deep clone
+        newBlogData.en.posts.splice(indexToDelete, 1);
+        newBlogData.bn.posts.splice(indexToDelete, 1);
+        
+        const result = await updateBlogPosts(newBlogData);
         toast({
             title: result.success ? 'Post Deleted' : 'Error!',
             description: result.message,
             variant: result.success ? 'default' : 'destructive'
         });
         if (result.success) {
-            setPosts(newPosts);
+            setBlogData(newBlogData);
         }
         setIsSaving(false);
     };
 
     const handleSaveFromDialog = async (data: EditablePost) => {
+        if (!blogData) return;
         const { post, index } = data;
         
-        let nextPosts: { en: Post[], bn: Post[] };
+        const nextBlogData = JSON.parse(JSON.stringify(blogData)); // Deep clone
 
         if (index === -1) { // New post
              const finalPost = { 
                 ...post, 
                 date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) 
             };
-            nextPosts = {
-                en: [finalPost, ...posts.en],
-                bn: [finalPost, ...posts.bn],
-            };
+            nextBlogData.en.posts.unshift(finalPost);
+            nextBlogData.bn.posts.unshift(finalPost); // Also add to Bengali posts for consistency
         } else { // Editing existing post
-            const newEn = [...posts.en];
-            const newBn = [...posts.bn];
-            newEn[index] = post;
-            newBn[index] = post;
-            nextPosts = { en: newEn, bn: newBn };
+            nextBlogData.en.posts[index] = post;
+            nextBlogData.bn.posts[index] = post; // Also update Bengali post
         }
         
         setIsSaving(true);
-        const result = await updateBlogPosts(nextPosts);
+        const result = await updateBlogPosts(nextBlogData);
         toast({
             title: result.success ? 'Success!' : 'Error!',
             description: result.message,
@@ -122,11 +157,20 @@ export default function AdminBlogPage() {
         });
 
         if (result.success) {
-            setPosts(nextPosts);
+            setBlogData(nextBlogData);
             setIsDialogOpen(false);
         }
         setIsSaving(false);
     };
+    
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin" />
+                <p className="ml-4">Loading blog posts from S3...</p>
+            </div>
+        )
+    }
 
     return (
         <div className="space-y-6">
@@ -156,10 +200,10 @@ export default function AdminBlogPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {posts.en.length === 0 ? (
+                            {!blogData || blogData.en.posts.length === 0 ? (
                                 <TableRow><TableCell colSpan={5} className="h-24 text-center">No blog posts found.</TableCell></TableRow>
                             ) : (
-                                posts.en.map((post, index) => (
+                                blogData.en.posts.map((post, index) => (
                                     <TableRow key={post.slug + index}>
                                         <TableCell className="font-medium">{post.title}</TableCell>
                                         <TableCell className="text-muted-foreground">{post.slug}</TableCell>
@@ -177,7 +221,7 @@ export default function AdminBlogPage() {
                                                           <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
                                                         </AlertDialogTrigger>
                                                         <AlertDialogContent>
-                                                            <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the post. This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
+                                                            <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the post from S3. This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
                                                             <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(index)} className="bg-destructive hover:bg-destructive/90">Yes, delete</AlertDialogAction></AlertDialogFooter>
                                                         </AlertDialogContent>
                                                     </AlertDialog>
@@ -464,5 +508,3 @@ function PostFormDialog({ isOpen, onOpenChange, onSave, post, isSaving }: { isOp
         </Dialog>
     );
 }
-
-    

@@ -1,9 +1,11 @@
-import { translations } from '@/lib/translations';
+
+import { getBlogPosts } from '@/app/admin/blog/actions';
 import { notFound } from 'next/navigation';
 import Header from '@/components/sections/header';
 import Footer from '@/components/sections/footer';
 import BlogPostContent from '@/components/blog-post-content';
 import type { Metadata, ResolvingMetadata } from 'next';
+import { translations } from '@/lib/translations';
 
 type Props = {
   params: { slug: string };
@@ -15,9 +17,11 @@ export async function generateMetadata(
   parent: ResolvingMetadata
 ): Promise<Metadata> {
   const slug = params.slug;
+  const blogData = await getBlogPosts();
+  
   // We don't know the language here, so we have to check both.
   // Assume English as the primary source for metadata if available, otherwise Bengali.
-  const post = translations.en.blog.posts.find((p) => p.slug === slug) || translations.bn.blog.posts.find((p) => p.slug === slug);
+  const post = blogData.en.posts.find((p) => p.slug === slug) || blogData.bn.posts.find((p) => p.slug === slug);
 
   if (!post) {
     return {
@@ -58,9 +62,10 @@ export async function generateMetadata(
 
 
 // The main page component
-export default function BlogPostPage({ params }: Props) {
+export default async function BlogPostPage({ params }: Props) {
     // We need to check if post exists on server, to call notFound() if needed.
-    const postExists = translations.en.blog.posts.some(p => p.slug === params.slug) || translations.bn.blog.posts.some(p => p.slug === params.slug);
+    const blogData = await getBlogPosts();
+    const postExists = blogData.en.posts.some(p => p.slug === params.slug) || blogData.bn.posts.some(p => p.slug === params.slug);
 
     if(!postExists) {
         notFound();
@@ -79,12 +84,18 @@ export default function BlogPostPage({ params }: Props) {
 
 // Statically generate routes for all slugs from all languages to improve SEO
 export async function generateStaticParams() {
-  const enPosts = translations.en.blog.posts.map((post) => ({ slug: post.slug }));
-  const bnPosts = translations.bn.blog.posts.map((post) => ({ slug: post.slug }));
-  
-  const allPosts = [...enPosts, ...bnPosts];
-  // Remove duplicates
-  const uniqueSlugs = Array.from(new Set(allPosts.map(p => p.slug))).map(slug => ({ slug }));
-  
-  return uniqueSlugs;
+  try {
+    const blogData = await getBlogPosts();
+    const enPosts = blogData.en.posts.map((post) => ({ slug: post.slug }));
+    const bnPosts = blogData.bn.posts.map((post) => ({ slug: post.slug }));
+    
+    const allPosts = [...enPosts, ...bnPosts];
+    // Remove duplicates
+    const uniqueSlugs = Array.from(new Set(allPosts.map(p => p.slug))).map(slug => ({ slug }));
+    
+    return uniqueSlugs;
+  } catch (error) {
+    console.error("Could not generate static params for blog:", error);
+    return [];
+  }
 }

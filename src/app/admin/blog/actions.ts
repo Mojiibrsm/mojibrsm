@@ -1,8 +1,8 @@
 
 'use server';
 
-import { promises as fs } from 'fs';
-import path from 'path';
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getAwsSettings } from '@/config/settings';
 
 // Define the type for a single blog post based on the existing structure
 type Post = {
@@ -18,39 +18,97 @@ type Post = {
     metaDescription: string;
 };
 
+interface BlogContent {
+  title: string;
+  description: string;
+  viewAll: string;
+  readMore: string;
+  posts: Post[];
+}
+
 interface BlogUpdatePayload {
-  en: Post[];
-  bn: Post[];
+  en: BlogContent;
+  bn: BlogContent;
 }
 
-// This function is kept for reference but will not be used in the main action
-// as writing to the file system is not reliable in a serverless environment.
-async function writeBlogFile(lang: 'en' | 'bn', posts: Post[]): Promise<void> {
-    const data = {
-        title: lang === 'en' ? "From My Blog" : "আমার ব্লগ থেকে",
-        description: lang === 'en' ? "Here are some of my thoughts on web development, design, and technology." : "ওয়েব ডেভেলপমেন্ট, ডিজাইন এবং প্রযুক্তি সম্পর্কে আমার কিছু চিন্তাভাবনা এখানে দেওয়া হলো।",
-        viewAll: lang === 'en' ? "View All Posts" : "সব পোস্ট দেখুন",
-        readMore: lang === 'en' ? "Read More" : "আরও পড়ুন",
-        posts: posts
-    };
-    const filePath = path.join(process.cwd(), 'src', 'lib', 'translations', lang, 'blog.ts');
-    const newFileContent = `export const blog = ${JSON.stringify(data, null, 2)};`;
-    // The actual write operation is disabled to prevent server errors.
-    // await fs.writeFile(filePath, newFileContent, 'utf-8');
+const BUCKET_FILE_KEY = 'blog.json';
+
+// Helper function to get the S3 client
+async function getS3Client() {
+    const awsSettings = await getAwsSettings();
+    if (!awsSettings.accessKeyId || !awsSettings.secretAccessKey || !awsSettings.bucketName || !awsSettings.region) {
+        throw new Error('AWS S3 is not configured in admin settings.');
+    }
+    return new S3Client({
+        region: awsSettings.region,
+        credentials: {
+            accessKeyId: awsSettings.accessKeyId,
+            secretAccessKey: awsSettings.secretAccessKey,
+        },
+    });
 }
 
 
-export async function updateBlogPosts(data: BlogUpdatePayload) {
-  // In a real-world scenario with a proper database, this function would
-  // write the updated blog posts to the database.
-  // Since we are using local files as a database, and writing to the file system
-  // is not possible in a Vercel serverless environment, we will simulate success.
-  // The user's changes will be reflected in the client-side state, but will
-  // not persist across page reloads.
-  // To make permanent changes, the user must edit the files in `src/lib/translations`.
-  
-  // We can still log the intended action to the server console for debugging.
-  console.log('Simulating update for blog posts. Data would be written to a database here.');
+export async function updateBlogPosts(data: BlogUpdatePayload): Promise<{ success: boolean; message: string }> {
+  try {
+    const s3Client = await getS3Client();
+    const awsSettings = await getAwsSettings();
+    
+    const command = new PutObjectCommand({
+      Bucket: awsSettings.bucketName,
+      Key: BUCKET_FILE_KEY,
+      Body: JSON.stringify(data, null, 2),
+      ContentType: 'application/json',
+    });
 
-  return { success: true, message: 'Blog posts updated for this session. For permanent changes, please update the source code files.' };
+    await s3Client.send(command);
+
+    return { success: true, message: 'Blog posts updated successfully and saved to S3.' };
+  } catch (error) {
+    console.error('Failed to update blog posts on S3:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    return { success: false, message: `Failed to save to S3: ${errorMessage}` };
+  }
+}
+
+export async function getBlogPosts(): Promise<BlogUpdatePayload> {
+    const s3Client = await getS3Client();
+    const awsSettings = await getAwsSettings();
+
+    const command = new GetObjectCommand({
+        Bucket: awsSettings.bucketName,
+        Key: BUCKET_FILE_KEY,
+    });
+
+    try {
+        const response = await s3Client.send(command);
+        const str = await response.Body?.transformToString();
+        if (!str) throw new Error("Empty file content from S3");
+        return JSON.parse(str) as BlogUpdatePayload;
+    } catch (error: any) {
+        if (error.name === 'NoSuchKey') {
+            console.log("blog.json not found on S3, returning default structure.");
+            // If the file doesn't exist, return a default structure.
+            // It will be created on the first update.
+             const defaultContent: BlogUpdatePayload = {
+                en: {
+                    title: "From My Blog",
+                    description: "Here are some of my thoughts on web development, design, and technology.",
+                    viewAll: "View All Posts",
+                    readMore: "Read More",
+                    posts: []
+                },
+                bn: {
+                    title: "আমার ব্লগ থেকে",
+                    description: "ওয়েব ডেভেলপমেন্ট, ডিজাইন এবং প্রযুক্তি সম্পর্কে আমার কিছু চিন্তাভাবনা এখানে দেওয়া হলো।",
+                    viewAll: "সব পোস্ট দেখুন",
+                    readMore: "আরও পড়ুন",
+                    posts: []
+                }
+            };
+            return defaultContent;
+        }
+        console.error("Failed to fetch blog posts from S3:", error);
+        throw error;
+    }
 }
