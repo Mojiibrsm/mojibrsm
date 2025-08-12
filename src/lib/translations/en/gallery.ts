@@ -1,47 +1,46 @@
-
 export const gallery = {
   "title": "My Gallery",
   "description": "A collection of moments and creations that inspire me.",
   "images": [
     {
       "src": "/uploads/1752046515076-1725103684395.jpg",
-      "alt": "A beautiful landscape",
-      "imageHint": "landscape scenery"
+      "alt": "Bangladesh Jatiya Sangsad",
+      "imageHint": "/uploads/1754960453907-1752046515076-1725103684395.jpg"
     },
     {
       "src": "/uploads/1752046533263-IMG-20240920-WA0045-EDIT.jpg",
-      "alt": "Modern architecture design",
-      "imageHint": "modern architecture"
+      "alt": "With delwar Friend",
+      "imageHint": "/uploads/1754960424938-1752046533263-IMG-20240920-WA0045-EDIT.jpg"
     },
     {
       "src": "/uploads/1752046710975-FB_IMG_1728372217283.jpg",
-      "alt": "Abstract art piece",
-      "imageHint": "abstract art"
+      "alt": "July Revolution (Bangladesh) 2024",
+      "imageHint": "/uploads/1754960501647-1752046710975-FB_IMG_1728372217283.jpg"
     },
     {
       "src": "/uploads/1752046723676-IMG20250619130703f.jpg",
-      "alt": "A person working on a laptop",
-      "imageHint": "person working"
+      "alt": "in college farewall day",
+      "imageHint": "/uploads/1754960536919-1752046723676-IMG20250619130703f.jpg"
     },
     {
-      "src": "/uploads/1752046728225-IMG20250619130703.jpg",
-      "alt": "Close-up of a camera lens",
-      "imageHint": "/uploads/1752046737701-IMG20250619130703.jpg"
+      "src": "/uploads/1754960582012-1752046739672-IMG20250619130510.jpg",
+      "alt": "in college farewall day",
+      "imageHint": "/uploads/1754960582012-1752046739672-IMG20250619130510.jpg"
     },
     {
-      "src": "/uploads/1752046739672-IMG20250619130510.jpg",
-      "alt": "City skyline at night",
-      "imageHint": "city skyline"
+      "src": "/uploads/1754960669253-485138794_668780005565511_8193880567669148641_n.jpg",
+      "alt": " working on a laptop",
+      "imageHint": "/uploads/1754960669253-485138794_668780005565511_8193880567669148641_n.jpg"
     },
     {
       "src": "/uploads/1752046740793-aulbtu.jpg",
-      "alt": "A classic car",
-      "imageHint": "classic car"
+      "alt": "Eid 2024",
+      "imageHint": "/uploads/1754960715300-1752046740793-aulbtu.jpg"
     },
     {
       "src": "/uploads/1752046744345-Mojibur_Rahman_sm.png",
-      "alt": "Delicious food plating",
-      "imageHint": "food plate"
+      "alt": "my Passport size image ",
+      "imageHint": "/uploads/1754960760771-1752046744345-Mojibur_Rahman_sm.png"
     }
   ]
 };
