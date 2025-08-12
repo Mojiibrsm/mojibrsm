@@ -11,6 +11,8 @@ export interface AwsSettings {
     region: string;
 }
 
+// NOTE: In a Vercel environment, this file path might not be persistent across deployments.
+// Environment variables are the recommended way to store secrets.
 const SETTINGS_FILE_PATH = path.join(process.cwd(), 'aws-settings.json');
 
 const initialSettings: AwsSettings = {
@@ -41,16 +43,12 @@ export async function getAwsSettings(): Promise<AwsSettings> {
         };
     }
 
-    // Fallback to JSON file for local development
+    // Fallback to JSON file for local development or if env vars are not set
     await ensureFileExists();
     try {
         const fileContent = await fs.readFile(SETTINGS_FILE_PATH, 'utf-8');
         const settingsFromFile = JSON.parse(fileContent);
-        // Return file settings only if they seem valid to avoid errors with empty strings
-        if (settingsFromFile.accessKeyId && settingsFromFile.secretAccessKey) {
-            return settingsFromFile;
-        }
-        return initialSettings;
+        return settingsFromFile;
     } catch (error) {
         console.error('Failed to read AWS settings file:', error);
         // Return empty settings on error
@@ -61,7 +59,7 @@ export async function getAwsSettings(): Promise<AwsSettings> {
 export async function saveAwsSettings(settings: AwsSettings): Promise<{ success: boolean; message: string }> {
     try {
         await fs.writeFile(SETTINGS_FILE_PATH, JSON.stringify(settings, null, 2), 'utf-8');
-        return { success: true, message: 'AWS settings saved successfully.' };
+        return { success: true, message: 'AWS settings saved successfully. They will be used if environment variables are not set.' };
     } catch (error) {
         console.error('Failed to save AWS settings:', error);
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';

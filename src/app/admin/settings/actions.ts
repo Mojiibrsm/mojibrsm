@@ -11,8 +11,8 @@ import path from 'path';
 // --- AWS Settings ---
 
 export async function updateAwsSettingsAction(data: AwsSettings): Promise<{ success: boolean, message: string }> {
-    // This is now a dummy function as we're not writing to the file system on Vercel
-    return { success: true, message: 'AWS settings are managed via environment variables on the server.' };
+    // This now calls the actual save function which writes to a file on the server.
+    return await saveAwsSettings(data);
 }
 
 export async function getAwsSettingsAction(): Promise<AwsSettings> {
