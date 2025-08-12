@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { translations, Translations } from '@/lib/translations';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -189,11 +189,19 @@ const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, hand
 };
 
 export default function AdminContentPage() {
-  const [editableContent, setEditableContent] = useState<Translations>(() => JSON.parse(JSON.stringify(translations)));
+  const [editableContent, setEditableContent] = useState<Translations>(translations);
+  const [isMounted, setIsMounted] = useState(false);
   const [isSaving, setIsSaving] = useState<string | null>(null);
   const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
   const [mediaTarget, setMediaTarget] = useState<{ path: (string | number)[], lang: 'en' | 'bn' } | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Deep clone the translations object only on the client side after mount
+    // to prevent mutations to the original object and avoid SSR issues.
+    setEditableContent(JSON.parse(JSON.stringify(translations)));
+    setIsMounted(true);
+  }, []);
 
   const handleFieldChange = useCallback((lang: 'en' | 'bn', path: (string | number)[], value: any) => {
     setEditableContent(prev => {
@@ -330,6 +338,10 @@ export default function AdminContentPage() {
   };
   
   const sections = Object.keys(editableContent.en).filter(key => !['site', 'blog', 'contact', 'whatsapp'].includes(key));
+
+  if (!isMounted) {
+    return <div className="flex h-64 w-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  }
 
   return (
     <div className="space-y-6">

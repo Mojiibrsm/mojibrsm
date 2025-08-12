@@ -1,5 +1,5 @@
 export const portfolio = {
-  "title": "My Portfolio",
+  "title": "Featured Projects",
   "techUsed": "Technologies Used",
   "viewButton": "View Project",
   "projects": [

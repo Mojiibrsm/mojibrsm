@@ -1,5 +1,5 @@
 export const portfolio = {
-  "title": "আমার পোর্টফোলিও",
+  "title": "বৈশিষ্ট্যযুক্ত প্রকল্প",
   "techUsed": "ব্যবহৃত প্রযুক্তি",
   "viewButton": "প্রকল্প দেখুন",
   "projects": [
