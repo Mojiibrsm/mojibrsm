@@ -222,7 +222,7 @@ const TiptapToolbar = ({ editor }: { editor: Editor | null }) => {
 
     const uploadFormData = new FormData();
     uploadFormData.append('file', file);
-    uploadFormData.append('destination', 's3');
+    uploadFormData.append('destination', 'local'); // Changed to 'local'
 
     toast({ title: "Uploading image..." });
     
@@ -464,3 +464,5 @@ function PostFormDialog({ isOpen, onOpenChange, onSave, post, isSaving }: { isOp
         </Dialog>
     );
 }
+
+    
