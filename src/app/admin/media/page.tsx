@@ -39,7 +39,7 @@ export default function AdminMediaPage() {
         setIsUploading(true);
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('destination', 'local'); // Changed to 'local'
+        formData.append('destination', 's3');
 
         try {
             const response = await fetch('/api/upload', { method: 'POST', body: formData });
@@ -235,7 +235,7 @@ function EditMediaDialog({
         
         const formData = new FormData();
         formData.append('file', editedFile);
-        formData.append('destination', 'local'); // Changed to 'local'
+        formData.append('destination', 's3');
 
         const response = await fetch('/api/upload', { method: 'POST', body: formData });
         const result = await response.json();
