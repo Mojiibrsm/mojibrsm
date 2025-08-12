@@ -13,12 +13,14 @@ import { pricing } from './pricing';
 import { contact } from './contact';
 import { whatsapp } from './whatsapp';
 import { footer } from './footer';
+import { stats } from './stats';
 
 export const bn = {
   site,
   nav,
   hero,
   about,
+  stats,
   experience,
   skills,
   services,

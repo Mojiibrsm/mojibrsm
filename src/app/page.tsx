@@ -1,7 +1,9 @@
+
 'use client';
 import Header from '@/components/sections/header';
 import Hero from '@/components/sections/hero';
 import About from '@/components/sections/about';
+import Stats from '@/components/sections/stats';
 import Services from '@/components/sections/services';
 import Experience from '@/components/sections/experience';
 import Skills from '@/components/sections/skills';
@@ -27,6 +29,7 @@ function PortfolioPage() {
       <main className="flex-grow overflow-hidden" suppressHydrationWarning>
         <Hero />
         <About />
+        <Stats />
         <Services />
         <Experience />
         <Skills />

@@ -81,7 +81,7 @@ const RenderFields = ({ data, path, lang, handleFieldChange, handleAddItem, hand
             
             {typeof item === 'object' && item !== null && (
                 <h5 className="text-sm font-semibold text-muted-foreground mb-2 absolute top-3 left-4">
-                    {capitalizeFirstLetter(String(item.title || item.role || item.alt || `Item ${index + 1}`))}
+                    {capitalizeFirstLetter(String(item.title || item.role || item.alt || item.label || `Item ${index + 1}`))}
                 </h5>
              )}
 
@@ -260,6 +260,8 @@ export default function AdminContentPage() {
                   newItem = { role: 'New Role', company: 'Company', period: 'Year - Year', responsibilities: [] };
               } else if (arrayName === 'items' && arrayPath.includes('services')) {
                   newItem = { icon: 'web', title: 'New Service', description: 'Description of the new service.' };
+              } else if (arrayName === 'items' && arrayPath.includes('stats')) {
+                  newItem = { value: '0', label: 'New Stat' };
               } else if (arrayName === 'projects') {
                   newItem = { title: 'New Project', tech: [], description: 'Description of new project.', link: '#', image: 'https://placehold.co/600x400.png', imageHint: 'project work' };
               } else if (arrayName === 'images' && arrayPath.includes('gallery')) {
