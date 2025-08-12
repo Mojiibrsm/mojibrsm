@@ -40,7 +40,7 @@ export function MediaLibraryDialog({ isOpen, onOpenChange, onSelect }: MediaLibr
         setIsUploading(true);
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('destination', 's3');
+        formData.append('destination', 'local'); // Changed to 'local'
 
         try {
             const response = await fetch('/api/upload', { method: 'POST', body: formData });
