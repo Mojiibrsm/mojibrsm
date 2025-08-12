@@ -1,4 +1,3 @@
-
 export const portfolio = {
   "title": "আমার পোর্টফোলিও",
   "techUsed": "ব্যবহৃত প্রযুক্তি",

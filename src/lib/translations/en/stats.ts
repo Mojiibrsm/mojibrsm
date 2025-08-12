@@ -1,4 +1,3 @@
-
 export const stats = {
   "title": "My Achievements",
   "items": [

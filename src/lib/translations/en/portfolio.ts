@@ -1,4 +1,3 @@
-
 export const portfolio = {
   "title": "My Portfolio",
   "techUsed": "Technologies Used",
