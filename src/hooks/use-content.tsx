@@ -20,39 +20,18 @@ interface ContentContextType {
   isLoading: boolean;
 }
 
-const CONTENT_CACHE_KEY = 'contentCache';
-
 const ContentContext = createContext<ContentContextType | undefined>(undefined);
 
 export const ContentProvider = ({ children }: { children: ReactNode }) => {
-  const [allContent, setAllContent] = useState<AllContent>(() => {
-    // Try to load from cache on initial render
-    try {
-        const cachedData = localStorage.getItem(CONTENT_CACHE_KEY);
-        if (cachedData) {
-            return JSON.parse(cachedData);
-        }
-    } catch (error) {
-        console.error("Failed to read content from localStorage", error);
-    }
-    // Fallback to local translations if cache is empty or invalid
-    return translations;
-  });
+  const [allContent, setAllContent] = useState<AllContent>(translations);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-     // If we have cached data, we can consider the initial load "done"
-     const cachedData = localStorage.getItem(CONTENT_CACHE_KEY);
-     if(cachedData) {
-         setIsLoading(false);
-     }
-
     const contentRef = collection(db, 'content');
     const unsubscribe = onSnapshot(contentRef, (snapshot) => {
       if (snapshot.empty) {
         // If Firestore is empty, use local translations and stop loading.
         setAllContent(translations);
-        localStorage.setItem(CONTENT_CACHE_KEY, JSON.stringify(translations));
         setIsLoading(false);
         return;
       }
@@ -65,27 +44,25 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
       const enContent: any = {};
       const bnContent: any = {};
 
-      for (const section in contentData) {
-          if (contentData[section]) {
-              enContent[section] = contentData[section].en;
-              bnContent[section] = contentData[section].bn;
-          }
+      for (const section in translations.en) {
+        if (contentData[section]) {
+            enContent[section] = contentData[section].en;
+            bnContent[section] = contentData[section].bn;
+        } else {
+            // Fallback to local translation if section not in firestore
+            enContent[section] = (translations.en as any)[section];
+            bnContent[section] = (translations.bn as any)[section];
+        }
       }
 
       const newAllContent = { en: enContent as Content, bn: bnContent as Content };
       setAllContent(newAllContent);
-
-      try {
-        // Update the cache with the fresh data from Firestore
-        localStorage.setItem(CONTENT_CACHE_KEY, JSON.stringify(newAllContent));
-      } catch (error) {
-          console.error("Failed to write content to localStorage", error);
-      }
-      
       setIsLoading(false);
+
     }, (error) => {
       console.error("Error fetching content from Firestore:", error);
-      // If there's an error, stick with the current (cached or fallback) data.
+      // On error, we will stick with the initial local translations.
+      setAllContent(translations);
       setIsLoading(false);
     });
 
