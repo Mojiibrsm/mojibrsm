@@ -23,7 +23,7 @@ import 'react-image-crop/dist/ReactCrop.css';
 const imagekit = new IK({
     publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!,
     urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT!,
-    authenticationEndpoint: '/api/imagekit-auth',
+    authenticationEndpoint: 'http://localhost:3000/api/imagekit-auth',
 });
 
 export default function AdminMediaPage() {
@@ -486,3 +486,5 @@ function EditMediaDialog({
         </Dialog>
     );
 }
+
+    

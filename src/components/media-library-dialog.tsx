@@ -17,7 +17,7 @@ import IK from 'imagekit-javascript';
 const imagekit = new IK({
     publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!,
     urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT!,
-    authenticationEndpoint: '/api/imagekit-auth',
+    authenticationEndpoint: 'http://localhost:3000/api/imagekit-auth',
 });
 
 interface MediaLibraryDialogProps {
@@ -150,3 +150,5 @@ export function MediaLibraryDialog({ isOpen, onOpenChange, onSelect }: MediaLibr
         </Dialog>
     );
 }
+
+    
