@@ -35,33 +35,44 @@ export interface Project {
 }
 export type ProjectFormData = Omit<Project, 'id' | 'createdAt'>;
 
-export const addProject = async (projectData: ProjectFormData): Promise<Project> => {
-    const docRef = await addDoc(collection(db, "projects"), {
-        ...projectData,
-        createdAt: serverTimestamp(),
-    });
-    return { ...projectData, id: docRef.id, createdAt: Timestamp.now() };
+// This function is client-side only for simplicity, it gets all projects and then filters.
+// For larger scale apps, a server-side query with proper indexing would be better.
+export const getProjectsByUserId = (userId: string): Project[] => {
+    // This is a placeholder for client-side filtering.
+    // The actual fetching and filtering logic is now in the component.
+    return [];
 };
 
-export const getProjects = async (): Promise<Project[]> => {
-    const q = query(collection(db, "projects"), orderBy("createdAt", "desc"));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
+export const addProject = (projectData: Omit<Project, 'id' | 'createdAt'>) => {
+    const projects = getProjects();
+    const newProject = { 
+        ...projectData, 
+        id: `proj_${new Date().getTime()}`,
+        createdAt: new Date().toISOString()
+    };
+    localStorage.setItem('projects', JSON.stringify([...projects, newProject]));
 };
 
-export const getProjectsByUserId = async (userId: string): Promise<Project[]> => {
-    const q = query(collection(db, "projects"), where("userId", "==", userId), orderBy("createdAt", "desc"));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
+
+export const getProjects = (): Project[] => {
+    if (typeof window === 'undefined') return [];
+    const data = localStorage.getItem('projects');
+    return data ? JSON.parse(data) : [];
 };
 
-export const updateProject = async (id: string, data: Partial<ProjectFormData>): Promise<void> => {
-    const projectRef = doc(db, "projects", id);
-    await updateDoc(projectRef, data);
+export const updateProject = (id: string, updatedData: Partial<ProjectFormData>) => {
+    const projects = getProjects();
+    const index = projects.findIndex(p => p.id === id);
+    if (index !== -1) {
+        projects[index] = { ...projects[index], ...updatedData };
+        localStorage.setItem('projects', JSON.stringify(projects));
+    }
 };
 
-export const deleteProject = async (id: string): Promise<void> => {
-    await deleteDoc(doc(db, "projects", id));
+export const deleteProject = (id: string) => {
+    let projects = getProjects();
+    projects = projects.filter(p => p.id !== id);
+    localStorage.setItem('projects', JSON.stringify(projects));
 };
 
 
@@ -75,33 +86,37 @@ export interface IRequest {
     service: string;
     details: string;
     status: RequestStatus;
-    createdAt: Timestamp;
+    createdAt: string;
 }
-export type RequestFormData = Omit<IRequest, 'id' | 'createdAt'>;
 
-export const addRequest = async (requestData: RequestFormData): Promise<IRequest> => {
-    const docRef = await addDoc(collection(db, "requests"), {
+export const addRequest = (requestData: Omit<IRequest, 'id' | 'createdAt'>) => {
+    const requests = getAllRequests();
+    const newRequest = {
         ...requestData,
-        createdAt: serverTimestamp()
-    });
-    return { ...requestData, id: docRef.id, createdAt: Timestamp.now() };
+        id: `req_${new Date().getTime()}`,
+        createdAt: new Date().toISOString(),
+    };
+    localStorage.setItem('requests', JSON.stringify([...requests, newRequest]));
 };
 
-export const getRequestsByUserId = async (userId: string): Promise<IRequest[]> => {
-    const q = query(collection(db, "requests"), where("userId", "==", userId), orderBy("createdAt", "desc"));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as IRequest));
+export const getRequestsByUserId = (userId: string): IRequest[] => {
+    const allRequests = getAllRequests();
+    return allRequests.filter(r => r.userId === userId);
 };
 
-export const getAllRequests = async (): Promise<IRequest[]> => {
-    const q = query(collection(db, "requests"), orderBy("createdAt", "desc"));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as IRequest));
+export const getAllRequests = (): IRequest[] => {
+    if (typeof window === 'undefined') return [];
+    const data = localStorage.getItem('requests');
+    return data ? JSON.parse(data) : [];
 };
 
-export const updateRequestStatus = async (id: string, status: RequestStatus): Promise<void> => {
-    const requestRef = doc(db, "requests", id);
-    await updateDoc(requestRef, { status });
+export const updateRequestStatus = (id: string, status: RequestStatus) => {
+    const requests = getAllRequests();
+    const index = requests.findIndex(r => r.id === id);
+    if (index !== -1) {
+        requests[index].status = status;
+        localStorage.setItem('requests', JSON.stringify(requests));
+    }
 };
 
 
@@ -109,7 +124,7 @@ export const updateRequestStatus = async (id: string, status: RequestStatus): Pr
 export interface IMessage {
     from: 'client' | 'admin';
     text: string;
-    timestamp: Timestamp;
+    timestamp: string;
 }
 export interface IMessageThread {
     id: string;
@@ -121,65 +136,62 @@ export interface IMessageThread {
     subject: string;
     messages: IMessage[];
     lastMessage: string;
-    lastMessageTimestamp: Timestamp;
+    lastMessageTimestamp: string;
     unreadByAdmin: boolean;
     unreadByUser: boolean;
-    type: 'contact';
+    type?: 'contact'; // To distinguish contact form messages
 }
-export type ThreadFormData = Omit<IMessageThread, 'id' | 'messages' | 'lastMessage' | 'lastMessageTimestamp'>;
 
-export const createMessageThread = async (threadData: ThreadFormData, initialMessage: Omit<IMessage, 'timestamp'>): Promise<IMessageThread> => {
-    const messageWithTimestamp = { ...initialMessage, timestamp: serverTimestamp() };
-    const docRef = await addDoc(collection(db, "messageThreads"), {
+export const getMessageThreads = (): IMessageThread[] => {
+    if (typeof window === 'undefined') return [];
+    const data = localStorage.getItem('messageThreads');
+    return data ? JSON.parse(data) : [];
+};
+
+export const getMessageThreadsForUser = (userId: string): IMessageThread[] => {
+    const allThreads = getMessageThreads();
+    return allThreads.filter(t => t.userId === userId);
+};
+
+export const createMessageThread = (threadData: Omit<IMessageThread, 'id' | 'messages' | 'lastMessage' | 'lastMessageTimestamp'>, initialMessage: IMessage) => {
+    const threads = getMessageThreads();
+    const newThread: IMessageThread = {
         ...threadData,
-        messages: [messageWithTimestamp],
+        id: `thread_${new Date().getTime()}`,
+        messages: [initialMessage],
         lastMessage: initialMessage.text,
-        lastMessageTimestamp: serverTimestamp(),
-    });
-    
-    return { 
-      ...threadData, 
-      id: docRef.id, 
-      messages: [{...initialMessage, timestamp: Timestamp.now()}], 
-      lastMessage: initialMessage.text,
-      lastMessageTimestamp: Timestamp.now()
+        lastMessageTimestamp: new Date().toISOString(),
     };
+    localStorage.setItem('messageThreads', JSON.stringify([...threads, newThread]));
 };
 
-export const addMessageToThread = async (threadId: string, message: Omit<IMessage, 'timestamp'>, senderType: 'admin' | 'client'): Promise<void> => {
-    const threadRef = doc(db, "messageThreads", threadId);
-    const threadDoc = await getDoc(threadRef);
-    if (!threadDoc.exists()) return;
-    
-    const currentThreadData = threadDoc.data() as IMessageThread;
-    const currentMessages = currentThreadData.messages || [];
-    const newMessages = [...currentMessages, {...message, timestamp: serverTimestamp()}];
-    
-    await updateDoc(threadRef, {
-        messages: newMessages,
-        lastMessage: message.text,
-        lastMessageTimestamp: serverTimestamp(),
-        unreadByAdmin: senderType === 'client',
-        unreadByUser: senderType === 'admin',
-    });
+export const addMessageToThread = (threadId: string, message: IMessage, senderType: 'admin' | 'client') => {
+    const threads = getMessageThreads();
+    const index = threads.findIndex(t => t.id === threadId);
+    if (index !== -1) {
+        threads[index].messages.push(message);
+        threads[index].lastMessage = message.text;
+        threads[index].lastMessageTimestamp = new Date().toISOString();
+        if (senderType === 'client') {
+            threads[index].unreadByAdmin = true;
+        } else {
+            threads[index].unreadByUser = true;
+        }
+        localStorage.setItem('messageThreads', JSON.stringify(threads));
+    }
 };
 
-export const getMessageThreads = async (): Promise<IMessageThread[]> => {
-    const q = query(collection(db, "messageThreads"), orderBy("lastMessageTimestamp", "desc"));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as IMessageThread));
-};
-
-export const getMessageThreadsForUser = async (userId: string): Promise<IMessageThread[]> => {
-    const q = query(collection(db, "messageThreads"), where("userId", "==", userId), orderBy("lastMessageTimestamp", "desc"));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as IMessageThread));
-};
-
-export const markThreadAsRead = async (threadId: string, readerType: 'admin' | 'user'): Promise<void> => {
-    const threadRef = doc(db, "messageThreads", threadId);
-    const updateData = readerType === 'admin' ? { unreadByAdmin: false } : { unreadByUser: false };
-    await updateDoc(threadRef, updateData);
+export const markThreadAsRead = (threadId: string, readerType: 'admin' | 'user') => {
+    const threads = getMessageThreads();
+    const index = threads.findIndex(t => t.id === threadId);
+    if (index !== -1) {
+        if (readerType === 'admin') {
+            threads[index].unreadByAdmin = false;
+        } else {
+            threads[index].unreadByUser = false;
+        }
+        localStorage.setItem('messageThreads', JSON.stringify(threads));
+    }
 };
 
 
@@ -191,48 +203,47 @@ export interface EmailLog {
     html: string;
     success: boolean;
     message: string;
-    timestamp: Timestamp;
+    timestamp: string;
 }
-export type EmailLogData = Omit<EmailLog, 'id' | 'timestamp'>;
-
 export interface SmsLog {
     id: string;
     to: string;
     message: string;
     success: boolean;
     response: string;
-    timestamp: Timestamp;
+    timestamp: string;
 }
-export type SmsLogData = Omit<SmsLog, 'id' | 'timestamp'>;
 
-export const addEmailLog = async (logData: EmailLogData) => {
-    await addDoc(collection(db, "emailLogs"), { ...logData, timestamp: serverTimestamp() });
+export const addEmailLog = (logData: Omit<EmailLog, 'id' | 'timestamp'>) => {
+    const logs = getLogs();
+    const newLog = { ...logData, id: `email_${new Date().getTime()}`, timestamp: new Date().toISOString() };
+    logs.email.unshift(newLog);
+    localStorage.setItem('logs', JSON.stringify(logs));
 };
 
-export const addSmsLog = async (logData: SmsLogData) => {
-    await addDoc(collection(db, "smsLogs"), { ...logData, timestamp: serverTimestamp() });
+export const addSmsLog = (logData: Omit<SmsLog, 'id' | 'timestamp'>) => {
+    const logs = getLogs();
+    const newLog = { ...logData, id: `sms_${new Date().getTime()}`, timestamp: new Date().toISOString() };
+    logs.sms.unshift(newLog);
+    localStorage.setItem('logs', JSON.stringify(logs));
 };
 
-export const getLogs = async (): Promise<{ email: EmailLog[], sms: SmsLog[] }> => {
-    const emailQuery = query(collection(db, "emailLogs"), orderBy("timestamp", "desc"));
-    const smsQuery = query(collection(db, "smsLogs"), orderBy("timestamp", "desc"));
-    
-    const [emailSnapshot, smsSnapshot] = await Promise.all([
-        getDocs(emailQuery),
-        getDocs(smsQuery)
-    ]);
-
-    const email = emailSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as EmailLog));
-    const sms = smsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SmsLog));
-    return { email, sms };
+export const getLogs = (): { email: EmailLog[], sms: SmsLog[] } => {
+    if (typeof window === 'undefined') return { email: [], sms: [] };
+    const data = localStorage.getItem('logs');
+    return data ? JSON.parse(data) : { email: [], sms: [] };
 };
 
-export const deleteEmailLog = async (id: string) => {
-    await deleteDoc(doc(db, "emailLogs", id));
+export const deleteEmailLog = (id: string) => {
+    const logs = getLogs();
+    logs.email = logs.email.filter(log => log.id !== id);
+    localStorage.setItem('logs', JSON.stringify(logs));
 };
 
-export const deleteSmsLog = async (id: string) => {
-    await deleteDoc(doc(db, "smsLogs", id));
+export const deleteSmsLog = (id: string) => {
+    const logs = getLogs();
+    logs.sms = logs.sms.filter(log => log.id !== id);
+    localStorage.setItem('logs', JSON.stringify(logs));
 };
 
 
@@ -241,22 +252,39 @@ export interface IMediaItem {
     id: string;
     url: string;
     name: string;
-    createdAt: Timestamp;
+    createdAt: string;
 }
-export type MediaItemData = Omit<IMediaItem, 'id' | 'createdAt'>;
-
-export const addMediaItem = async (itemData: MediaItemData): Promise<IMediaItem> => {
-    const docRef = await addDoc(collection(db, "mediaLibrary"), { 
-        ...itemData,
-        createdAt: serverTimestamp()
-    });
-    return { ...itemData, id: docRef.id, createdAt: Timestamp.now() };
-};
 
 export const getMediaItems = async (): Promise<IMediaItem[]> => {
     const q = query(collection(db, "mediaLibrary"), orderBy("createdAt", "desc"));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as IMediaItem));
+    return querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return { 
+            id: doc.id, 
+            ...data,
+            // Convert Firestore Timestamp to string
+            createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : new Date().toISOString()
+        } as IMediaItem
+    });
+};
+
+export const addMediaItem = async (itemData: Omit<IMediaItem, 'id' | 'createdAt'>): Promise<IMediaItem> => {
+    const docRef = await addDoc(collection(db, "mediaLibrary"), { 
+        ...itemData,
+        createdAt: serverTimestamp()
+    });
+
+    const docSnap = await getDoc(docRef);
+    const data = docSnap.data();
+    const createdAt = data?.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : new Date().toISOString();
+
+    const newItem: IMediaItem = { 
+        ...itemData, 
+        id: docRef.id, 
+        createdAt
+    };
+    return newItem;
 };
 
 export const deleteMediaItem = async (item: IMediaItem): Promise<void> => {
@@ -264,9 +292,13 @@ export const deleteMediaItem = async (item: IMediaItem): Promise<void> => {
       throw new Error("File URL is missing, cannot delete from Storage.");
     }
     
+    // Create a reference from the full URL
     const fileRef = ref(storage, item.url);
   
+    // Delete the file from Firebase Storage
     await deleteObject(fileRef);
+
+    // Delete the document from Firestore
     await deleteDoc(doc(db, "mediaLibrary", item.id));
 };
 

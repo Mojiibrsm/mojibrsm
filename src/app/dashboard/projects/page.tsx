@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Eye } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/auth-context';
-import { getProjectsByUserId, Project } from '@/services/data';
+import { getProjects, Project } from '@/services/data';
 import { FormattedTimestamp } from '@/components/formatted-timestamp';
 
 const getStatusVariant = (status: string) => {
@@ -32,7 +32,8 @@ export default function ProjectsPage() {
 
   useEffect(() => {
     if (user) {
-      const userProjects = getProjectsByUserId(user.uid);
+      const allProjects = getProjects();
+      const userProjects = allProjects.filter(p => p.userId === user.uid);
       setProjects(userProjects);
     }
   }, [user]);
