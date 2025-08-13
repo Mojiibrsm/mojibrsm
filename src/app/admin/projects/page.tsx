@@ -24,6 +24,14 @@ import Image from 'next/image';
 import { useLanguage } from '@/contexts/language-context';
 import { sendSms } from '@/services/sms';
 import { MediaLibraryDialog } from '@/components/media-library-dialog';
+import IK from 'imagekit-javascript';
+
+
+const imagekit = new IK({
+    publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!,
+    urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT!,
+    authenticationEndpoint: typeof window !== 'undefined' ? `${window.location.origin}/api/imagekit-auth` : '',
+});
 
 
 const getStatusVariant = (status: string) => {
