@@ -1,9 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { db } from '@/services/firestore';
 import { collection, onSnapshot } from 'firebase/firestore';
-import { useLanguage } from '@/contexts/language-context';
 
 export type Content = {
     about: any;
@@ -23,16 +22,21 @@ export type Content = {
     whatsapp: any;
 };
 
+// This type will hold all languages for the content.
+type AllContent = {
+    en: Content | null;
+    bn: Content | null;
+};
+
 interface ContentContextType {
-  content: Content | null;
+  allContent: AllContent;
   isLoading: boolean;
 }
 
 const ContentContext = createContext<ContentContextType | undefined>(undefined);
 
 export const ContentProvider = ({ children }: { children: ReactNode }) => {
-  const { language } = useLanguage();
-  const [allContent, setAllContent] = useState<Record<string, { en: any; bn: any }>>({});
+  const [allContent, setAllContent] = useState<AllContent>({ en: null, bn: null });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -43,7 +47,18 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
       snapshot.forEach((doc) => {
         contentData[doc.id] = doc.data() as { en: any; bn: any };
       });
-      setAllContent(contentData);
+      
+      const enContent: any = {};
+      const bnContent: any = {};
+
+      for (const section in contentData) {
+          if (contentData[section]) {
+              enContent[section] = contentData[section].en;
+              bnContent[section] = contentData[section].bn;
+          }
+      }
+
+      setAllContent({ en: enContent as Content, bn: bnContent as Content });
       setIsLoading(false);
     }, (error) => {
       console.error("Error fetching content from Firestore:", error);
@@ -53,25 +68,8 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
-  const contentForLanguage = useMemo(() => {
-    if (isLoading || Object.keys(allContent).length === 0) {
-      return null;
-    }
-    const selectedContent: any = {};
-    for (const section in allContent) {
-      if (allContent[section] && allContent[section][language]) {
-        selectedContent[section] = allContent[section][language];
-      } else if (allContent[section] && allContent[section]['en']) {
-        // Fallback to English if the selected language is not available
-        selectedContent[section] = allContent[section]['en'];
-      }
-    }
-    return selectedContent as Content;
-  }, [allContent, language, isLoading]);
-
-
   const value = {
-    content: contentForLanguage,
+    allContent,
     isLoading,
   };
 

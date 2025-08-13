@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -9,11 +8,13 @@ import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { Menu, Loader2 } from 'lucide-react';
 import { ThemeSwitcher } from '../theme-switcher';
 import { useContent } from '@/hooks/use-content';
+import { useLanguage } from '@/contexts/language-context';
 
 export default function Header() {
-  const { content, isLoading } = useContent();
-  const t = content?.nav;
-  const site = content?.site;
+  const { allContent, isLoading } = useContent();
+  const { language } = useLanguage();
+  const t = allContent[language]?.nav;
+  const site = allContent[language]?.site;
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 

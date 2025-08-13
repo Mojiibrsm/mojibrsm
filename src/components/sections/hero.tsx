@@ -1,14 +1,15 @@
-
 'use client';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { useContent } from '@/hooks/use-content';
+import { useLanguage } from '@/contexts/language-context';
 import { Loader2 } from 'lucide-react';
 
 export default function Hero() {
-  const { content, isLoading } = useContent();
-  const t = content?.hero;
+  const { allContent, isLoading } = useContent();
+  const { language } = useLanguage();
+  const t = allContent[language]?.hero;
 
   const containerVariants = {
     hidden: { opacity: 0 },

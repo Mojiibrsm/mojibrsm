@@ -9,7 +9,7 @@ type Language = 'en' | 'bn';
 interface LanguageContextType {
   language: Language;
   setLanguage: (language: Language) => void;
-  t: Translations[Language];
+  t: Translations[Language]; // Fallback translations
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -34,7 +34,6 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   };
 
   const currentLanguage = isMounted ? language : 'en';
-  // Use local translations as a fallback, main data comes from ContentProvider
   const t = translations[currentLanguage];
 
   const value = { language: currentLanguage, setLanguage, t };

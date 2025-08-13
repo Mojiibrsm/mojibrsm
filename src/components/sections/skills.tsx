@@ -1,4 +1,3 @@
-
 'use client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,6 +5,7 @@ import { Code2, Palette, LineChart, TerminalSquare, Loader2 } from 'lucide-react
 import React, { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { useContent } from '@/hooks/use-content';
+import { useLanguage } from '@/contexts/language-context';
 
 const icons: { [key: string]: React.ElementType } = {
   development: Code2,
@@ -15,8 +15,9 @@ const icons: { [key: string]: React.ElementType } = {
 };
 
 export default function Skills() {
-  const { content, isLoading } = useContent();
-  const t = content?.skills;
+  const { allContent, isLoading } = useContent();
+  const { language } = useLanguage();
+  const t = allContent[language]?.skills;
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.1 });
 

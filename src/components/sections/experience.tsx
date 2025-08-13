@@ -1,14 +1,15 @@
-
 'use client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Briefcase, Loader2 } from 'lucide-react';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 import { useContent } from '@/hooks/use-content';
+import { useLanguage } from '@/contexts/language-context';
 
 export default function Experience() {
-  const { content, isLoading } = useContent();
-  const t = content?.experience;
+  const { allContent, isLoading } = useContent();
+  const { language } = useLanguage();
+  const t = allContent[language]?.experience;
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.1 });
 

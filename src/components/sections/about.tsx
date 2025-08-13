@@ -1,14 +1,15 @@
-
 'use client';
 import Image from 'next/image';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 import { useContent } from '@/hooks/use-content';
+import { useLanguage } from '@/contexts/language-context';
 import { Loader2 } from 'lucide-react';
 
 export default function About() {
-  const { content, isLoading } = useContent();
-  const t = content?.about;
+  const { allContent, isLoading } = useContent();
+  const { language } = useLanguage();
+  const t = allContent[language]?.about;
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.2 });
 

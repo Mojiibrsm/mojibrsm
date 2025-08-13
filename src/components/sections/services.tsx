@@ -1,4 +1,3 @@
-
 'use client';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +5,7 @@ import { Code, PenTool, LineChart, Server, Smartphone, Loader2 } from 'lucide-re
 import React, { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { useContent } from '@/hooks/use-content';
+import { useLanguage } from '@/contexts/language-context';
 
 const iconComponents: { [key: string]: React.ElementType } = {
   web: Code,
@@ -17,8 +17,9 @@ const iconComponents: { [key: string]: React.ElementType } = {
 
 
 export default function Services() {
-  const { content, isLoading } = useContent();
-  const t = content?.services;
+  const { allContent, isLoading } = useContent();
+  const { language } = useLanguage();
+  const t = allContent[language]?.services;
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.1 });
 

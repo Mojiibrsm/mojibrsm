@@ -1,4 +1,3 @@
-
 'use client';
 import Image from 'next/image';
 import { motion, useInView } from 'framer-motion';
@@ -6,11 +5,13 @@ import { useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useContent } from '@/hooks/use-content';
+import { useLanguage } from '@/contexts/language-context';
 import { Loader2 } from 'lucide-react';
 
 export default function Gallery() {
-  const { content, isLoading } = useContent();
-  const t = content?.gallery;
+  const { allContent, isLoading } = useContent();
+  const { language } = useLanguage();
+  const t = allContent[language]?.gallery;
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.1 });
 

@@ -1,15 +1,16 @@
-
 'use client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useContent } from '@/hooks/use-content';
+import { useLanguage } from '@/contexts/language-context';
 import { Loader2 } from 'lucide-react';
 
 export default function Footer() {
-  const { content, isLoading } = useContent();
-  const t = content?.footer;
-  const site = content?.site;
+  const { allContent, isLoading } = useContent();
+  const { language } = useLanguage();
+  const t = allContent[language]?.footer;
+  const site = allContent[language]?.site;
 
   if (isLoading) {
     return <footer className="w-full bg-card border-t h-24 flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin" /></footer>

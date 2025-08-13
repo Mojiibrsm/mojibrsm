@@ -1,4 +1,3 @@
-
 'use client';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,11 +5,13 @@ import { CheckCircle, Loader2 } from 'lucide-react';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 import { useContent } from '@/hooks/use-content';
+import { useLanguage } from '@/contexts/language-context';
 
 export default function Pricing() {
-    const { content, isLoading } = useContent();
-    const t = content?.pricing;
-    const contactDetails = content?.contact?.details;
+    const { allContent, isLoading } = useContent();
+    const { language } = useLanguage();
+    const t = allContent[language]?.pricing;
+    const contactDetails = allContent[language]?.contact?.details;
     const ref = useRef(null);
     const isInView = useInView(ref, { once: true, amount: 0.1 });
 

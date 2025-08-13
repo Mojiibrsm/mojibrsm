@@ -1,4 +1,3 @@
-
 'use client';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -7,11 +6,13 @@ import { Badge } from '@/components/ui/badge';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 import { useContent } from '@/hooks/use-content';
+import { useLanguage } from '@/contexts/language-context';
 import { Loader2 } from 'lucide-react';
 
 export default function Portfolio() {
-  const { content, isLoading } = useContent();
-  const t = content?.portfolio;
+  const { allContent, isLoading } = useContent();
+  const { language } = useLanguage();
+  const t = allContent[language]?.portfolio;
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.1 });
 

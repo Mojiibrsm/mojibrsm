@@ -1,9 +1,9 @@
-
 'use client';
 
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { useContent } from '@/hooks/use-content';
+import { useLanguage } from '@/contexts/language-context';
 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
@@ -13,9 +13,10 @@ const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 
 export default function WhatsAppWidget() {
-    const { content } = useContent();
-    const t = content?.whatsapp;
-    const contactDetails = content?.contact?.details;
+    const { allContent } = useContent();
+    const { language } = useLanguage();
+    const t = allContent[language]?.whatsapp;
+    const contactDetails = allContent[language]?.contact?.details;
     
     if (!t || !contactDetails?.phone) {
         return null;

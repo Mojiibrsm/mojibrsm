@@ -1,4 +1,3 @@
-
 'use client';
 import { useLanguage } from '@/contexts/language-context';
 import { Button } from '@/components/ui/button';
@@ -15,6 +14,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from '@/component
 import { useToast } from '@/hooks/use-toast';
 import { handleContactFormSubmission } from './contact-actions';
 import { createMessageThread, IMessage, addMessageToThread, getMessageThreads } from '@/services/data';
+import { useContent } from '@/hooks/use-content';
 
 const ContactFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -28,7 +28,9 @@ type ContactFormValues = z.infer<typeof ContactFormSchema>;
 
 
 export default function Contact() {
-  const { t } = useLanguage();
+  const { allContent, isLoading } = useContent();
+  const { language } = useLanguage();
+  const t = allContent[language]?.contact;
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.1 });
   const { toast } = useToast();
@@ -101,10 +103,14 @@ export default function Contact() {
   };
 
 
+  if (isLoading || !t) {
+    return <section id="contact" className="w-full py-16 md:py-24 bg-card flex justify-center items-center min-h-[70vh]"><Loader2 className="w-8 h-8 animate-spin"/></section>
+  }
+
   const socialLinks = [
-    { icon: Github, href: t.contact.details.socials.github },
-    { icon: Facebook, href: t.contact.details.socials.facebook },
-    { icon: Linkedin, href: t.contact.details.socials.linkedin },
+    { icon: Github, href: t.details.socials.github },
+    { icon: Facebook, href: t.details.socials.facebook },
+    { icon: Linkedin, href: t.details.socials.linkedin },
   ];
 
   const containerVariants = {
@@ -127,9 +133,9 @@ export default function Contact() {
         animate={isInView ? 'visible' : 'hidden'}
       >
         <motion.div variants={itemVariants} className="text-center mb-12">
-          <h2 className="text-4xl font-bold font-headline">{t.contact.title}</h2>
+          <h2 className="text-4xl font-bold font-headline">{t.title}</h2>
           <div className="mt-4 h-1.5 w-24 bg-gradient-to-r from-primary via-accent to-secondary mx-auto rounded-full"></div>
-          <p className="max-w-2xl mx-auto text-muted-foreground mt-4">{t.contact.description}</p>
+          <p className="max-w-2xl mx-auto text-muted-foreground mt-4">{t.description}</p>
         </motion.div>
         <div className="grid md:grid-cols-2 gap-12">
           <motion.div variants={itemVariants}>
@@ -141,7 +147,7 @@ export default function Contact() {
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <Input placeholder={t.contact.form.name} {...field} />
+                        <Input placeholder={t.form.name} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -153,7 +159,7 @@ export default function Contact() {
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <Input type="email" placeholder={t.contact.form.email} {...field} />
+                        <Input type="email" placeholder={t.form.email} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -165,7 +171,7 @@ export default function Contact() {
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                         <Input placeholder={t.contact.form.phone} {...field} />
+                         <Input placeholder={t.form.phone} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -177,7 +183,7 @@ export default function Contact() {
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <Input placeholder={t.contact.form.subject} {...field} />
+                        <Input placeholder={t.form.subject} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -189,7 +195,7 @@ export default function Contact() {
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <Textarea placeholder={t.contact.form.message} rows={5} {...field} />
+                        <Textarea placeholder={t.form.message} rows={5} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -197,7 +203,7 @@ export default function Contact() {
                 />
                 <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
                   {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {t.contact.form.submit}
+                  {t.form.submit}
                 </Button>
               </form>
             </Form>
@@ -208,7 +214,7 @@ export default function Contact() {
                 <Mail className="w-8 h-8 text-primary" />
                 <div>
                   <h3 className="font-semibold">Email</h3>
-                  <a href={`mailto:${t.contact.details.email}`} className="text-muted-foreground hover:text-primary">{t.contact.details.email}</a>
+                  <a href={`mailto:${t.details.email}`} className="text-muted-foreground hover:text-primary">{t.details.email}</a>
                 </div>
               </CardContent>
             </Card>
@@ -217,7 +223,7 @@ export default function Contact() {
                 <Phone className="w-8 h-8 text-primary" />
                 <div>
                   <h3 className="font-semibold">Phone</h3>
-                  <a href={`tel:${t.contact.details.phone}`} className="text-muted-foreground hover:text-primary">{t.contact.details.phone}</a>
+                  <a href={`tel:${t.details.phone}`} className="text-muted-foreground hover:text-primary">{t.details.phone}</a>
                 </div>
               </CardContent>
             </Card>
@@ -226,7 +232,7 @@ export default function Contact() {
                 <MapPin className="w-8 h-8 text-primary" />
                 <div>
                   <h3 className="font-semibold">Location</h3>
-                  <p className="text-muted-foreground">{t.contact.details.location}</p>
+                  <p className="text-muted-foreground">{t.details.location}</p>
                 </div>
               </CardContent>
             </Card>

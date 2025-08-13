@@ -1,15 +1,16 @@
-
 'use client';
 import { Award, Briefcase, Loader2 } from 'lucide-react';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 import { useContent } from '@/hooks/use-content';
+import { useLanguage } from '@/contexts/language-context';
 
 const icons = [Award, Briefcase];
 
 export default function Stats() {
-  const { content, isLoading } = useContent();
-  const t = content?.stats;
+  const { allContent, isLoading } = useContent();
+  const { language } = useLanguage();
+  const t = allContent[language]?.stats;
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.2 });
 
