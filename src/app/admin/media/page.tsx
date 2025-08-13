@@ -54,7 +54,7 @@ export default function AdminMediaPage() {
             const response = await fetch('/api/upload', { method: 'POST', body: formData });
             const result = await response.json();
             if (response.ok && result.success) {
-                await addMediaItem({ url: result.url, name: file.name });
+                await addMediaItem({ url: result.url, name: file.name, fileId: result.fileId });
                 toast({ title: "Upload Successful", description: `${file.name} has been added to the library.` });
                 await loadMedia(); // Refresh list
             } else {
@@ -64,6 +64,7 @@ export default function AdminMediaPage() {
             toast({ title: "Upload Error", description: error.message, variant: "destructive" });
         } finally {
             setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
 
@@ -78,7 +79,7 @@ export default function AdminMediaPage() {
         setIsDeleting(item.id);
         try {
             await deleteMediaItem(item);
-            toast({ title: "Media Deleted", description: "The item has been removed from the library and Firebase Storage." });
+            toast({ title: "Media Deleted", description: "The item has been removed from the library and ImageKit." });
             await loadMedia();
         } catch (error: any) {
              toast({ title: "Delete Error", description: error.message, variant: "destructive" });
@@ -119,7 +120,7 @@ export default function AdminMediaPage() {
                 <CardHeader>
                     <CardTitle>All Media</CardTitle>
                     <CardDescription>
-                        {mediaItems.length} items in the library. These files are stored on Firebase Storage. Deleting them here will also remove them from the server.
+                        {mediaItems.length} items in the library. These files are stored on ImageKit. Deleting them here will also remove them from the server.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -160,7 +161,7 @@ export default function AdminMediaPage() {
                                                 <AlertDialogContent>
                                                     <AlertDialogHeader>
                                                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                        <AlertDialogDescription>This will permanently delete the file from your Firebase Storage and media library. This action cannot be undone.</AlertDialogDescription>
+                                                        <AlertDialogDescription>This will permanently delete the file from your ImageKit account and media library. This action cannot be undone.</AlertDialogDescription>
                                                     </AlertDialogHeader>
                                                     <AlertDialogFooter>
                                                         <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -196,8 +197,6 @@ export default function AdminMediaPage() {
     );
 }
 
-// ... EditMediaDialog component remains the same, but it will need a small adjustment
-// in the uploadEditedImage function to call the Firebase-based service.
 
 function EditMediaDialog({
     item,
@@ -277,7 +276,7 @@ function EditMediaDialog({
             throw new Error(result.message || 'Upload failed');
         }
 
-        await addMediaItem({ url: result.url, name: editedFile.name });
+        await addMediaItem({ url: result.url, name: editedFile.name, fileId: result.fileId });
     };
 
     const handleSaveCrop = async () => {

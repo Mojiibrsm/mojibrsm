@@ -35,14 +35,6 @@ export interface Project {
 }
 export type ProjectFormData = Omit<Project, 'id' | 'createdAt'>;
 
-// This function is client-side only for simplicity, it gets all projects and then filters.
-// For larger scale apps, a server-side query with proper indexing would be better.
-export const getProjectsByUserId = (userId: string): Project[] => {
-    // This is a placeholder for client-side filtering.
-    // The actual fetching and filtering logic is now in the component.
-    return [];
-};
-
 export const addProject = (projectData: Omit<Project, 'id' | 'createdAt'>) => {
     const projects = getProjects();
     const newProject = { 
@@ -249,7 +241,8 @@ export const deleteSmsLog = (id: string) => {
 
 // --- MEDIA LIBRARY ---
 export interface IMediaItem {
-    id: string;
+    id: string; // Firestore document ID
+    fileId: string; // ImageKit file ID
     url: string;
     name: string;
     createdAt: string;
@@ -263,7 +256,6 @@ export const getMediaItems = async (): Promise<IMediaItem[]> => {
         return { 
             id: doc.id, 
             ...data,
-            // Convert Firestore Timestamp to string
             createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : new Date().toISOString()
         } as IMediaItem
     });
@@ -279,30 +271,30 @@ export const addMediaItem = async (itemData: Omit<IMediaItem, 'id' | 'createdAt'
     const data = docSnap.data();
     const createdAt = data?.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : new Date().toISOString();
 
-    const newItem: IMediaItem = { 
+    return { 
         ...itemData, 
         id: docRef.id, 
         createdAt
     };
-    return newItem;
 };
 
 export const deleteMediaItem = async (item: IMediaItem): Promise<void> => {
-    if (!item.url) {
-      throw new Error("File URL is missing, cannot delete from Storage.");
+    if (!item.fileId) {
+      throw new Error("File ID is missing, cannot delete from ImageKit.");
     }
     
-    // Create a reference from the full URL
-    const fileRef = ref(storage, item.url);
-  
-    // Delete the file from Firebase Storage
-    await deleteObject(fileRef);
+    // Call the backend API to delete from ImageKit
+    await fetch('/api/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileId: item.fileId })
+    });
 
     // Delete the document from Firestore
     await deleteDoc(doc(db, "mediaLibrary", item.id));
 };
 
-export const updateMediaItem = async (id: string, data: Partial<Omit<IMediaItem, 'id' | 'createdAt' | 'url'>>): Promise<void> => {
+export const updateMediaItem = async (id: string, data: Partial<Omit<IMediaItem, 'id' | 'createdAt' | 'url' | 'fileId'>>): Promise<void> => {
     const itemRef = doc(db, "mediaLibrary", id);
     await updateDoc(itemRef, data);
 };
