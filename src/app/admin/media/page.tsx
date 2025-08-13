@@ -15,10 +15,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
+import IK from 'imagekit-javascript';
 
 import ReactCrop, { type Crop, type PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 
+const imagekit = new IK({
+    publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!,
+    urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT!,
+    authenticationEndpoint: '/api/imagekit-auth',
+});
 
 export default function AdminMediaPage() {
     const [mediaItems, setMediaItems] = useState<IMediaItem[]>([]);
@@ -47,19 +53,17 @@ export default function AdminMediaPage() {
 
     const handleFileUpload = async (file: File) => {
         setIsUploading(true);
-        const formData = new FormData();
-        formData.append('file', file);
         
         try {
-            const response = await fetch('/api/upload', { method: 'POST', body: formData });
-            const result = await response.json();
-            if (response.ok && result.success) {
-                await addMediaItem({ url: result.url, name: file.name, fileId: result.fileId });
-                toast({ title: "Upload Successful", description: `${file.name} has been added to the library.` });
-                await loadMedia(); // Refresh list
-            } else {
-                throw new Error(result.message || 'Upload failed');
-            }
+            const response = await imagekit.upload({
+                file: file,
+                fileName: file.name,
+                useUniqueFileName: true,
+                folder: "/portfolio-uploads/",
+            });
+            await addMediaItem({ url: response.url, name: file.name, fileId: response.fileId });
+            toast({ title: "Upload Successful", description: `${file.name} has been added to the library.` });
+            await loadMedia(); // Refresh list
         } catch (error: any) {
             toast({ title: "Upload Error", description: error.message, variant: "destructive" });
         } finally {
@@ -263,20 +267,16 @@ function EditMediaDialog({
 
     const uploadEditedImage = async (blob: Blob | null, newName: string) => {
         if (!blob) throw new Error('Could not create edited image.');
-
         const editedFile = new File([blob], newName, { type: blob.type || 'image/png' });
         
-        const formData = new FormData();
-        formData.append('file', editedFile);
+        const response = await imagekit.upload({
+            file: editedFile,
+            fileName: editedFile.name,
+            useUniqueFileName: true,
+            folder: "/portfolio-uploads/",
+        });
 
-        const response = await fetch('/api/upload', { method: 'POST', body: formData });
-        const result = await response.json();
-
-        if (!response.ok || !result.success) {
-            throw new Error(result.message || 'Upload failed');
-        }
-
-        await addMediaItem({ url: result.url, name: editedFile.name, fileId: result.fileId });
+        await addMediaItem({ url: response.url, name: editedFile.name, fileId: response.fileId });
     };
 
     const handleSaveCrop = async () => {

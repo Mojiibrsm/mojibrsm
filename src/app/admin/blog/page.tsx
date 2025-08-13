@@ -25,6 +25,14 @@ import TiptapTextStyle from '@tiptap/extension-text-style';
 import TiptapImage from '@tiptap/extension-image';
 import TiptapLink from '@tiptap/extension-link';
 import { MediaLibraryDialog } from '@/components/media-library-dialog';
+import IK from 'imagekit-javascript';
+
+const imagekit = new IK({
+    publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!,
+    urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT!,
+    authenticationEndpoint: '/api/imagekit-auth',
+});
+
 
 type Post = {
     slug: string;
@@ -71,7 +79,7 @@ export default function AdminBlogPage() {
             } catch (error: any) {
                 toast({
                     title: 'Error fetching posts',
-                    description: error.message || 'Could not load blog posts from S3.',
+                    description: error.message || 'Could not load blog posts.',
                     variant: 'destructive',
                 });
             } finally {
@@ -167,7 +175,7 @@ export default function AdminBlogPage() {
         return (
             <div className="flex items-center justify-center h-64">
                 <Loader2 className="h-8 w-8 animate-spin" />
-                <p className="ml-4">Loading blog posts from S3...</p>
+                <p className="ml-4">Loading blog posts...</p>
             </div>
         )
     }
@@ -221,7 +229,7 @@ export default function AdminBlogPage() {
                                                           <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
                                                         </AlertDialogTrigger>
                                                         <AlertDialogContent>
-                                                            <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the post from S3. This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
+                                                            <AlertDialogHeader><AlertDialogTitle>Are you sure?</AlertDialogTitle><AlertDialogDescription>This will permanently delete the post. This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
                                                             <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(index)} className="bg-destructive hover:bg-destructive/90">Yes, delete</AlertDialogAction></AlertDialogFooter>
                                                         </AlertDialogContent>
                                                     </AlertDialog>
@@ -263,23 +271,21 @@ const TiptapToolbar = ({ editor }: { editor: Editor | null }) => {
     if (!editor) return;
     const file = event.target.files?.[0];
     if (!file) return;
-
-    const uploadFormData = new FormData();
-    uploadFormData.append('file', file);
-    uploadFormData.append('destination', 's3');
-
+    
     toast({ title: "Uploading image..." });
     
     try {
-        const response = await fetch('/api/upload', { method: 'POST', body: uploadFormData });
-        const result = await response.json();
-        if (response.ok && result.success) {
-            editor.chain().focus().setImage({ src: result.url, alt: file.name }).run();
-            addMediaItem({ url: result.url, name: file.name });
-            toast({ title: "Image Uploaded", description: "Image inserted into content." });
-        } else {
-            throw new Error(result.message || 'Upload failed');
-        }
+        const result = await imagekit.upload({
+            file: file,
+            fileName: file.name,
+            useUniqueFileName: true,
+            folder: "/portfolio-uploads/",
+        });
+        
+        editor.chain().focus().setImage({ src: result.url, alt: file.name }).run();
+        await addMediaItem({ url: result.url, name: file.name, fileId: result.fileId });
+        toast({ title: "Image Uploaded", description: "Image inserted into content." });
+
     } catch (error: any) {
         toast({ title: "Upload Error", description: error.message, variant: "destructive" });
     } finally {

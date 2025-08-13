@@ -12,7 +12,13 @@ import { FormattedTimestamp } from '@/components/formatted-timestamp';
 import { Search, ImageOff, Upload, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import type { Timestamp } from 'firebase/firestore';
+import IK from 'imagekit-javascript';
+
+const imagekit = new IK({
+    publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY!,
+    urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT!,
+    authenticationEndpoint: '/api/imagekit-auth',
+});
 
 interface MediaLibraryDialogProps {
     isOpen: boolean;
@@ -48,24 +54,22 @@ export function MediaLibraryDialog({ isOpen, onOpenChange, onSelect }: MediaLibr
 
     const handleFileUpload = async (file: File) => {
         setIsUploading(true);
-        const formData = new FormData();
-        formData.append('file', file);
-
         try {
-            const response = await fetch('/api/upload', { method: 'POST', body: formData });
-            const result = await response.json();
-            if (response.ok && result.success) {
-                const newItem = await addMediaItem({ url: result.url, name: file.name });
-                toast({ title: "Upload Successful", description: `${file.name} has been added.` });
-                await loadMedia(); // Refresh list to show the new item
-                onSelect(newItem); // Automatically select the newly uploaded item
-            } else {
-                throw new Error(result.message || 'Upload failed');
-            }
+            const result = await imagekit.upload({
+                file: file,
+                fileName: file.name,
+                useUniqueFileName: true,
+                folder: "/portfolio-uploads/",
+            });
+            const newItem = await addMediaItem({ url: result.url, name: file.name, fileId: result.fileId });
+            toast({ title: "Upload Successful", description: `${file.name} has been added.` });
+            await loadMedia(); // Refresh list to show the new item
+            onSelect(newItem); // Automatically select the newly uploaded item
         } catch (error: any) {
             toast({ title: "Upload Error", description: error.message, variant: "destructive" });
         } finally {
             setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
     
