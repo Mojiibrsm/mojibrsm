@@ -1,31 +1,18 @@
+
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { db } from '@/services/firestore';
 import { collection, onSnapshot } from 'firebase/firestore';
+import { translations } from '@/lib/translations';
+import { en } from '@/lib/translations/en';
 
-export type Content = {
-    about: any;
-    blog: any;
-    contact: any;
-    experience: any;
-    footer: any;
-    gallery: any;
-    hero: any;
-    nav: any;
-    portfolio: any;
-    pricing: any;
-    services: any;
-    site: any;
-    skills: any;
-    stats: any;
-    whatsapp: any;
-};
+export type Content = typeof en;
 
 // This type will hold all languages for the content.
 type AllContent = {
-    en: Content | null;
-    bn: Content | null;
+    en: Content;
+    bn: Content;
 };
 
 interface ContentContextType {
@@ -36,13 +23,19 @@ interface ContentContextType {
 const ContentContext = createContext<ContentContextType | undefined>(undefined);
 
 export const ContentProvider = ({ children }: { children: ReactNode }) => {
-  const [allContent, setAllContent] = useState<AllContent>({ en: null, bn: null });
+  // Initialize with local fallback data to prevent blank pages
+  const [allContent, setAllContent] = useState<AllContent>(translations);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setIsLoading(true);
     const contentRef = collection(db, 'content');
     const unsubscribe = onSnapshot(contentRef, (snapshot) => {
+      if (snapshot.empty) {
+        // If Firestore is empty, continue using local translations and stop loading.
+        setIsLoading(false);
+        return;
+      }
+
       const contentData: Record<string, { en: any; bn: any }> = {};
       snapshot.forEach((doc) => {
         contentData[doc.id] = doc.data() as { en: any; bn: any };
@@ -62,6 +55,7 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
     }, (error) => {
       console.error("Error fetching content from Firestore:", error);
+      // If there's an error, stick with the local fallback data.
       setIsLoading(false);
     });
 
