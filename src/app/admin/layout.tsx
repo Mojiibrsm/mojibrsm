@@ -1,3 +1,4 @@
+
 'use client';
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
@@ -109,8 +110,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <Button variant="ghost" size="icon" className="rounded-full" asChild>
                         <Link href="/admin/content">
                             <Avatar>
-                                <AvatarImage src={t.site.adminAvatar} alt={t.site.title} />
-                                <AvatarFallback>{t.site.title.charAt(0)}</AvatarFallback>
+                                <AvatarImage src={user?.photoURL || t.site.adminAvatar} alt={t.site.title} />
+                                <AvatarFallback>{user?.displayName?.charAt(0) || t.site.title.charAt(0)}</AvatarFallback>
                             </Avatar>
                         </Link>
                     </Button>
