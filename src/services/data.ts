@@ -1,4 +1,3 @@
-
 'use client';
 import { db, storage } from './firestore';
 import { collection, addDoc, getDocs, getDoc, doc, updateDoc, deleteDoc, query, where, orderBy, writeBatch, serverTimestamp, Timestamp } from "firebase/firestore";
@@ -31,7 +30,7 @@ export interface Project {
     notesImage?: string;
     status: ProjectStatus;
     deadline: string;
-    createdAt: Timestamp;
+    createdAt: string;
 }
 export type ProjectFormData = Omit<Project, 'id' | 'createdAt'>;
 
@@ -50,6 +49,11 @@ export const getProjects = (): Project[] => {
     if (typeof window === 'undefined') return [];
     const data = localStorage.getItem('projects');
     return data ? JSON.parse(data) : [];
+};
+
+export const getProjectsByUserId = (userId: string): Project[] => {
+    const allProjects = getProjects();
+    return allProjects.filter(p => p.userId === userId);
 };
 
 export const updateProject = (id: string, updatedData: Partial<ProjectFormData>) => {
@@ -284,11 +288,16 @@ export const deleteMediaItem = async (item: IMediaItem): Promise<void> => {
     }
     
     // Call the backend API to delete from ImageKit
-    await fetch('/api/delete', {
+    const response = await fetch('/api/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fileId: item.fileId })
     });
+
+    if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.message || 'Failed to delete file from ImageKit.');
+    }
 
     // Delete the document from Firestore
     await deleteDoc(doc(db, "mediaLibrary", item.id));

@@ -14,16 +14,28 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
-import IK from 'imagekit-javascript';
 
 import ReactCrop, { type Crop, type PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 
-const imagekit = new IK({
-    publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY || '',
-    urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT || '',
-    authenticationEndpoint: 'http://localhost:3000/api/imagekit-auth',
-});
+
+const uploadFileToServer = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+    });
+    
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Server-side upload failed.');
+    }
+    
+    return await response.json();
+};
+
 
 export default function AdminMediaPage() {
     const [mediaItems, setMediaItems] = useState<IMediaItem[]>([]);
@@ -54,12 +66,7 @@ export default function AdminMediaPage() {
         setIsUploading(true);
         
         try {
-            const response = await imagekit.upload({
-                file: file,
-                fileName: file.name,
-                useUniqueFileName: true,
-                folder: "/portfolio-uploads/",
-            });
+            const response = await uploadFileToServer(file);
             await addMediaItem({ url: response.url, name: file.name, fileId: response.fileId });
             toast({ title: "Upload Successful", description: `${file.name} has been added to the library.` });
             await loadMedia(); // Refresh list
@@ -268,12 +275,7 @@ function EditMediaDialog({
         if (!blob) throw new Error('Could not create edited image.');
         const editedFile = new File([blob], newName, { type: blob.type || 'image/png' });
         
-        const response = await imagekit.upload({
-            file: editedFile,
-            fileName: editedFile.name,
-            useUniqueFileName: true,
-            folder: "/portfolio-uploads/",
-        });
+        const response = await uploadFileToServer(editedFile);
 
         await addMediaItem({ url: response.url, name: editedFile.name, fileId: response.fileId });
     };

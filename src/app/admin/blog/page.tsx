@@ -24,14 +24,24 @@ import TiptapTextStyle from '@tiptap/extension-text-style';
 import TiptapImage from '@tiptap/extension-image';
 import TiptapLink from '@tiptap/extension-link';
 import { MediaLibraryDialog } from '@/components/media-library-dialog';
-import IK from 'imagekit-javascript';
 
-const imagekit = new IK({
-    publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY || '',
-    urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT || '',
-    authenticationEndpoint: 'http://localhost:3000/api/imagekit-auth',
-});
 
+const uploadFileToServer = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+    });
+    
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Server-side upload failed.');
+    }
+    
+    return await response.json();
+};
 
 type Post = {
     slug: string;
@@ -274,12 +284,7 @@ const TiptapToolbar = ({ editor }: { editor: Editor | null }) => {
     toast({ title: "Uploading image..." });
     
     try {
-        const result = await imagekit.upload({
-            file: file,
-            fileName: file.name,
-            useUniqueFileName: true,
-            folder: "/portfolio-uploads/",
-        });
+        const result = await uploadFileToServer(file);
         
         editor.chain().focus().setImage({ src: result.url, alt: file.name }).run();
         await addMediaItem({ url: result.url, name: file.name, fileId: result.fileId });

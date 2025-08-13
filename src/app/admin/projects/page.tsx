@@ -15,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
-import { addProject, getProjects, updateProject, deleteProject, Project, ProjectStatus, addEmailLog, addSmsLog, addMediaItem, IMediaItem } from '@/services/data';
+import { addProject, getProjects, updateProject, deleteProject, Project, ProjectStatus, addEmailLog, addSmsLog, IMediaItem } from '@/services/data';
 import { FormattedTimestamp } from '@/components/formatted-timestamp';
 import { sendEmail } from '@/services/email';
 import { translations } from '@/lib/translations';
@@ -23,14 +23,6 @@ import Image from 'next/image';
 import { useLanguage } from '@/contexts/language-context';
 import { sendSms } from '@/services/sms';
 import { MediaLibraryDialog } from '@/components/media-library-dialog';
-import IK from 'imagekit-javascript';
-
-
-const imagekit = new IK({
-    publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY || '',
-    urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT || '',
-    authenticationEndpoint: 'https://9000-firebase-studio-1751893595114.cluster-73qgvk7hjjadkrjeyexca5ivva.cloudworkstations.dev/api/imagekit-auth',
-});
 
 
 const getStatusVariant = (status: string) => {

@@ -11,13 +11,25 @@ import { FormattedTimestamp } from '@/components/formatted-timestamp';
 import { Search, ImageOff, Upload, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import IK from 'imagekit-javascript';
 
-const imagekit = new IK({
-    publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY || '',
-    urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT || '',
-    authenticationEndpoint: 'http://localhost:3000/api/imagekit-auth',
-});
+
+const uploadFileToServer = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+    });
+    
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Server-side upload failed.');
+    }
+    
+    return await response.json();
+};
+
 
 interface MediaLibraryDialogProps {
     isOpen: boolean;
@@ -54,12 +66,7 @@ export function MediaLibraryDialog({ isOpen, onOpenChange, onSelect }: MediaLibr
     const handleFileUpload = async (file: File) => {
         setIsUploading(true);
         try {
-            const result = await imagekit.upload({
-                file: file,
-                fileName: file.name,
-                useUniqueFileName: true,
-                folder: "/portfolio-uploads/",
-            });
+            const result = await uploadFileToServer(file);
             const newItem = await addMediaItem({ url: result.url, name: file.name, fileId: result.fileId });
             toast({ title: "Upload Successful", description: `${file.name} has been added.` });
             await loadMedia(); // Refresh list to show the new item
