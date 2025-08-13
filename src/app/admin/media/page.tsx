@@ -22,15 +22,24 @@ import 'react-image-crop/dist/ReactCrop.css';
 
 export default function AdminMediaPage() {
     const [mediaItems, setMediaItems] = useState<IMediaItem[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
     const { toast } = useToast();
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const [editingItem, setEditingItem] = useState<IMediaItem | null>(null);
 
-    const loadMedia = useCallback(() => {
-        setMediaItems(getMediaItems());
-    }, []);
+    const loadMedia = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const items = await getMediaItems();
+            setMediaItems(items);
+        } catch (error) {
+             toast({ title: "Error Loading Media", description: "Could not fetch items from Firestore.", variant: "destructive" });
+        } finally {
+            setIsLoading(false);
+        }
+    }, [toast]);
 
     useEffect(() => {
         loadMedia();
@@ -40,15 +49,14 @@ export default function AdminMediaPage() {
         setIsUploading(true);
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('destination', 's3');
-
+        
         try {
             const response = await fetch('/api/upload', { method: 'POST', body: formData });
             const result = await response.json();
             if (response.ok && result.success) {
-                addMediaItem({ url: result.url, name: file.name });
+                await addMediaItem({ url: result.url, name: file.name });
                 toast({ title: "Upload Successful", description: `${file.name} has been added to the library.` });
-                loadMedia(); // Refresh list
+                await loadMedia(); // Refresh list
             } else {
                 throw new Error(result.message || 'Upload failed');
             }
@@ -66,12 +74,12 @@ export default function AdminMediaPage() {
         }
     };
     
-    const handleDelete = async (id: string) => {
-        setIsDeleting(id);
+    const handleDelete = async (item: IMediaItem) => {
+        setIsDeleting(item.id);
         try {
-            await deleteMediaItem(id);
-            toast({ title: "Media Deleted", description: "The item has been removed from the library and the server." });
-            loadMedia();
+            await deleteMediaItem(item);
+            toast({ title: "Media Deleted", description: "The item has been removed from the library and Firebase Storage." });
+            await loadMedia();
         } catch (error: any) {
              toast({ title: "Delete Error", description: error.message, variant: "destructive" });
         } finally {
@@ -111,11 +119,16 @@ export default function AdminMediaPage() {
                 <CardHeader>
                     <CardTitle>All Media</CardTitle>
                     <CardDescription>
-                        {mediaItems.length} items in the library. These files are stored on your S3 bucket. Deleting them here will also remove them from the server.
+                        {mediaItems.length} items in the library. These files are stored on Firebase Storage. Deleting them here will also remove them from the server.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {mediaItems.length === 0 ? (
+                    {isLoading ? (
+                         <div className="flex items-center justify-center h-64">
+                            <Loader2 className="h-8 w-8 animate-spin" />
+                            <p className="ml-4">Loading media from Firebase...</p>
+                        </div>
+                    ) : mediaItems.length === 0 ? (
                         <div className="flex flex-col items-center justify-center text-center text-muted-foreground py-12 border-2 border-dashed rounded-lg">
                            <ImageOff className="h-12 w-12 mb-4" />
                            <p className="font-semibold">Your media library is empty.</p>
@@ -147,11 +160,11 @@ export default function AdminMediaPage() {
                                                 <AlertDialogContent>
                                                     <AlertDialogHeader>
                                                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                        <AlertDialogDescription>This will permanently delete the file from your S3 bucket and media library. This action cannot be undone.</AlertDialogDescription>
+                                                        <AlertDialogDescription>This will permanently delete the file from your Firebase Storage and media library. This action cannot be undone.</AlertDialogDescription>
                                                     </AlertDialogHeader>
                                                     <AlertDialogFooter>
                                                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={() => handleDelete(item.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                                                        <AlertDialogAction onClick={() => handleDelete(item)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
                                                     </AlertDialogFooter>
                                                 </AlertDialogContent>
                                             </AlertDialog>
@@ -182,6 +195,9 @@ export default function AdminMediaPage() {
         </div>
     );
 }
+
+// ... EditMediaDialog component remains the same, but it will need a small adjustment
+// in the uploadEditedImage function to call the Firebase-based service.
 
 function EditMediaDialog({
     item,
@@ -217,7 +233,6 @@ function EditMediaDialog({
         setOriginalDimensions({ width: img.naturalWidth, height: img.naturalHeight });
         setResizeDimensions({ width: img.naturalWidth, height: img.naturalHeight });
         
-        // Center crop on load
         const { width, height } = e.currentTarget
         const newCrop = centerCrop(
           makeAspectCrop(
@@ -225,7 +240,7 @@ function EditMediaDialog({
               unit: '%',
               width: 90,
             },
-            1, // aspect ratio 1:1
+            1,
             width,
             height
           ),
@@ -235,12 +250,16 @@ function EditMediaDialog({
         setCrop(newCrop);
     };
 
-    const handleSaveDetails = () => {
+    const handleSaveDetails = async () => {
         setIsSaving(true);
-        updateMediaItem(item.id, { name });
-        toast({ title: "Media Updated", description: "The image name has been saved." });
+        try {
+            await updateMediaItem(item.id, { name });
+            toast({ title: "Media Updated", description: "The image name has been saved." });
+            onSaveSuccess();
+        } catch (error: any) {
+            toast({ title: "Error", description: error.message, variant: "destructive" });
+        }
         setIsSaving(false);
-        onSaveSuccess();
     };
 
     const uploadEditedImage = async (blob: Blob | null, newName: string) => {
@@ -250,7 +269,6 @@ function EditMediaDialog({
         
         const formData = new FormData();
         formData.append('file', editedFile);
-        formData.append('destination', 's3');
 
         const response = await fetch('/api/upload', { method: 'POST', body: formData });
         const result = await response.json();
@@ -259,7 +277,7 @@ function EditMediaDialog({
             throw new Error(result.message || 'Upload failed');
         }
 
-        addMediaItem({ url: result.url, name: editedFile.name });
+        await addMediaItem({ url: result.url, name: editedFile.name });
     };
 
     const handleSaveCrop = async () => {
@@ -469,10 +487,3 @@ function EditMediaDialog({
         </Dialog>
     );
 }
-
-
-    
-
-    
-
-    

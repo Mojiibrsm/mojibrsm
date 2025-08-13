@@ -2,72 +2,77 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
-
-// Static user data to avoid breaking components that use it.
-const staticUser = {
-  uid: 'static-user-id',
-  displayName: 'Admin User',
-  email: 'admin@example.com',
-  photoURL: 'https://placehold.co/100x100.png',
-  phoneNumber: '+123456789',
-  role: 'Admin' as const,
-};
+import { useRouter, usePathname } from 'next/navigation';
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User } from 'firebase/auth';
+import { auth } from '@/services/firestore';
+import { Loader2 } from 'lucide-react';
 
 interface AuthContextType {
   isLoggedIn: boolean;
-  user: typeof staticUser | null;
-  login: (password: string) => boolean;
+  user: User | null;
+  login: (password: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Use an environment variable for the password. The NEXT_PUBLIC_ prefix makes it available on the client-side.
-// Provide a fallback for local development.
-const LOGIN_PASSWORD = process.env.NEXT_PUBLIC_LOGIN_PASSWORD || 'mojibx'; 
+// Using a static email for the admin login
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@example.com';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
-    // Check for login state in localStorage on initial load
-    const loggedInState = localStorage.getItem('isLoggedIn');
-    if (loggedInState === 'true') {
-      setIsLoggedIn(true);
-    }
-    setLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
+    return () => unsubscribe();
   }, []);
 
-  const login = (password: string): boolean => {
-    if (!LOGIN_PASSWORD) {
-      console.error("Login password is not set in environment variables.");
-      return false;
+  const login = async (password: string) => {
+    try {
+      await signInWithEmailAndPassword(auth, ADMIN_EMAIL, password);
+      return { success: true, message: 'Login successful!' };
+    } catch (error: any) {
+      console.error("Firebase Auth Error:", error);
+      let message = 'An unknown error occurred.';
+      if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+        message = 'Incorrect password. Please try again.';
+      } else if (error.code === 'auth/invalid-email') {
+         message = 'The admin email is configured incorrectly.';
+      }
+      return { success: false, message };
     }
-    if (password === LOGIN_PASSWORD) {
-      localStorage.setItem('isLoggedIn', 'true');
-      setIsLoggedIn(true);
-      return true;
-    }
-    return false;
   };
 
-  const logout = () => {
-    localStorage.removeItem('isLoggedIn');
-    setIsLoggedIn(false);
+  const logout = async () => {
+    await signOut(auth);
     router.push('/login');
   };
 
   const value = {
-    isLoggedIn,
-    user: isLoggedIn ? staticUser : null,
+    isLoggedIn: !!user,
+    user,
     login,
     logout,
     loading,
   };
+  
+  if (loading) {
+       return (
+        <div className="flex h-screen w-full items-center justify-center bg-background">
+            <div className="flex flex-col items-center gap-4">
+                <Loader2 className="h-8 w-8 animate-spin" />
+                <p>Loading Authentication...</p>
+            </div>
+        </div>
+       )
+   }
 
   return (
     <AuthContext.Provider value={value}>

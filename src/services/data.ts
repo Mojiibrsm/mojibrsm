@@ -1,36 +1,8 @@
 
 'use client';
-
-// --- STORAGE SERVICE ---
-// A simple service to abstract localStorage access and handle SSR.
-const storageService = {
-    getItem: (key: string) => {
-        if (typeof window === 'undefined') {
-            return null;
-        }
-        return localStorage.getItem(key);
-    },
-    setItem: (key: string, value: string) => {
-        if (typeof window !== 'undefined') {
-            localStorage.setItem(key, value);
-        }
-    }
-};
-
-const getCollection = <T,>(key: string): T[] => {
-    try {
-        const data = storageService.getItem(key);
-        return data ? JSON.parse(data) : [];
-    } catch (error) {
-        console.error(`Error parsing collection ${key} from localStorage`, error);
-        return [];
-    }
-};
-
-const saveCollection = <T,>(key: string, data: T[]) => {
-    storageService.setItem(key, JSON.stringify(data));
-};
-
+import { db, storage } from './firestore';
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy, writeBatch, serverTimestamp, Timestamp } from "firebase/firestore";
+import { ref, deleteObject } from "firebase/storage";
 
 // --- PROJECT MANAGEMENT ---
 export type ProjectStatus = 'Pending' | 'In Progress' | 'Completed';
@@ -45,45 +17,37 @@ export interface Project {
     notesImage?: string;
     status: ProjectStatus;
     deadline: string;
-    createdAt: string; // ISO String
+    createdAt: Timestamp;
 }
+export type ProjectFormData = Omit<Project, 'id' | 'createdAt'>;
 
-export const addProject = (projectData: Omit<Project, 'id' | 'createdAt'>): Project => {
-    const projects = getCollection<Project>('projects');
-    const newProject: Project = {
+export const addProject = async (projectData: ProjectFormData): Promise<Project> => {
+    const docRef = await addDoc(collection(db, "projects"), {
         ...projectData,
-        id: crypto.randomUUID(),
-        createdAt: new Date().toISOString(),
-    };
-    projects.unshift(newProject);
-    saveCollection('projects', projects);
-    return newProject;
+        createdAt: serverTimestamp(),
+    });
+    return { ...projectData, id: docRef.id, createdAt: Timestamp.now() };
 };
 
-export const getProjects = (): Project[] => {
-    return getCollection<Project>('projects');
+export const getProjects = async (): Promise<Project[]> => {
+    const q = query(collection(db, "projects"), orderBy("createdAt", "desc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
 };
 
-export const getProjectsByUserId = (userId: string): Project[] => {
-    const allProjects = getProjects();
-    return allProjects.filter(p => p.userId === userId);
+export const getProjectsByUserId = async (userId: string): Promise<Project[]> => {
+    const q = query(collection(db, "projects"), where("userId", "==", userId), orderBy("createdAt", "desc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
 };
 
-export const updateProject = (id: string, data: Partial<Omit<Project, 'id' | 'createdAt' | 'userId'>>): Project | undefined => {
-    const projects = getCollection<Project>('projects');
-    const projectIndex = projects.findIndex(p => p.id === id);
-    if (projectIndex > -1) {
-        projects[projectIndex] = { ...projects[projectIndex], ...data };
-        saveCollection('projects', projects);
-        return projects[projectIndex];
-    }
-    return undefined;
+export const updateProject = async (id: string, data: Partial<ProjectFormData>): Promise<void> => {
+    const projectRef = doc(db, "projects", id);
+    await updateDoc(projectRef, data);
 };
 
-export const deleteProject = (id: string) => {
-    let projects = getCollection<Project>('projects');
-    projects = projects.filter(p => p.id !== id);
-    saveCollection('projects', projects);
+export const deleteProject = async (id: string): Promise<void> => {
+    await deleteDoc(doc(db, "projects", id));
 };
 
 
@@ -97,37 +61,33 @@ export interface IRequest {
     service: string;
     details: string;
     status: RequestStatus;
-    createdAt: string; // ISO String
+    createdAt: Timestamp;
 }
+export type RequestFormData = Omit<IRequest, 'id' | 'createdAt'>;
 
-export const addRequest = (requestData: Omit<IRequest, 'id' | 'createdAt'>): IRequest => {
-    const requests = getCollection<IRequest>('requests');
-    const newRequest: IRequest = {
+export const addRequest = async (requestData: RequestFormData): Promise<IRequest> => {
+    const docRef = await addDoc(collection(db, "requests"), {
         ...requestData,
-        id: crypto.randomUUID(),
-        createdAt: new Date().toISOString(),
-    };
-    requests.unshift(newRequest);
-    saveCollection('requests', requests);
-    return newRequest;
+        createdAt: serverTimestamp()
+    });
+    return { ...requestData, id: docRef.id, createdAt: Timestamp.now() };
 };
 
-export const getRequestsByUserId = (userId: string): IRequest[] => {
-    const allRequests = getCollection<IRequest>('requests');
-    return allRequests.filter(r => r.userId === userId);
+export const getRequestsByUserId = async (userId: string): Promise<IRequest[]> => {
+    const q = query(collection(db, "requests"), where("userId", "==", userId), orderBy("createdAt", "desc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as IRequest));
 };
 
-export const getAllRequests = (): IRequest[] => {
-    return getCollection<IRequest>('requests');
+export const getAllRequests = async (): Promise<IRequest[]> => {
+    const q = query(collection(db, "requests"), orderBy("createdAt", "desc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as IRequest));
 };
 
-export const updateRequestStatus = (id: string, status: RequestStatus) => {
-    const requests = getCollection<IRequest>('requests');
-    const requestIndex = requests.findIndex(r => r.id === id);
-    if (requestIndex > -1) {
-        requests[requestIndex].status = status;
-        saveCollection('requests', requests);
-    }
+export const updateRequestStatus = async (id: string, status: RequestStatus): Promise<void> => {
+    const requestRef = doc(db, "requests", id);
+    await updateDoc(requestRef, { status });
 };
 
 
@@ -135,7 +95,7 @@ export const updateRequestStatus = (id: string, status: RequestStatus) => {
 export interface IMessage {
     from: 'client' | 'admin';
     text: string;
-    timestamp: string; // ISO String
+    timestamp: Timestamp;
 }
 export interface IMessageThread {
     id: string;
@@ -147,63 +107,68 @@ export interface IMessageThread {
     subject: string;
     messages: IMessage[];
     lastMessage: string;
-    lastMessageTimestamp: string; // ISO String
+    lastMessageTimestamp: Timestamp;
     unreadByAdmin: boolean;
     unreadByUser: boolean;
     type: 'contact';
 }
+export type ThreadFormData = Omit<IMessageThread, 'id' | 'messages' | 'lastMessage' | 'lastMessageTimestamp'>;
 
-export const createMessageThread = (threadData: Omit<IMessageThread, 'id' | 'messages' | 'lastMessage' | 'lastMessageTimestamp' | 'type'>, initialMessage: IMessage): IMessageThread => {
-    const threads = getCollection<IMessageThread>('messageThreads');
-    const newThread: IMessageThread = {
+export const createMessageThread = async (threadData: ThreadFormData, initialMessage: Omit<IMessage, 'timestamp'>): Promise<IMessageThread> => {
+    const messageWithTimestamp = { ...initialMessage, timestamp: serverTimestamp() };
+    const docRef = await addDoc(collection(db, "messageThreads"), {
         ...threadData,
-        type: 'contact',
-        id: crypto.randomUUID(),
-        messages: [initialMessage],
+        messages: [messageWithTimestamp],
         lastMessage: initialMessage.text,
-        lastMessageTimestamp: initialMessage.timestamp,
+        lastMessageTimestamp: serverTimestamp(),
+    });
+    
+    // This is a simplified version. For a real app, you might need a separate read operation
+    // to get the exact data back, but this works for UI updates.
+    return { 
+      ...threadData, 
+      id: docRef.id, 
+      messages: [{...initialMessage, timestamp: Timestamp.now()}], 
+      lastMessage: initialMessage.text,
+      lastMessageTimestamp: Timestamp.now()
     };
-    threads.unshift(newThread);
-    saveCollection('messageThreads', threads);
-    return newThread;
 };
 
-export const addMessageToThread = (threadId: string, message: IMessage, senderType: 'admin' | 'client') => {
-    const threads = getCollection<IMessageThread>('messageThreads');
-    const threadIndex = threads.findIndex(t => t.id === threadId);
-    if (threadIndex > -1) {
-        threads[threadIndex].messages.push(message);
-        threads[threadIndex].lastMessage = message.text;
-        threads[threadIndex].lastMessageTimestamp = message.timestamp;
-        threads[threadIndex].unreadByAdmin = senderType === 'client';
-        threads[threadIndex].unreadByUser = senderType === 'admin';
-        saveCollection('messageThreads', threads);
-    }
+export const addMessageToThread = async (threadId: string, message: Omit<IMessage, 'timestamp'>, senderType: 'admin' | 'client'): Promise<void> => {
+    const threadRef = doc(db, "messageThreads", threadId);
+    const threads = await getDocs(query(collection(db, "messageThreads"), where('__name__', '==', threadId)));
+    if (threads.empty) return;
+    
+    const currentThreadData = threads.docs[0].data() as IMessageThread;
+    const newMessages = [...currentThreadData.messages, {...message, timestamp: serverTimestamp()}];
+    
+    await updateDoc(threadRef, {
+        messages: newMessages,
+        lastMessage: message.text,
+        lastMessageTimestamp: serverTimestamp(),
+        unreadByAdmin: senderType === 'client',
+        unreadByUser: senderType === 'admin',
+    });
 };
 
-export const getMessageThreads = (): IMessageThread[] => {
-    const threads = getCollection<IMessageThread>('messageThreads');
-    // Sort by most recent message
-    return threads.sort((a, b) => new Date(b.lastMessageTimestamp).getTime() - new Date(a.lastMessageTimestamp).getTime());
+export const getMessageThreads = async (): Promise<IMessageThread[]> => {
+    const q = query(collection(db, "messageThreads"), orderBy("lastMessageTimestamp", "desc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as IMessageThread));
 };
 
-export const getMessageThreadsForUser = (userId: string): IMessageThread[] => {
-    const allThreads = getCollection<IMessageThread>('messageThreads');
-    return allThreads.filter(t => t.userId === userId);
+export const getMessageThreadsForUser = async (userId: string): Promise<IMessageThread[]> => {
+    const q = query(collection(db, "messageThreads"), where("userId", "==", userId), orderBy("lastMessageTimestamp", "desc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as IMessageThread));
 };
 
-export const markThreadAsRead = (threadId: string, readerType: 'admin' | 'user') => {
-    const threads = getCollection<IMessageThread>('messageThreads');
-    const threadIndex = threads.findIndex(t => t.id === threadId);
-    if (threadIndex > -1) {
-        if (readerType === 'admin') {
-            threads[threadIndex].unreadByAdmin = false;
-        } else {
-            threads[threadIndex].unreadByUser = false;
-        }
-        saveCollection('messageThreads', threads);
-    }
+export const markThreadAsRead = async (threadId: string, readerType: 'admin' | 'user'): Promise<void> => {
+    const threadRef = doc(db, "messageThreads", threadId);
+    const updateData = readerType === 'admin' ? { unreadByAdmin: false } : { unreadByUser: false };
+    await updateDoc(threadRef, updateData);
 };
+
 
 // --- LOGGING ---
 export interface EmailLog {
@@ -213,8 +178,9 @@ export interface EmailLog {
     html: string;
     success: boolean;
     message: string;
-    timestamp: string; // ISO String
+    timestamp: Timestamp;
 }
+export type EmailLogData = Omit<EmailLog, 'id' | 'timestamp'>;
 
 export interface SmsLog {
     id: string;
@@ -222,47 +188,38 @@ export interface SmsLog {
     message: string;
     success: boolean;
     response: string;
-    timestamp: string; // ISO String
+    timestamp: Timestamp;
 }
+export type SmsLogData = Omit<SmsLog, 'id' | 'timestamp'>;
 
-export const addEmailLog = (logData: Omit<EmailLog, 'id' | 'timestamp'>) => {
-    const logs = getCollection<EmailLog>('emailLogs');
-    const newLog: EmailLog = {
-        ...logData,
-        id: crypto.randomUUID(),
-        timestamp: new Date().toISOString(),
-    };
-    logs.unshift(newLog);
-    saveCollection('emailLogs', logs);
+export const addEmailLog = async (logData: EmailLogData) => {
+    await addDoc(collection(db, "emailLogs"), { ...logData, timestamp: serverTimestamp() });
 };
 
-export const addSmsLog = (logData: Omit<SmsLog, 'id' | 'timestamp'>) => {
-    const logs = getCollection<SmsLog>('smsLogs');
-    const newLog: SmsLog = {
-        ...logData,
-        id: crypto.randomUUID(),
-        timestamp: new Date().toISOString(),
-    };
-    logs.unshift(newLog);
-    saveCollection('smsLogs', logs);
+export const addSmsLog = async (logData: SmsLogData) => {
+    await addDoc(collection(db, "smsLogs"), { ...logData, timestamp: serverTimestamp() });
 };
 
-export const getLogs = (): { email: EmailLog[], sms: SmsLog[] } => {
-    const email = getCollection<EmailLog>('emailLogs');
-    const sms = getCollection<SmsLog>('smsLogs');
+export const getLogs = async (): Promise<{ email: EmailLog[], sms: SmsLog[] }> => {
+    const emailQuery = query(collection(db, "emailLogs"), orderBy("timestamp", "desc"));
+    const smsQuery = query(collection(db, "smsLogs"), orderBy("timestamp", "desc"));
+    
+    const [emailSnapshot, smsSnapshot] = await Promise.all([
+        getDocs(emailQuery),
+        getDocs(smsQuery)
+    ]);
+
+    const email = emailSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as EmailLog));
+    const sms = smsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SmsLog));
     return { email, sms };
 };
 
-export const deleteEmailLog = (id: string) => {
-    let logs = getCollection<EmailLog>('emailLogs');
-    logs = logs.filter(log => log.id !== id);
-    saveCollection('emailLogs', logs);
+export const deleteEmailLog = async (id: string) => {
+    await deleteDoc(doc(db, "emailLogs", id));
 };
 
-export const deleteSmsLog = (id: string) => {
-    let logs = getCollection<SmsLog>('smsLogs');
-    logs = logs.filter(log => log.id !== id);
-    saveCollection('smsLogs', logs);
+export const deleteSmsLog = async (id: string) => {
+    await deleteDoc(doc(db, "smsLogs", id));
 };
 
 
@@ -271,66 +228,39 @@ export interface IMediaItem {
     id: string;
     url: string;
     name: string;
-    createdAt: string; // ISO String
+    createdAt: Timestamp;
 }
+export type MediaItemData = Omit<IMediaItem, 'id' | 'createdAt'>;
 
-export const addMediaItem = (itemData: Omit<IMediaItem, 'id' | 'createdAt'>): IMediaItem => {
-    const media = getCollection<IMediaItem>('mediaLibrary');
-    const newItem: IMediaItem = {
+export const addMediaItem = async (itemData: MediaItemData): Promise<IMediaItem> => {
+    const docRef = await addDoc(collection(db, "mediaLibrary"), { 
         ...itemData,
-        id: crypto.randomUUID(),
-        createdAt: new Date().toISOString(),
-    };
-    media.unshift(newItem);
-    saveCollection('mediaLibrary', media);
-    return newItem;
-};
-
-export const getMediaItems = (): IMediaItem[] => {
-    return getCollection<IMediaItem>('mediaLibrary');
-};
-
-export const deleteMediaItem = async (id: string): Promise<void> => {
-    let media = getCollection<IMediaItem>('mediaLibrary');
-    const itemToDelete = media.find(item => item.id === id);
-
-    if (!itemToDelete) {
-        throw new Error('Media item not found in the library.');
-    }
-    
-    // Extract file key from URL
-    const fileKey = itemToDelete.url.split('/').pop();
-    if (!fileKey) {
-        throw new Error('Could not determine file key from URL.');
-    }
-
-    // Call the server action to delete the file from S3
-    const response = await fetch('/api/delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fileKey }),
+        createdAt: serverTimestamp()
     });
-
-    const result = await response.json();
-
-    if (!response.ok || !result.success) {
-        throw new Error(result.message || 'Failed to delete file from the server.');
-    }
-
-    // If server deletion was successful, remove from local storage
-    media = media.filter(item => item.id !== id);
-    saveCollection('mediaLibrary', media);
+    return { ...itemData, id: docRef.id, createdAt: Timestamp.now() };
 };
 
-export const updateMediaItem = (id: string, data: Partial<Omit<IMediaItem, 'id' | 'createdAt' | 'url'>>): IMediaItem | undefined => {
-    const media = getCollection<IMediaItem>('mediaLibrary');
-    const itemIndex = media.findIndex(p => p.id === id);
-    if (itemIndex > -1) {
-        media[itemIndex] = { ...media[itemIndex], ...data };
-        saveCollection('mediaLibrary', media);
-        return media[itemIndex];
-    }
-    return undefined;
+export const getMediaItems = async (): Promise<IMediaItem[]> => {
+    const q = query(collection(db, "mediaLibrary"), orderBy("createdAt", "desc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as IMediaItem));
 };
 
+export const deleteMediaItem = async (item: IMediaItem): Promise<void> => {
+    if (!item.url) {
+      throw new Error("File URL is missing, cannot delete from Storage.");
+    }
     
+    const fileRef = ref(storage, item.url);
+  
+    // Delete the file from Firebase Storage
+    await deleteObject(fileRef);
+  
+    // Delete the document from Firestore
+    await deleteDoc(doc(db, "mediaLibrary", item.id));
+};
+
+export const updateMediaItem = async (id: string, data: Partial<Omit<IMediaItem, 'id' | 'createdAt' | 'url'>>): Promise<void> => {
+    const itemRef = doc(db, "mediaLibrary", id);
+    await updateDoc(itemRef, data);
+};

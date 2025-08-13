@@ -14,52 +14,63 @@ import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, Mail, Phone, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { updateProfile } from 'firebase/auth';
+import { auth } from '@/services/firestore';
 
 const profileFormSchema = z.object({
-  fullName: z.string().min(1, 'Full name is required'),
-  bio: z.string().max(200, 'Bio cannot be longer than 200 characters').optional(),
+  displayName: z.string().min(1, 'Full name is required'),
+  // Other fields like bio could be added here and stored in Firestore
 });
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
-      fullName: '',
-      bio: '',
+      displayName: '',
     },
   });
 
   useEffect(() => {
     if (user) {
       form.reset({
-        fullName: user.displayName || '',
-        bio: 'I am a passionate developer and designer.', // This is now static
+        displayName: user.displayName || '',
       });
     }
   }, [user, form]);
 
 
   async function onSubmit(data: z.infer<typeof profileFormSchema>) {
+    if (!auth.currentUser) {
+        toast({ title: "Not Authenticated", description: "You must be logged in to update your profile.", variant: "destructive" });
+        return;
+    }
+
     setIsSubmitting(true);
     
-    // Simulate an API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // With Firebase Auth removed, we just show a toast message.
-    // In a real app with a backend, you'd make an API call here.
-    toast({
-      title: 'প্রোফাইল আপডেট হয়েছে',
-      description: 'আপনার প্রোফাইলের তথ্য সফলভাবে আপডেট করা হয়েছে (সিমুলেশন)।',
-    });
-    
-    setIsSubmitting(false);
+    try {
+        await updateProfile(auth.currentUser, {
+            displayName: data.displayName
+        });
+        toast({
+            title: 'Profile Updated',
+            description: 'Your profile information has been successfully updated.',
+        });
+    } catch (error: any) {
+        toast({
+            title: 'Update Failed',
+            description: error.message || 'Could not update your profile. Please try again.',
+            variant: "destructive"
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
   }
 
-  if (!user) return null;
+  if (loading || !user) return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin"/></div>;
 
   return (
     <div className="space-y-6">
@@ -77,7 +88,6 @@ export default function ProfilePage() {
             <div className="grid gap-1">
               <h2 className="text-xl font-semibold">{user?.displayName || 'New User'}</h2>
               <p className="text-sm text-muted-foreground">{user?.email}</p>
-              <p className="text-xs text-muted-foreground pt-2">This is static profile information.</p>
             </div>
           </div>
         </CardHeader>
@@ -86,7 +96,7 @@ export default function ProfilePage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <FormField
                 control={form.control}
-                name="fullName"
+                name="displayName"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Full Name</FormLabel>
@@ -100,13 +110,6 @@ export default function ProfilePage() {
                   </FormItem>
                 )}
               />
-              <FormItem>
-                <FormLabel>Phone Number</FormLabel>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input value={user.phoneNumber || ''} disabled className="pl-10" />
-                </div>
-              </FormItem>
               
               {user.email && (
                  <FormItem>
@@ -118,19 +121,6 @@ export default function ProfilePage() {
                   </FormItem>
               )}
 
-              <FormField
-                control={form.control}
-                name="bio"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Bio</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Tell us a little bit about yourself" className="resize-none" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
               <Button type="submit" disabled={isSubmitting}>
                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Save Changes

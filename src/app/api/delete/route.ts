@@ -1,44 +1,38 @@
 
 import { NextResponse } from 'next/server';
-import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { getAwsSettings } from '@/config/settings';
+import { ref, deleteObject } from 'firebase/storage';
+import { storage } from '@/services/firestore';
 
 export async function POST(request: Request) {
   try {
     const data = await request.json();
-    const fileKey = data.fileKey;
+    const fileUrl = data.fileUrl; // We will pass the full file URL
 
-    if (!fileKey) {
-      return NextResponse.json({ success: false, message: 'File key is required.' }, { status: 400 });
+    if (!fileUrl) {
+      return NextResponse.json({ success: false, message: 'File URL is required.' }, { status: 400 });
     }
 
-    const awsSettings = await getAwsSettings();
-    if (!awsSettings.accessKeyId || !awsSettings.secretAccessKey || !awsSettings.bucketName || !awsSettings.region) {
-      return NextResponse.json({ success: false, message: 'AWS S3 is not configured in admin settings.' }, { status: 500 });
-    }
+    // Create a reference to the file to delete
+    const fileRef = ref(storage, fileUrl);
 
-    const s3Client = new S3Client({
-      region: awsSettings.region,
-      credentials: {
-        accessKeyId: awsSettings.accessKeyId,
-        secretAccessKey: awsSettings.secretAccessKey,
-      },
-    });
+    // Delete the file
+    await deleteObject(fileRef);
 
-    const command = new DeleteObjectCommand({
-      Bucket: awsSettings.bucketName,
-      Key: fileKey,
-    });
-
-    await s3Client.send(command);
-
-    return NextResponse.json({ success: true, message: 'File deleted successfully from S3.' });
+    return NextResponse.json({ success: true, message: 'File deleted successfully from Firebase Storage.' });
 
   } catch (error) {
-    console.error('S3 Deletion failed:', error);
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred during deletion.';
+    console.error('Firebase Storage Deletion failed:', error);
+    let errorMessage = 'An unknown error occurred during deletion.';
+    if (error instanceof Error) {
+        // Check for specific Firebase storage errors
+        if ('code' in error) {
+            const firebaseError = error as { code: string; message: string };
+            if (firebaseError.code === 'storage/object-not-found') {
+                return NextResponse.json({ success: false, message: 'File not found in storage.' }, { status: 404 });
+            }
+        }
+        errorMessage = error.message;
+    }
     return NextResponse.json({ success: false, message: errorMessage }, { status: 500 });
   }
 }
-
-    

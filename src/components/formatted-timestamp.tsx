@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { Timestamp } from 'firebase/firestore'; // Keep type for compatibility if used elsewhere
+import { Timestamp } from 'firebase/firestore';
 import { useState, useEffect } from 'react';
 
 interface FormattedTimestampProps extends React.HTMLAttributes<HTMLSpanElement> {
@@ -17,23 +17,20 @@ export function FormattedTimestamp({ timestamp, format = 'toLocaleString', ...pr
   }, []);
 
   if (!isMounted || !timestamp) {
-    // Return an empty span or a placeholder to avoid layout shifts.
     return <span {...props} />;
   }
 
   let date: Date;
-  if (typeof timestamp === 'string') {
-    date = new Date(timestamp);
+  if (timestamp instanceof Timestamp) {
+    date = timestamp.toDate();
   } else if (timestamp instanceof Date) {
     date = timestamp;
-  } else if (typeof timestamp === 'object' && 'toDate' in timestamp && typeof (timestamp as any).toDate === 'function') {
-    // Handle Firebase Timestamp
-    date = (timestamp as any).toDate();
+  } else if (typeof timestamp === 'string') {
+    date = new Date(timestamp);
   } else {
     return <span {...props}>Invalid Date</span>;
   }
 
-  // Check if the created date is valid
   if (isNaN(date.getTime())) {
     return <span {...props}>Invalid Date</span>;
   }

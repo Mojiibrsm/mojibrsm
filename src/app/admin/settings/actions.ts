@@ -1,51 +1,53 @@
 
 'use server';
 
-import { getAwsSettings, saveAwsSettings, AwsSettings } from '@/config/settings';
-import { site as enSite } from '@/lib/translations/en/site';
-import { contact as enContactData } from '@/lib/translations/en/contact';
-import { contact as bnContactData } from '@/lib/translations/bn/contact';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '@/services/firestore';
+import { translations } from '@/lib/translations';
 
-// --- AWS Settings ---
-
-export async function updateAwsSettingsAction(data: AwsSettings): Promise<{ success: boolean, message: string }> {
-    // This now calls the actual save function which writes to a file on the server.
-    return await saveAwsSettings(data);
-}
-
-export async function getAwsSettingsAction(): Promise<AwsSettings> {
-    return await getAwsSettings();
-}
-
-// --- Site Settings ---
-
-export type SiteSettings = typeof enSite;
+// --- SITE SETTINGS ---
+export type SiteSettings = typeof translations.en.site;
 
 export async function getSiteSettingsAction(): Promise<SiteSettings> {
-    // Data is read directly from the source files
-    return enSite;
+    const docRef = doc(db, "content", "site");
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists() && docSnap.data().en) {
+        return docSnap.data().en as SiteSettings;
+    }
+    return translations.en.site; // Fallback to local
 }
 
-export async function updateSiteSettingsAction(newSettings: SiteSettings): Promise<{ success: boolean; message: string }> {
-    // This function will no longer write to files.
-    // Client-side state will handle UI updates, but persistence is managed by version control.
-    // To make permanent changes, the user should edit the translation files directly.
-     return { success: true, message: 'Settings updated for this session. For permanent changes, please update the translation files in your source code.' };
+export async function updateSiteSettingsAction(newEnSettings: SiteSettings, newBnSettings: SiteSettings): Promise<{ success: boolean; message: string }> {
+    try {
+        const docRef = doc(db, "content", "site");
+        await setDoc(docRef, { en: newEnSettings, bn: newBnSettings }, { merge: true });
+        return { success: true, message: 'Settings updated successfully in Firebase.' };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        return { success: false, message: `Failed to update settings: ${errorMessage}` };
+    }
 }
 
 
-// --- Contact Settings ---
-
-export type ContactSettings = typeof enContactData;
+// --- CONTACT SETTINGS ---
+export type ContactSettings = typeof translations.en.contact;
 
 export async function getContactSettingsAction(): Promise<ContactSettings> {
-    return enContactData;
+    const docRef = doc(db, "content", "contact");
+    const docSnap = await getDoc(docRef);
+     if (docSnap.exists() && docSnap.data().en) {
+        return docSnap.data().en as ContactSettings;
+    }
+    return translations.en.contact; // Fallback to local
 }
 
-
-export async function updateContactSettingsAction(newEnData: ContactSettings): Promise<{ success: boolean; message: string }> {
-  // This function will no longer write to files.
-   return { success: true, message: 'Contact settings updated for this session. For permanent changes, please update the translation files.' };
+export async function updateContactSettingsAction(newEnData: ContactSettings, newBnData: ContactSettings): Promise<{ success: boolean; message: string }> {
+     try {
+        const docRef = doc(db, "content", "contact");
+        await setDoc(docRef, { en: newEnData, bn: newBnData }, { merge: true });
+        return { success: true, message: 'Contact settings updated successfully in Firebase.' };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        return { success: false, message: `Failed to update settings: ${errorMessage}` };
+    }
 }

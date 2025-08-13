@@ -21,13 +21,13 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    const wasSuccessful = login(password);
+    const result = await login(password);
 
-    if (wasSuccessful) {
+    if (result.success) {
       toast({
         title: 'লগইন সফল',
         description: "আপনাকে ড্যাশবোর্ডে নিয়ে যাওয়া হচ্ছে।",
@@ -38,7 +38,7 @@ function LoginForm() {
       toast({
         variant: 'destructive',
         title: 'লগইন ব্যর্থ',
-        description: 'আপনি ভুল পাসওয়ার্ড দিয়েছেন। অনুগ্রহ করে আবার চেষ্টা করুন।',
+        description: result.message,
       });
       setLoading(false);
     }

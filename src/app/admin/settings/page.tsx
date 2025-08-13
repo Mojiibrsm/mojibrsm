@@ -3,39 +3,33 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { HardDrive, Bell, Loader2, Save, Info, FolderSearch, Contact2, Github, Facebook, Linkedin, Mail, Phone, MapPin } from 'lucide-react';
+import { HardDrive, Bell, Loader2, Save, Info, FolderSearch, Contact2, Github, Facebook, Linkedin, Mail, Phone, MapPin, ShieldAlert } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { getAwsSettingsAction, updateAwsSettingsAction } from './actions';
-import { getSiteSettingsAction, updateSiteSettingsAction } from './actions';
-import { getContactSettingsAction, updateContactSettingsAction } from './actions';
-import type { AwsSettings } from '@/config/settings';
-import type { SiteSettings, ContactSettings } from './actions';
+import { 
+    getSiteSettingsAction, 
+    updateSiteSettingsAction, 
+    getContactSettingsAction, 
+    updateContactSettingsAction,
+    SiteSettings,
+    ContactSettings
+} from './actions';
+import { translations } from '@/lib/translations';
 import Image from 'next/image';
 import { MediaLibraryDialog } from '@/components/media-library-dialog';
-import { IMediaItem } from '@/services/data';
+import { IMediaItem, addMediaItem } from '@/services/data';
 
 
-const initialAwsSettings: AwsSettings = { accessKeyId: '', secretAccessKey: '', bucketName: '', region: '' };
-const initialSiteSettings: SiteSettings = { title: '', url: '', logo: '', publicLogo: '', adminAvatar: '', favicon: '' };
-const initialContactSettings: ContactSettings = {
-    title: '',
-    description: '',
-    form: { name: '', email: '', phone: '', subject: '', message: '', submit: '' },
-    details: { email: '', phone: '', location: '', socials: { github: '', facebook: '', linkedin: '' } },
-};
+const initialSiteSettings: SiteSettings = translations.en.site;
+const initialContactSettings: ContactSettings = translations.en.contact;
 
 
 type NotificationSettings = { messages: boolean; requests: boolean };
 
 export default function AdminSettingsPage() {
-    const [awsSettings, setAwsSettings] = useState<AwsSettings>(initialAwsSettings);
-    const [isAwsLoading, setIsAwsLoading] = useState(true);
-    const [isAwsSaving, setIsAwsSaving] = useState(false);
-
     const [siteSettings, setSiteSettings] = useState<SiteSettings>(initialSiteSettings);
     const [isSiteLoading, setIsSiteLoading] = useState(true);
     const [isSiteSaving, setIsSiteSaving] = useState(false);
@@ -53,13 +47,8 @@ export default function AdminSettingsPage() {
 
     useEffect(() => {
         const loadAllSettings = async () => {
-            setIsAwsLoading(true);
             setIsSiteLoading(true);
             setIsContactLoading(true);
-
-            const awsData = await getAwsSettingsAction();
-            setAwsSettings(awsData);
-            setIsAwsLoading(false);
 
             const siteData = await getSiteSettingsAction();
             setSiteSettings(siteData);
@@ -71,23 +60,12 @@ export default function AdminSettingsPage() {
         };
         loadAllSettings();
 
+        // Note: Notification settings are still client-side only via localStorage
         const savedNotificationSettings = localStorage.getItem('notificationSettings');
         if (savedNotificationSettings) {
             setNotifications(JSON.parse(savedNotificationSettings));
         }
     }, []);
-
-    const handleAwsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setAwsSettings(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleSaveAws = async () => {
-        setIsAwsSaving(true);
-        const result = await updateAwsSettingsAction(awsSettings);
-        toast({ title: result.success ? 'Success!' : 'Error!', description: result.message, variant: result.success ? 'default' : 'destructive' });
-        setIsAwsSaving(false);
-    };
 
     const handleSiteSettingsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -108,7 +86,10 @@ export default function AdminSettingsPage() {
 
     const handleSaveSiteSettings = async () => {
         setIsSiteSaving(true);
-        const result = await updateSiteSettingsAction(siteSettings);
+        // This is a simplified approach. A real implementation would need a way to edit both languages.
+        // For now, we assume changes to 'en' settings should be mirrored in 'bn' structure.
+        const bnSettings = { ...translations.bn.site, ...siteSettings };
+        const result = await updateSiteSettingsAction(siteSettings, bnSettings);
         toast({ title: result.success ? 'Success!' : 'Error!', description: result.message, variant: result.success ? 'default' : 'destructive' });
         setIsSiteSaving(false);
     };
@@ -117,7 +98,7 @@ export default function AdminSettingsPage() {
         setContactSettings(prev => {
             if (!prev) return prev;
             const keys = fieldPath.split('.');
-            const newSettings = JSON.parse(JSON.stringify(prev)); // Deep copy to handle nested objects
+            const newSettings = JSON.parse(JSON.stringify(prev));
             let current = newSettings;
             for (let i = 0; i < keys.length - 1; i++) {
                 current = current[keys[i]];
@@ -130,7 +111,9 @@ export default function AdminSettingsPage() {
     const handleSaveContact = async () => {
         if (!contactSettings) return;
         setIsContactSaving(true);
-        const result = await updateContactSettingsAction(contactSettings);
+        // Similar to site settings, we'll just update based on the English form for simplicity.
+        const bnContact = { ...translations.bn.contact, details: contactSettings.details };
+        const result = await updateContactSettingsAction(contactSettings, bnContact);
         toast({ title: result.success ? 'Success!' : 'Error!', description: result.message, variant: result.success ? 'default' : 'destructive' });
         setIsContactSaving(false);
     };
@@ -140,7 +123,7 @@ export default function AdminSettingsPage() {
         const newSettings = { ...notifications, [key]: !notifications[key] };
         setNotifications(newSettings);
         localStorage.setItem('notificationSettings', JSON.stringify(newSettings));
-        toast({ title: 'Settings Saved', description: 'Your notification preferences have been updated.' });
+        toast({ title: 'Settings Saved', description: 'Your notification preferences have been updated locally.' });
     };
 
     const ImageField = ({ fieldName, label, dimensions, isSquare }: { fieldName: keyof SiteSettings, label: string, dimensions: string, isSquare?: boolean }) => (
@@ -171,6 +154,18 @@ export default function AdminSettingsPage() {
                 <h1 className="text-2xl font-bold">Settings</h1>
                 <p className="text-muted-foreground">Manage your site's configuration and preferences.</p>
             </div>
+            
+             <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <ShieldAlert className="h-5 w-5" />
+                        Admin Credentials
+                    </CardTitle>
+                    <CardDescription>
+                       To change your admin password, please go to your Firebase project console, navigate to the Authentication section, and update the password for the admin user.
+                    </CardDescription>
+                </CardHeader>
+            </Card>
 
             <Card>
                 <CardHeader>
@@ -272,52 +267,10 @@ export default function AdminSettingsPage() {
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                        <HardDrive className="h-5 w-5" />
-                        File Storage Configuration
-                    </CardTitle>
-                    <CardDescription>
-                        Configure your AWS S3 bucket for project image uploads. Other uploads will use local server storage.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {isAwsLoading ? (
-                        <div className="flex justify-center items-center h-48"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
-                    ) : (
-                        <div className="space-y-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="accessKeyId">AWS Access Key ID</Label>
-                                <Input id="accessKeyId" name="accessKeyId" value={awsSettings.accessKeyId} onChange={handleAwsChange} placeholder="AKIA..." />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="secretAccessKey">AWS Secret Access Key</Label>
-                                <Input id="secretAccessKey" name="secretAccessKey" type="password" value={awsSettings.secretAccessKey} onChange={handleAwsChange} placeholder="••••••••••••••••" />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="bucketName">S3 Bucket Name</Label>
-                                <Input id="bucketName" name="bucketName" value={awsSettings.bucketName} onChange={handleAwsChange} placeholder="your-s3-bucket-name" />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="region">AWS Region</Label>
-                                <Input id="region" name="region" value={awsSettings.region} onChange={handleAwsChange} placeholder="e.g., us-east-1" />
-                            </div>
-                        </div>
-                    )}
-                </CardContent>
-                <CardFooter className="border-t px-6 py-4">
-                    <Button onClick={handleSaveAws} disabled={isAwsSaving || isAwsLoading}>
-                        {isAwsSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                        Save AWS Credentials
-                    </Button>
-                </CardFooter>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
                        <Bell className="h-5 w-5" />
                        Notification Settings
                     </CardTitle>
-                    <CardDescription>Configure email notifications for important site events. These settings will apply to future automated notification features.</CardDescription>
+                    <CardDescription>Configure email notifications for important site events. These are saved locally to your browser.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="flex items-center justify-between p-4 border rounded-lg">

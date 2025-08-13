@@ -12,6 +12,7 @@ import { FormattedTimestamp } from '@/components/formatted-timestamp';
 import { Search, ImageOff, Upload, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import type { Timestamp } from 'firebase/firestore';
 
 interface MediaLibraryDialogProps {
     isOpen: boolean;
@@ -21,14 +22,23 @@ interface MediaLibraryDialogProps {
 
 export function MediaLibraryDialog({ isOpen, onOpenChange, onSelect }: MediaLibraryDialogProps) {
     const [mediaItems, setMediaItems] = useState<IMediaItem[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [isUploading, setIsUploading] = useState(false);
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const loadMedia = useCallback(() => {
-        setMediaItems(getMediaItems());
-    }, []);
+    const loadMedia = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const items = await getMediaItems();
+            setMediaItems(items);
+        } catch (error) {
+            toast({ title: "Error loading media", description: "Could not fetch media from Firebase.", variant: "destructive" });
+        } finally {
+            setIsLoading(false);
+        }
+    }, [toast]);
 
     useEffect(() => {
         if (isOpen) {
@@ -40,15 +50,14 @@ export function MediaLibraryDialog({ isOpen, onOpenChange, onSelect }: MediaLibr
         setIsUploading(true);
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('destination', 's3');
 
         try {
             const response = await fetch('/api/upload', { method: 'POST', body: formData });
             const result = await response.json();
             if (response.ok && result.success) {
-                const newItem = addMediaItem({ url: result.url, name: file.name });
+                const newItem = await addMediaItem({ url: result.url, name: file.name });
                 toast({ title: "Upload Successful", description: `${file.name} has been added.` });
-                loadMedia(); // Refresh list to show the new item
+                await loadMedia(); // Refresh list to show the new item
                 onSelect(newItem); // Automatically select the newly uploaded item
             } else {
                 throw new Error(result.message || 'Upload failed');
@@ -94,7 +103,9 @@ export function MediaLibraryDialog({ isOpen, onOpenChange, onSelect }: MediaLibr
                 </div>
                 <ScrollArea className="flex-1 -mx-6">
                     <div className="px-6 py-4">
-                        {filteredItems.length === 0 && !isUploading ? (
+                        {isLoading ? (
+                             <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>
+                        ) : filteredItems.length === 0 && !isUploading ? (
                              <div className="flex flex-col items-center justify-center text-center text-muted-foreground py-12 border-2 border-dashed rounded-lg h-full">
                                 <ImageOff className="h-12 w-12 mb-4" />
                                 <p className="font-semibold">No media found.</p>
