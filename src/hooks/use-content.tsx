@@ -23,6 +23,7 @@ interface ContentContextType {
 const ContentContext = createContext<ContentContextType | undefined>(undefined);
 
 export const ContentProvider = ({ children }: { children: ReactNode }) => {
+  // Initialize with local translations to prevent empty state on initial render.
   const [allContent, setAllContent] = useState<AllContent>(translations);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -30,7 +31,7 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
     const contentRef = collection(db, 'content');
     const unsubscribe = onSnapshot(contentRef, (snapshot) => {
       if (snapshot.empty) {
-        // If Firestore is empty, use local translations and stop loading.
+        // If Firestore is empty, we stick with local translations.
         setAllContent(translations);
         setIsLoading(false);
         return;
@@ -44,30 +45,22 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
       const enContent: any = {};
       const bnContent: any = {};
 
-      // Use local translations as a base
       const baseEn = translations.en as any;
       const baseBn = translations.bn as any;
 
+      // Merge Firestore data with local fallbacks.
       for (const section in baseEn) {
-          if (contentData[section] && contentData[section].en) {
-              enContent[section] = contentData[section].en;
-          } else {
-              enContent[section] = baseEn[section];
-          }
-           if (contentData[section] && contentData[section].bn) {
-              bnContent[section] = contentData[section].bn;
-          } else {
-              bnContent[section] = baseBn[section];
-          }
+          enContent[section] = contentData[section]?.en ?? baseEn[section];
+          bnContent[section] = contentData[section]?.bn ?? baseBn[section];
       }
 
       const newAllContent = { en: enContent as Content, bn: bnContent as Content };
       setAllContent(newAllContent);
-      setIsLoading(false); // Set loading to false only after data processing is complete
+      setIsLoading(false);
 
     }, (error) => {
-      console.error("Error fetching content from Firestore, falling back to local data:", error);
-      // On error, we will stick with the initial local translations.
+      console.error("Error fetching content from Firestore, using local data:", error);
+      // On error, we will use the initial local translations.
       setAllContent(translations);
       setIsLoading(false);
     });
