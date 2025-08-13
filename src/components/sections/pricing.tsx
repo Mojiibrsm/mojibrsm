@@ -34,7 +34,7 @@ export default function Pricing() {
   
     if (!t) return null;
 
-    const whatsappNumber = t.whatsappPhoneNumber.replace(/[^0-9]/g, '');
+    const whatsappNumber = (t.whatsappPhoneNumber || '').replace(/[^0-9]/g, '');
 
     return (
         <section id="pricing" className="w-full py-16 md:py-24 bg-card" suppressHydrationWarning>
