@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { HardDrive, Bell, Loader2, Save, Info, FolderSearch, Contact2, Github, Facebook, Linkedin, Mail, Phone, MapPin, ShieldAlert } from 'lucide-react';
+import { HardDrive, Bell, Loader2, Save, Info, FolderSearch, Contact2, Github, Facebook, Linkedin, Mail, Phone, MapPin, ShieldAlert, Database } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -14,6 +14,7 @@ import {
     updateSiteSettingsAction, 
     getContactSettingsAction, 
     updateContactSettingsAction,
+    seedDatabaseAction,
     SiteSettings,
     ContactSettings
 } from './actions';
@@ -21,6 +22,7 @@ import { translations } from '@/lib/translations';
 import Image from 'next/image';
 import { MediaLibraryDialog } from '@/components/media-library-dialog';
 import { IMediaItem, addMediaItem } from '@/services/data';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 
 const initialSiteSettings: SiteSettings = translations.en.site;
@@ -41,6 +43,7 @@ export default function AdminSettingsPage() {
     const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
     const [mediaTargetField, setMediaTargetField] = useState<keyof SiteSettings | null>(null);
 
+    const [isSeeding, setIsSeeding] = useState(false);
     const [notifications, setNotifications] = useState<NotificationSettings>({ messages: true, requests: false });
 
     const { toast } = useToast();
@@ -118,6 +121,13 @@ export default function AdminSettingsPage() {
         setIsContactSaving(false);
     };
 
+    const handleSeedDatabase = async () => {
+        setIsSeeding(true);
+        const result = await seedDatabaseAction();
+        toast({ title: result.success ? 'Success!' : 'Error!', description: result.message, variant: result.success ? 'default' : 'destructive' });
+        setIsSeeding(false);
+    };
+
 
     const handleNotificationChange = (key: keyof NotificationSettings) => {
         const newSettings = { ...notifications, [key]: !notifications[key] };
@@ -165,6 +175,37 @@ export default function AdminSettingsPage() {
                        To change your admin password, please go to your Firebase project console, navigate to the Authentication section, and update the password for the admin user.
                     </CardDescription>
                 </CardHeader>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Database className="h-5 w-5" /> Data Management</CardTitle>
+                    <CardDescription>
+                       Use this to populate your Firestore database with the initial content from the local files. This should only be run once on a fresh setup.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                           <Button variant="secondary" disabled={isSeeding}>
+                                {isSeeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                Seed Initial Content
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure you want to seed the database?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action will overwrite any existing content in the 'content' collection in Firestore with the data from your local translation files. This is intended for initial setup and may cause data loss if used on a database that already has content.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleSeedDatabase}>Yes, seed the database</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </CardContent>
             </Card>
 
             <Card>

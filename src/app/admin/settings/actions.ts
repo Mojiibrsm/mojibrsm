@@ -1,7 +1,7 @@
 
 'use server';
 
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, writeBatch } from 'firebase/firestore';
 import { db } from '@/services/firestore';
 import { translations } from '@/lib/translations';
 
@@ -49,5 +49,34 @@ export async function updateContactSettingsAction(newEnData: ContactSettings, ne
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
         return { success: false, message: `Failed to update settings: ${errorMessage}` };
+    }
+}
+
+
+// --- DATABASE SEEDING ---
+export async function seedDatabaseAction(): Promise<{ success: boolean; message: string }> {
+    try {
+        const batch = writeBatch(db);
+        const sections = Object.keys(translations.en) as Array<keyof typeof translations.en>;
+
+        for (const section of sections) {
+            // We skip 'blog' as it's managed separately
+            if (section === 'blog') continue;
+
+            const docRef = doc(db, "content", section);
+            const data = {
+                en: translations.en[section],
+                bn: translations.bn[section],
+            };
+            batch.set(docRef, data);
+        }
+
+        await batch.commit();
+
+        return { success: true, message: 'Database successfully seeded with initial content.' };
+    } catch (error) {
+        console.error("Database seeding failed:", error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        return { success: false, message: `Failed to seed database: ${errorMessage}` };
     }
 }
