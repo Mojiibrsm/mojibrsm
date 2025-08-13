@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, KeyRound } from 'lucide-react';
+import { Loader2, KeyRound, Mail } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 
@@ -18,6 +18,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const { login } = useAuth();
   
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -25,7 +26,7 @@ function LoginForm() {
     e.preventDefault();
     setLoading(true);
 
-    const result = await login(password);
+    const result = await login(email, password);
 
     if (result.success) {
       toast({
@@ -48,10 +49,25 @@ function LoginForm() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle>স্বাগতম!</CardTitle>
-          <CardDescription>আপনার পাসওয়ার্ড দিয়ে লগইন করুন।</CardDescription>
+          <CardDescription>আপনার ইমেইল ও পাসওয়ার্ড দিয়ে লগইন করুন।</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-6">
+            <div className="grid w-full items-center gap-1.5">
+              <Label htmlFor="email">ইমেইল</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="আপনার ইমেইল"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="pl-10"
+                />
+              </div>
+            </div>
             <div className="grid w-full items-center gap-1.5">
               <Label htmlFor="password">পাসওয়ার্ড</Label>
               <div className="relative">

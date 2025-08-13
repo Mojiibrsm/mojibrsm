@@ -10,15 +10,12 @@ import { Loader2 } from 'lucide-react';
 interface AuthContextType {
   isLoggedIn: boolean;
   user: User | null;
-  login: (password: string) => Promise<{ success: boolean; message: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// Using a static email for the admin login
-const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@example.com';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -34,17 +31,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
-  const login = async (password: string) => {
+  const login = async (email: string, password: string) => {
     try {
-      await signInWithEmailAndPassword(auth, ADMIN_EMAIL, password);
+      await signInWithEmailAndPassword(auth, email, password);
       return { success: true, message: 'Login successful!' };
     } catch (error: any) {
       console.error("Firebase Auth Error:", error);
       let message = 'An unknown error occurred.';
       if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-        message = 'Incorrect password. Please try again.';
+        message = 'Incorrect email or password. Please try again.';
       } else if (error.code === 'auth/invalid-email') {
-         message = 'The admin email is configured incorrectly.';
+         message = 'The email address is not valid.';
       }
       return { success: false, message };
     }
