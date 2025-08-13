@@ -23,7 +23,36 @@ export default function AdminDashboardPage() {
     ]);
 
     useEffect(() => {
-        // This useEffect will run only once on the client-side for chart data
+        const fetchStats = async () => {
+            try {
+                // Fetch all data concurrently
+                const [projects, requests, threads] = await Promise.all([
+                    getProjects(),
+                    getAllRequests(),
+                    getMessageThreads()
+                ]);
+
+                // Update stats based on fetched data
+                setStats(prev => prev.map(s => {
+                    switch (s.title) {
+                        case "Total Projects":
+                            return { ...s, value: projects.length.toString(), description: `${projects.filter(p => p.status === 'In Progress').length} active projects` };
+                        case "Pending Requests":
+                            const pending = requests.filter(r => r.status === 'Pending').length;
+                            return { ...s, value: pending.toString(), description: `Awaiting approval` };
+                        case "New Messages":
+                            const unread = threads.filter(t => t.unreadByAdmin).length;
+                            return { ...s, value: unread.toString(), description: `${unread} unread messages` };
+                        default:
+                            return s;
+                    }
+                }));
+
+            } catch (error) {
+                console.error("Failed to fetch dashboard stats:", error);
+            }
+        };
+
         const generateChartData = () => {
           return [
             { name: "Jan", total: Math.floor(Math.random() * 5000) + 1000 },
@@ -40,22 +69,13 @@ export default function AdminDashboardPage() {
             { name: "Dec", total: Math.floor(Math.random() * 5000) + 1000 },
           ];
         };
+        
         setChartData(generateChartData());
-
-        // Fetch real data for stats
-        const projects = getProjects();
-        setStats(prev => prev.map(s => s.title === "Total Projects" ? { ...s, value: projects.length.toString(), description: `${projects.filter(p => p.status === 'In Progress').length} active projects` } : s));
-
-        const requests = getAllRequests();
-        const pending = requests.filter(r => r.status === 'Pending').length;
-        setStats(prev => prev.map(s => s.title === "Pending Requests" ? { ...s, value: pending.toString(), description: `Awaiting approval` } : s));
-
-        const threads = getMessageThreads();
-        const unread = threads.filter(t => t.unreadByAdmin).length;
-        setStats(prev => prev.map(s => s.title === "New Messages" ? { ...s, value: unread.toString(), description: `${unread} unread messages` } : s));
         
         const visitorCount = Math.floor(Math.random() * 2000) + 500;
         setStats(prev => prev.map(s => s.title === "Site Visitors" ? { ...s, value: visitorCount.toLocaleString(), description: `From the last 30 days` } : s));
+
+        fetchStats();
 
     }, []);
 

@@ -1,3 +1,4 @@
+
 'use client';
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
@@ -26,18 +27,36 @@ export default function DashboardPage() {
             sessionStorage.setItem('welcomeShown', 'true');
         }
 
-        if(user) {
-            const projects = getProjectsByUserId(user.uid);
-            setStats(prev => prev.map(s => s.title === "Active Projects" ? { ...s, value: projects.filter(p => p.status === 'In Progress').length.toString(), description: `${projects.filter(p => p.status === 'Pending').length} waiting for review` } : s));
+        const fetchStats = async () => {
+            if(user) {
+                try {
+                    const [projects, requests, threads] = await Promise.all([
+                        getProjectsByUserId(user.uid),
+                        getRequestsByUserId(user.uid),
+                        getMessageThreadsForUser(user.uid)
+                    ]);
 
-            const requests = getRequestsByUserId(user.uid);
-            const pending = requests.filter(r => r.status === 'Pending').length;
-            setStats(prev => prev.map(s => s.title === "Pending Requests" ? { ...s, value: pending.toString(), description: "Awaiting approval" } : s));
-            
-            const threads = getMessageThreadsForUser(user.uid);
-            const unread = threads.filter(t => t.unreadByUser).length;
-            setStats(prev => prev.map(s => s.title === "Unread Messages" ? { ...s, value: unread.toString(), description: `${unread} unread messages` } : s));
-        }
+                    setStats(prev => prev.map(s => {
+                        switch(s.title) {
+                            case "Active Projects":
+                                return { ...s, value: projects.filter(p => p.status === 'In Progress').length.toString(), description: `${projects.filter(p => p.status === 'Pending').length} waiting for review` };
+                            case "Pending Requests":
+                                const pending = requests.filter(r => r.status === 'Pending').length;
+                                return { ...s, value: pending.toString(), description: "Awaiting approval" };
+                            case "Unread Messages":
+                                const unread = threads.filter(t => t.unreadByUser).length;
+                                return { ...s, value: unread.toString(), description: `${unread} unread messages` };
+                            default:
+                                return s;
+                        }
+                    }));
+                } catch (error) {
+                    console.error("Failed to fetch user stats:", error);
+                }
+            }
+        };
+
+        fetchStats();
     }, [user, loading]);
 
     if (loading) {
