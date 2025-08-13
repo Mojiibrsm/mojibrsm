@@ -3,14 +3,13 @@
 import { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import type { Translations } from '@/lib/translations';
 import { translations } from '@/lib/translations';
-import { Content, useContent } from '@/hooks/use-content';
 
 type Language = 'en' | 'bn';
 
 interface LanguageContextType {
   language: Language;
   setLanguage: (language: Language) => void;
-  t: Translations[Language] | Content;
+  t: Translations[Language];
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -35,7 +34,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   };
 
   const currentLanguage = isMounted ? language : 'en';
-  // Use local translations as a fallback
+  // Use local translations as a fallback, main data comes from ContentProvider
   const t = translations[currentLanguage];
 
   const value = { language: currentLanguage, setLanguage, t };
