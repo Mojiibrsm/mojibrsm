@@ -22,7 +22,7 @@ interface ContentContextType {
 
 const ContentContext = createContext<ContentContextType | undefined>(undefined);
 
-export const ContentProvider = ({ children }: { children: ReactNode }) => {
+export const ContentProvider = ({ children }: { children: React.ReactNode }) => {
   // Initialize with local translations to prevent empty state on initial render.
   const [allContent, setAllContent] = useState<AllContent>(translations);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,6 +32,7 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribe = onSnapshot(contentRef, (snapshot) => {
       if (snapshot.empty) {
         // If Firestore is empty, we stick with local translations.
+        console.warn("Firestore 'content' collection is empty. Using local fallback data.");
         setAllContent(translations);
         setIsLoading(false);
         return;
