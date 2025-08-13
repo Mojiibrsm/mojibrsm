@@ -5,6 +5,7 @@ export const pricing = {
   "popular": "জনপ্রিয়",
   "buttonText": "অর্ডার করুন",
   "whatsappMessage": "হ্যালো, আমি আপনার \"{packageName}\" প্যাকেজটিতে আগ্রহী।",
+  "whatsappPhoneNumber": "+8801601519007",
   "paymentMethods": {
     "title": "আমরা গ্রহণ করি:",
     "bkash": "বিকাশ",

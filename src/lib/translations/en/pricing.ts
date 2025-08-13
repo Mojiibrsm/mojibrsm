@@ -5,6 +5,7 @@ export const pricing = {
   "popular": "Popular",
   "buttonText": "Order Now",
   "whatsappMessage": "Hello, I am interested in your \"{packageName}\" package.",
+  "whatsappPhoneNumber": "+8801601519007",
   "paymentMethods": {
     "title": "We accept:",
     "bkash": "bKash",

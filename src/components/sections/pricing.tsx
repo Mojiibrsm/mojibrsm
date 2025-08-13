@@ -11,7 +11,6 @@ export default function Pricing() {
     const { allContent, isLoading } = useContent();
     const { language } = useLanguage();
     const t = allContent[language]?.pricing;
-    const contactDetails = allContent[language]?.contact?.details;
     const ref = useRef(null);
     const isInView = useInView(ref, { once: true, amount: 0.1 });
 
@@ -33,9 +32,9 @@ export default function Pricing() {
         );
     }
   
-    if (!t || !contactDetails) return null;
+    if (!t) return null;
 
-    const whatsappNumber = contactDetails.phone.replace(/[^0-9]/g, '');
+    const whatsappNumber = t.whatsappPhoneNumber.replace(/[^0-9]/g, '');
 
     return (
         <section id="pricing" className="w-full py-16 md:py-24 bg-card" suppressHydrationWarning>
