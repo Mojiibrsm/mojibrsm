@@ -48,7 +48,7 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
       const baseEn = translations.en as any;
       const baseBn = translations.bn as any;
 
-      // Merge Firestore data with local fallbacks.
+      // Merge Firestore data with local fallbacks. This ensures no section is missing.
       for (const section in baseEn) {
           enContent[section] = contentData[section]?.en ?? baseEn[section];
           bnContent[section] = contentData[section]?.bn ?? baseBn[section];
