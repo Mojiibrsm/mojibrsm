@@ -2,7 +2,7 @@
 'use server';
 
 import { db } from '@/services/firestore';
-import { collection, getDocs, doc, updateDoc, setDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, query, where } from 'firebase/firestore';
 
 // Define the type for a single blog post based on the existing structure
 type Post = {
