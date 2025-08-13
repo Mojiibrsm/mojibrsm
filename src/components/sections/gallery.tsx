@@ -1,13 +1,16 @@
+
 'use client';
 import Image from 'next/image';
-import { useLanguage } from '@/contexts/language-context';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useContent } from '@/hooks/use-content';
+import { Loader2 } from 'lucide-react';
 
 export default function Gallery() {
-  const { t } = useLanguage();
+  const { content, isLoading } = useContent();
+  const t = content?.gallery;
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.1 });
 
@@ -21,6 +24,16 @@ export default function Gallery() {
     visible: { opacity: 1, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } },
   };
 
+  if (isLoading) {
+    return (
+        <section id="gallery" className="w-full py-16 md:py-24 bg-card flex justify-center items-center min-h-[50vh]">
+            <Loader2 className="w-8 h-8 animate-spin" />
+        </section>
+    );
+  }
+  
+  if (!t) return null;
+
   return (
     <section id="gallery" className="w-full py-16 md:py-24 bg-card" suppressHydrationWarning>
       <div className="container">
@@ -31,9 +44,9 @@ export default function Gallery() {
           transition={{ duration: 0.5 }}
           className="text-center mb-12"
         >
-          <h2 className="text-4xl font-bold font-headline">{t.gallery.title}</h2>
+          <h2 className="text-4xl font-bold font-headline">{t.title}</h2>
           <div className="mt-4 h-1.5 w-24 bg-gradient-to-r from-primary via-accent to-secondary mx-auto rounded-full"></div>
-          <p className="max-w-2xl mx-auto text-muted-foreground mt-4">{t.gallery.description}</p>
+          <p className="max-w-2xl mx-auto text-muted-foreground mt-4">{t.description}</p>
         </motion.div>
         <motion.div
           ref={ref}
@@ -42,7 +55,7 @@ export default function Gallery() {
           initial="hidden"
           animate={isInView ? 'visible' : 'hidden'}
         >
-          {t.gallery.images.map((image, index) => (
+          {t.images.map((image, index) => (
             <Dialog key={index}>
               <DialogTrigger asChild>
                 <motion.div variants={itemVariants} className="group relative cursor-pointer">

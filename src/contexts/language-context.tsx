@@ -1,14 +1,16 @@
+
 'use client';
 import { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import type { Translations } from '@/lib/translations';
 import { translations } from '@/lib/translations';
+import { Content, useContent } from '@/hooks/use-content';
 
 type Language = 'en' | 'bn';
 
 interface LanguageContextType {
   language: Language;
   setLanguage: (language: Language) => void;
-  t: Translations[Language];
+  t: Translations[Language] | Content;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -32,8 +34,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // To prevent hydration mismatch, use the default language ('en') until the client has mounted.
   const currentLanguage = isMounted ? language : 'en';
+  // Use local translations as a fallback
   const t = translations[currentLanguage];
 
   const value = { language: currentLanguage, setLanguage, t };

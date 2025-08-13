@@ -1,3 +1,4 @@
+
 import type {Metadata} from 'next';
 import { Toaster } from "@/components/ui/toaster"
 import './globals.css';
@@ -7,6 +8,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/contexts/auth-context';
 import { ClientOnly } from '@/components/client-only';
 import { translations } from '@/lib/translations';
+import { ContentProvider } from '@/hooks/use-content';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -14,11 +16,12 @@ const poppins = Poppins({
   variable: '--font-poppins',
 });
 
+// Metadata remains based on local files for fast initial load and SEO.
 const siteConfig = {
   name: translations.en.site.title,
   description: translations.en.hero.tagline,
   url: translations.en.site.url,
-  ogImage: translations.en.site.adminAvatar, // Using adminAvatar for og:image
+  ogImage: translations.en.site.adminAvatar, 
   favicon: translations.en.site.favicon,
 }
 
@@ -86,7 +89,9 @@ export default function RootLayout({
         >
           <LanguageProvider>
             <AuthProvider>
-              {children}
+              <ContentProvider>
+                {children}
+              </ContentProvider>
             </AuthProvider>
             <ClientOnly>
               <Toaster />

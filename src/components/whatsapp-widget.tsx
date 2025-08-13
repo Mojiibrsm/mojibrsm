@@ -1,8 +1,9 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { useLanguage } from '@/contexts/language-context';
+import { useContent } from '@/hooks/use-content';
 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
@@ -12,14 +13,16 @@ const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 
 export default function WhatsAppWidget() {
-    const { t } = useLanguage();
+    const { content } = useContent();
+    const t = content?.whatsapp;
+    const contactDetails = content?.contact?.details;
     
-    const phoneNumber = t.contact.details.phone?.replace(/[^0-9]/g, '');
-    if (!phoneNumber) {
+    if (!t || !contactDetails?.phone) {
         return null;
     }
 
-    const message = encodeURIComponent(t.whatsapp.defaultMessage);
+    const phoneNumber = contactDetails.phone.replace(/[^0-9]/g, '');
+    const message = encodeURIComponent(t.defaultMessage);
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
 
     return (

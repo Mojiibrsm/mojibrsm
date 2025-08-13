@@ -1,12 +1,14 @@
+
 'use client';
-import { useLanguage } from '@/contexts/language-context';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Briefcase } from 'lucide-react';
+import { Briefcase, Loader2 } from 'lucide-react';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
+import { useContent } from '@/hooks/use-content';
 
 export default function Experience() {
-  const { t } = useLanguage();
+  const { content, isLoading } = useContent();
+  const t = content?.experience;
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.1 });
 
@@ -24,6 +26,16 @@ export default function Experience() {
     hidden: { opacity: 0, y: 50 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
   };
+  
+  if (isLoading) {
+    return (
+        <section id="experience" className="w-full py-16 md:py-24 bg-card flex justify-center items-center min-h-[50vh]">
+            <Loader2 className="w-8 h-8 animate-spin" />
+        </section>
+    );
+  }
+  
+  if (!t) return null;
 
   return (
     <section id="experience" className="w-full py-16 md:py-24 bg-card" suppressHydrationWarning>
@@ -35,7 +47,7 @@ export default function Experience() {
           transition={{ duration: 0.5 }}
           className="text-center mb-12"
         >
-          <h2 className="text-4xl font-bold font-headline">{t.experience.title}</h2>
+          <h2 className="text-4xl font-bold font-headline">{t.title}</h2>
           <div className="mt-4 h-1.5 w-24 bg-gradient-to-r from-primary via-accent to-secondary mx-auto rounded-full"></div>
         </motion.div>
         
@@ -46,7 +58,7 @@ export default function Experience() {
           initial="hidden"
           animate={isInView ? 'visible' : 'hidden'}
         >
-          {t.experience.jobs.map((job, index) => (
+          {t.jobs.map((job, index) => (
             <motion.div key={index} variants={itemVariants} className="relative group h-full">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-primary via-accent to-secondary rounded-xl blur opacity-0 group-hover:opacity-75 transition duration-500"></div>
               <Card className="relative w-full p-6 rounded-2xl shadow-lg transition-all duration-300 h-full bg-card">

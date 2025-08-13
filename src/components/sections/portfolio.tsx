@@ -1,14 +1,17 @@
+
 'use client';
 import Image from 'next/image';
-import { useLanguage } from '@/contexts/language-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
+import { useContent } from '@/hooks/use-content';
+import { Loader2 } from 'lucide-react';
 
 export default function Portfolio() {
-  const { t } = useLanguage();
+  const { content, isLoading } = useContent();
+  const t = content?.portfolio;
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.1 });
 
@@ -21,6 +24,16 @@ export default function Portfolio() {
     hidden: { opacity: 0, y: 50, scale: 0.95 },
     visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } },
   };
+  
+  if (isLoading) {
+    return (
+        <section id="portfolio" className="w-full py-16 md:py-24 bg-card flex justify-center items-center min-h-[50vh]">
+            <Loader2 className="w-8 h-8 animate-spin" />
+        </section>
+    );
+  }
+  
+  if (!t) return null;
 
   return (
     <section id="portfolio" className="w-full py-16 md:py-24 bg-card" suppressHydrationWarning>
@@ -31,7 +44,7 @@ export default function Portfolio() {
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.5 }}
           className="text-center mb-12">
-            <h2 className="text-4xl font-bold font-headline">{t.portfolio.title}</h2>
+            <h2 className="text-4xl font-bold font-headline">{t.title}</h2>
             <div className="mt-4 h-1.5 w-24 bg-gradient-to-r from-primary via-accent to-secondary mx-auto rounded-full"></div>
         </motion.div>
         <motion.div
@@ -41,7 +54,7 @@ export default function Portfolio() {
           initial="hidden"
           animate={isInView ? 'visible' : 'hidden'}
         >
-          {t.portfolio.projects.map((project, index) => (
+          {t.projects.map((project, index) => (
             <motion.div key={project.title} variants={itemVariants} className="relative group h-full">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-primary via-accent to-secondary rounded-xl blur opacity-0 group-hover:opacity-75 transition duration-500"></div>
               <Card className="relative overflow-hidden shadow-md transition-all duration-300 rounded-2xl flex flex-col bg-card h-full">
@@ -64,7 +77,7 @@ export default function Portfolio() {
                     </CardHeader>
                     <CardContent className="flex-grow flex flex-col">
                       <div className="mb-4">
-                        <h4 className="font-semibold mb-2 text-sm text-muted-foreground">{t.portfolio.techUsed}</h4>
+                        <h4 className="font-semibold mb-2 text-sm text-muted-foreground">{t.techUsed}</h4>
                         <div className="flex flex-wrap gap-2">
                           {project.tech.map((tech) => (
                             <Badge key={tech} variant="secondary">{tech}</Badge>
@@ -74,7 +87,7 @@ export default function Portfolio() {
                       <div className="mt-auto">
                           <Button asChild className="w-full">
                               <a href={project.link} target="_blank" rel="noopener noreferrer">
-                                  {t.portfolio.viewButton}
+                                  {t.viewButton}
                               </a>
                           </Button>
                       </div>

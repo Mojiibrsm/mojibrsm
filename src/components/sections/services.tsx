@@ -1,10 +1,11 @@
+
 'use client';
-import { useLanguage } from '@/contexts/language-context';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Code, PenTool, LineChart, Server, Smartphone } from 'lucide-react';
+import { Code, PenTool, LineChart, Server, Smartphone, Loader2 } from 'lucide-react';
 import React, { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
+import { useContent } from '@/hooks/use-content';
 
 const iconComponents: { [key: string]: React.ElementType } = {
   web: Code,
@@ -16,7 +17,8 @@ const iconComponents: { [key: string]: React.ElementType } = {
 
 
 export default function Services() {
-  const { t } = useLanguage();
+  const { content, isLoading } = useContent();
+  const t = content?.services;
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.1 });
 
@@ -34,6 +36,16 @@ export default function Services() {
     hidden: { opacity: 0, y: 50 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
   };
+  
+  if (isLoading) {
+    return (
+        <section id="services" className="w-full py-16 md:py-24 bg-card flex justify-center items-center min-h-[50vh]">
+            <Loader2 className="w-8 h-8 animate-spin" />
+        </section>
+    );
+  }
+  
+  if (!t) return null;
 
   return (
     <section id="services" className="w-full py-16 md:py-24 bg-card" suppressHydrationWarning>
@@ -44,7 +56,7 @@ export default function Services() {
            viewport={{ once: true, amount: 0.2 }}
            transition={{ duration: 0.5 }}
            className="text-center mb-12">
-            <h2 className="text-4xl font-bold font-headline">{t.services.title}</h2>
+            <h2 className="text-4xl font-bold font-headline">{t.title}</h2>
             <div className="mt-4 h-1.5 w-24 bg-gradient-to-r from-primary via-accent to-secondary mx-auto rounded-full"></div>
         </motion.div>
         <motion.div
@@ -54,7 +66,7 @@ export default function Services() {
             initial="hidden"
             animate={isInView ? 'visible' : 'hidden'}
           >
-            {t.services.items.map((service, index) => {
+            {t.items.map((service, index) => {
               const Icon = iconComponents[service.icon] || Code;
               return (
                 <motion.div key={index} variants={itemVariants} className="relative group h-full">
@@ -71,7 +83,7 @@ export default function Services() {
                     </CardContent>
                     <div className="mt-6 w-full">
                       <Button asChild>
-                          <a href="#contact">{t.services.button}</a>
+                          <a href="#contact">{t.button}</a>
                       </Button>
                     </div>
                   </Card>

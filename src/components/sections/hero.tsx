@@ -1,11 +1,14 @@
+
 'use client';
-import { useLanguage } from '@/contexts/language-context';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import { useContent } from '@/hooks/use-content';
+import { Loader2 } from 'lucide-react';
 
 export default function Hero() {
-  const { t } = useLanguage();
+  const { content, isLoading } = useContent();
+  const t = content?.hero;
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -27,6 +30,16 @@ export default function Hero() {
     visible: { opacity: 1, scale: 1, transition: { type: "spring", stiffness: 100, delay: 0.4 } },
   };
 
+  if (isLoading) {
+    return (
+        <section className="w-full py-16 md:py-20 lg:py-24 bg-card flex justify-center items-center min-h-[70vh]">
+            <Loader2 className="w-8 h-8 animate-spin" />
+        </section>
+    );
+  }
+  
+  if (!t) return null;
+
 
   return (
     <section className="w-full py-16 md:py-20 lg:py-24 bg-card" suppressHydrationWarning>
@@ -43,9 +56,9 @@ export default function Hero() {
                 variants={itemVariants}
                 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none font-headline animate-float"
               >
-                {t.hero.greeting}{' '}
+                {t.greeting}{' '}
                 <span className="text-primary relative inline-block">
-                    {t.hero.name}
+                    {t.name}
                     <svg
                         className="absolute -bottom-3 left-0 w-full h-auto text-accent animate-wavy-underline"
                         viewBox="0 0 120 8"
@@ -60,29 +73,29 @@ export default function Hero() {
                 variants={itemVariants}
                 className="text-2xl font-semibold text-foreground/90 sm:text-3xl font-headline"
               >
-                {t.hero.title}
+                {t.title}
               </motion.h2>
               <motion.p 
                 variants={itemVariants}
                 className="max-w-[600px] text-muted-foreground md:text-xl"
               >
-                {t.hero.tagline}
+                {t.tagline}
               </motion.p>
             </div>
             <motion.div variants={itemVariants} className="flex flex-col gap-3 min-[400px]:flex-row">
               <Button size="lg" asChild>
-                <a href={t.hero.cv_url} target="_blank" rel="noopener noreferrer">
-                  {t.hero.buttons.cv}
+                <a href={t.cv_url} target="_blank" rel="noopener noreferrer">
+                  {t.buttons.cv}
                 </a>
               </Button>
               <Button size="lg" variant="secondary" asChild>
                 <a href="#portfolio">
-                  {t.hero.buttons.work}
+                  {t.buttons.work}
                 </a>
               </Button>
               <Button size="lg" variant="outline" asChild>
                 <a href="#contact">
-                  {t.hero.buttons.contact}
+                  {t.buttons.contact}
                 </a>
               </Button>
             </motion.div>
@@ -100,12 +113,12 @@ export default function Hero() {
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
               <Image
-                src={t.hero.image}
-                alt={t.hero.name}
+                src={t.image}
+                alt={t.name}
                 width={600}
                 height={600}
                 className="object-cover aspect-square w-full"
-                data-ai-hint={t.hero.imageHint}
+                data-ai-hint={t.imageHint}
                 priority
               />
             </motion.div>

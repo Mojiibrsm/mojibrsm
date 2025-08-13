@@ -1,8 +1,22 @@
 
 'use client';
 import { db, storage } from './firestore';
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy, writeBatch, serverTimestamp, Timestamp } from "firebase/firestore";
+import { collection, addDoc, getDocs, getDoc, doc, updateDoc, deleteDoc, query, where, orderBy, writeBatch, serverTimestamp, Timestamp } from "firebase/firestore";
 import { ref, deleteObject } from "firebase/storage";
+
+// --- SITE & CONTACT SETTINGS (Example of fetching a single document) ---
+export const getSiteSettings = async () => {
+    const docRef = doc(db, "content", "site");
+    const docSnap = await getDoc(docRef);
+    return docSnap.exists() ? docSnap.data() : null;
+};
+
+export const getContactSettings = async () => {
+    const docRef = doc(db, "content", "contact");
+    const docSnap = await getDoc(docRef);
+    return docSnap.exists() ? docSnap.data() : null;
+};
+
 
 // --- PROJECT MANAGEMENT ---
 export type ProjectStatus = 'Pending' | 'In Progress' | 'Completed';
@@ -123,8 +137,6 @@ export const createMessageThread = async (threadData: ThreadFormData, initialMes
         lastMessageTimestamp: serverTimestamp(),
     });
     
-    // This is a simplified version. For a real app, you might need a separate read operation
-    // to get the exact data back, but this works for UI updates.
     return { 
       ...threadData, 
       id: docRef.id, 
@@ -136,11 +148,12 @@ export const createMessageThread = async (threadData: ThreadFormData, initialMes
 
 export const addMessageToThread = async (threadId: string, message: Omit<IMessage, 'timestamp'>, senderType: 'admin' | 'client'): Promise<void> => {
     const threadRef = doc(db, "messageThreads", threadId);
-    const threads = await getDocs(query(collection(db, "messageThreads"), where('__name__', '==', threadId)));
-    if (threads.empty) return;
+    const threadDoc = await getDoc(threadRef);
+    if (!threadDoc.exists()) return;
     
-    const currentThreadData = threads.docs[0].data() as IMessageThread;
-    const newMessages = [...currentThreadData.messages, {...message, timestamp: serverTimestamp()}];
+    const currentThreadData = threadDoc.data() as IMessageThread;
+    const currentMessages = currentThreadData.messages || [];
+    const newMessages = [...currentMessages, {...message, timestamp: serverTimestamp()}];
     
     await updateDoc(threadRef, {
         messages: newMessages,
@@ -253,10 +266,7 @@ export const deleteMediaItem = async (item: IMediaItem): Promise<void> => {
     
     const fileRef = ref(storage, item.url);
   
-    // Delete the file from Firebase Storage
     await deleteObject(fileRef);
-  
-    // Delete the document from Firestore
     await deleteDoc(doc(db, "mediaLibrary", item.id));
 };
 

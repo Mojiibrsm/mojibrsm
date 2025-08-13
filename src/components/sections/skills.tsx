@@ -1,10 +1,11 @@
+
 'use client';
-import { useLanguage } from '@/contexts/language-context';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Code2, Palette, LineChart, TerminalSquare } from 'lucide-react';
+import { Code2, Palette, LineChart, TerminalSquare, Loader2 } from 'lucide-react';
 import React, { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
+import { useContent } from '@/hooks/use-content';
 
 const icons: { [key: string]: React.ElementType } = {
   development: Code2,
@@ -14,7 +15,8 @@ const icons: { [key: string]: React.ElementType } = {
 };
 
 export default function Skills() {
-  const { t } = useLanguage();
+  const { content, isLoading } = useContent();
+  const t = content?.skills;
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.1 });
 
@@ -28,6 +30,16 @@ export default function Skills() {
     visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
   };
 
+  if (isLoading) {
+    return (
+        <section id="skills" className="w-full py-16 md:py-24 bg-card flex justify-center items-center min-h-[50vh]">
+            <Loader2 className="w-8 h-8 animate-spin" />
+        </section>
+    );
+  }
+  
+  if (!t) return null;
+
 
   return (
     <section id="skills" className="w-full py-16 md:py-24 bg-card" suppressHydrationWarning>
@@ -39,7 +51,7 @@ export default function Skills() {
           transition={{ duration: 0.5 }}
           className="text-center mb-12"
         >
-          <h2 className="text-3xl font-bold font-headline">{t.skills.title}</h2>
+          <h2 className="text-3xl font-bold font-headline">{t.title}</h2>
           <div className="mt-4 h-1.5 w-24 bg-gradient-to-r from-primary via-accent to-secondary mx-auto rounded-full"></div>
         </motion.div>
         <motion.div
@@ -49,7 +61,7 @@ export default function Skills() {
           initial="hidden"
           animate={isInView ? 'visible' : 'hidden'}
         >
-          {Object.entries(t.skills.categories).map(([key, category]) => {
+          {Object.entries(t.categories).map(([key, category]) => {
             const Icon = icons[key];
             return (
               <motion.div key={category.title} variants={itemVariants}>
