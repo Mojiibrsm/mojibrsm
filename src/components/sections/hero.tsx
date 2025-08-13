@@ -4,10 +4,9 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { useContent } from '@/hooks/use-content';
 import { useLanguage } from '@/contexts/language-context';
-import { Loader2 } from 'lucide-react';
 
 export default function Hero() {
-  const { allContent, isLoading } = useContent();
+  const { allContent } = useContent();
   const { language } = useLanguage();
   const t = allContent[language]?.hero;
 
@@ -30,17 +29,8 @@ export default function Hero() {
     hidden: { opacity: 0, scale: 0.8 },
     visible: { opacity: 1, scale: 1, transition: { type: "spring", stiffness: 100, delay: 0.4 } },
   };
-
-  if (isLoading) {
-    return (
-        <section className="w-full py-16 md:py-20 lg:py-24 bg-card flex justify-center items-center min-h-[70vh]">
-            <Loader2 className="w-8 h-8 animate-spin" />
-        </section>
-    );
-  }
   
   if (!t) return null;
-
 
   return (
     <section className="w-full py-16 md:py-20 lg:py-24 bg-card" suppressHydrationWarning>

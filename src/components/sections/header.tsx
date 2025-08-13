@@ -5,13 +5,13 @@ import Image from 'next/image';
 import { LanguageSwitcher } from '../language-switcher';
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
-import { Menu, Loader2 } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { ThemeSwitcher } from '../theme-switcher';
 import { useContent } from '@/hooks/use-content';
 import { useLanguage } from '@/contexts/language-context';
 
 export default function Header() {
-  const { allContent, isLoading } = useContent();
+  const { allContent } = useContent();
   const { language } = useLanguage();
   const t = allContent[language]?.nav;
   const site = allContent[language]?.site;
@@ -26,11 +26,9 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
   
-  if (isLoading || !t || !site) {
+  if (!t || !site) {
     return (
-        <header className="sticky top-0 z-50 w-full h-20 flex items-center justify-center bg-background/80">
-            <Loader2 className="w-6 h-6 animate-spin" />
-        </header>
+        <header className="sticky top-0 z-50 w-full h-20 flex items-center justify-center bg-background/80" />
     )
   }
 

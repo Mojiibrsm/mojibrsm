@@ -28,7 +28,7 @@ type ContactFormValues = z.infer<typeof ContactFormSchema>;
 
 
 export default function Contact() {
-  const { allContent, isLoading } = useContent();
+  const { allContent } = useContent();
   const { language } = useLanguage();
   const t = allContent[language]?.contact;
   const ref = useRef(null);
@@ -103,8 +103,8 @@ export default function Contact() {
   };
 
 
-  if (isLoading || !t) {
-    return <section id="contact" className="w-full py-16 md:py-24 bg-card flex justify-center items-center min-h-[70vh]"><Loader2 className="w-8 h-8 animate-spin"/></section>
+  if (!t) {
+    return null;
   }
 
   const socialLinks = [

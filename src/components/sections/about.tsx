@@ -4,10 +4,9 @@ import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 import { useContent } from '@/hooks/use-content';
 import { useLanguage } from '@/contexts/language-context';
-import { Loader2 } from 'lucide-react';
 
 export default function About() {
-  const { allContent, isLoading } = useContent();
+  const { allContent } = useContent();
   const { language } = useLanguage();
   const t = allContent[language]?.about;
   const ref = useRef(null);
@@ -28,14 +27,6 @@ export default function About() {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
   };
-  
-  if (isLoading) {
-    return (
-        <section id="about" className="w-full py-16 md:py-24 bg-card flex justify-center items-center min-h-[50vh]">
-            <Loader2 className="w-8 h-8 animate-spin" />
-        </section>
-    );
-  }
   
   if (!t) return null;
 

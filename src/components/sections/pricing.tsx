@@ -1,14 +1,14 @@
 'use client';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Loader2 } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 import { useContent } from '@/hooks/use-content';
 import { useLanguage } from '@/contexts/language-context';
 
 export default function Pricing() {
-    const { allContent, isLoading } = useContent();
+    const { allContent } = useContent();
     const { language } = useLanguage();
     const t = allContent[language]?.pricing;
     const ref = useRef(null);
@@ -24,14 +24,6 @@ export default function Pricing() {
         visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } },
     };
 
-    if (isLoading) {
-        return (
-            <section id="pricing" className="w-full py-16 md:py-24 bg-card flex justify-center items-center min-h-[50vh]">
-                <Loader2 className="w-8 h-8 animate-spin" />
-            </section>
-        );
-    }
-  
     if (!t) return null;
 
     const whatsappNumber = (t.whatsappPhoneNumber || '').replace(/[^0-9]/g, '');

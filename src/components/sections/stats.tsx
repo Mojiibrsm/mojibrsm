@@ -1,5 +1,5 @@
 'use client';
-import { Award, Briefcase, Loader2 } from 'lucide-react';
+import { Award, Briefcase } from 'lucide-react';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 import { useContent } from '@/hooks/use-content';
@@ -8,7 +8,7 @@ import { useLanguage } from '@/contexts/language-context';
 const icons = [Award, Briefcase];
 
 export default function Stats() {
-  const { allContent, isLoading } = useContent();
+  const { allContent } = useContent();
   const { language } = useLanguage();
   const t = allContent[language]?.stats;
   const ref = useRef(null);
@@ -23,14 +23,6 @@ export default function Stats() {
     hidden: { opacity: 0, y: 30 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
   };
-  
-  if (isLoading) {
-    return (
-        <section id="stats" className="w-full py-16 md:py-24 bg-background flex justify-center items-center min-h-[20vh]">
-            <Loader2 className="w-8 h-8 animate-spin" />
-        </section>
-    );
-  }
   
   if (!t) return null;
 

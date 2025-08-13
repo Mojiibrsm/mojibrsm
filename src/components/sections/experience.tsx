@@ -1,13 +1,13 @@
 'use client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Briefcase, Loader2 } from 'lucide-react';
+import { Briefcase } from 'lucide-react';
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 import { useContent } from '@/hooks/use-content';
 import { useLanguage } from '@/contexts/language-context';
 
 export default function Experience() {
-  const { allContent, isLoading } = useContent();
+  const { allContent } = useContent();
   const { language } = useLanguage();
   const t = allContent[language]?.experience;
   const ref = useRef(null);
@@ -27,14 +27,6 @@ export default function Experience() {
     hidden: { opacity: 0, y: 50 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
   };
-  
-  if (isLoading) {
-    return (
-        <section id="experience" className="w-full py-16 md:py-24 bg-card flex justify-center items-center min-h-[50vh]">
-            <Loader2 className="w-8 h-8 animate-spin" />
-        </section>
-    );
-  }
   
   if (!t) return null;
 

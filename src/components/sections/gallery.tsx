@@ -6,10 +6,9 @@ import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useContent } from '@/hooks/use-content';
 import { useLanguage } from '@/contexts/language-context';
-import { Loader2 } from 'lucide-react';
 
 export default function Gallery() {
-  const { allContent, isLoading } = useContent();
+  const { allContent } = useContent();
   const { language } = useLanguage();
   const t = allContent[language]?.gallery;
   const ref = useRef(null);
@@ -24,14 +23,6 @@ export default function Gallery() {
     hidden: { opacity: 0, scale: 0.8 },
     visible: { opacity: 1, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } },
   };
-
-  if (isLoading) {
-    return (
-        <section id="gallery" className="w-full py-16 md:py-24 bg-card flex justify-center items-center min-h-[50vh]">
-            <Loader2 className="w-8 h-8 animate-spin" />
-        </section>
-    );
-  }
   
   if (!t) return null;
 

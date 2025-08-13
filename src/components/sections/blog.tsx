@@ -1,4 +1,3 @@
-
 'use client';
 import Image from 'next/image';
 import { useLanguage } from '@/contexts/language-context';
@@ -8,7 +7,6 @@ import { motion, useInView } from 'framer-motion';
 import { useRef, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getBlogPosts } from '@/app/admin/blog/actions';
-import { Loader2 } from 'lucide-react';
 
 type Post = {
     slug: string;
@@ -64,17 +62,7 @@ export default function Blog() {
     visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } },
   };
 
-  if (isLoading) {
-    return (
-        <section id="blog" className="w-full py-16 md:py-24 bg-card" suppressHydrationWarning>
-            <div className="container flex items-center justify-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin" />
-            </div>
-        </section>
-    );
-  }
-
-  if (!blogContent || blogContent.posts.length === 0) {
+  if (isLoading || !blogContent || blogContent.posts.length === 0) {
     return null; // Don't render the section if there are no posts or data
   }
 
