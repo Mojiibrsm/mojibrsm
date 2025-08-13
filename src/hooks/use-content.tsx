@@ -44,23 +44,29 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
       const enContent: any = {};
       const bnContent: any = {};
 
-      for (const section in translations.en) {
-        if (contentData[section]) {
-            enContent[section] = contentData[section].en;
-            bnContent[section] = contentData[section].bn;
-        } else {
-            // Fallback to local translation if section not in firestore
-            enContent[section] = (translations.en as any)[section];
-            bnContent[section] = (translations.bn as any)[section];
-        }
+      // Use local translations as a base
+      const baseEn = translations.en as any;
+      const baseBn = translations.bn as any;
+
+      for (const section in baseEn) {
+          if (contentData[section] && contentData[section].en) {
+              enContent[section] = contentData[section].en;
+          } else {
+              enContent[section] = baseEn[section];
+          }
+           if (contentData[section] && contentData[section].bn) {
+              bnContent[section] = contentData[section].bn;
+          } else {
+              bnContent[section] = baseBn[section];
+          }
       }
 
       const newAllContent = { en: enContent as Content, bn: bnContent as Content };
       setAllContent(newAllContent);
-      setIsLoading(false);
+      setIsLoading(false); // Set loading to false only after data processing is complete
 
     }, (error) => {
-      console.error("Error fetching content from Firestore:", error);
+      console.error("Error fetching content from Firestore, falling back to local data:", error);
       // On error, we will stick with the initial local translations.
       setAllContent(translations);
       setIsLoading(false);
